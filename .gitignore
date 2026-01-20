@@ -20,6 +20,6 @@ Thumbs.db
 .env.production
 
 # Editor/IDE
-.vSCode/
+.vsCode/
 .idea/
 *.swp
