@@ -1,0 +1,25 @@
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Env files
+.env
+.env.local
+.env.production
+
+# Editor/IDE
+.vSCode/
+.idea/
+*.swp
