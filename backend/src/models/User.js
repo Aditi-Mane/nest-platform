@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true
+      required: true,
+      select: false
     },
 
     collegeId: {
@@ -33,6 +34,17 @@ const userSchema = new mongoose.Schema(
     },
 
     isVerified: {
+      type: Boolean,
+      default: false
+    },
+
+    role: {
+      type: String,
+      enum: ["student", "business", "admin"],
+      default: null
+    },
+
+    isRoleSet: {
       type: Boolean,
       default: false
     }
