@@ -1,8 +1,22 @@
+import { Routes, Route } from "react-router-dom"
+import Login from "./auth/Login.jsx"
+import SignUp from "./auth/SignUp.jsx"
+import ForgotPassword from "./auth/ForgotPassword.jsx"
+import VerifyOtp from "./auth/VerifyOtp.jsx"
+import CreateNewPass from "./auth/CreateNewPass.jsx"
+
 const AuthPage = () => {
   return (
-    <div className="h-screen">
+    <Routes>
+      {/* Default route: /auth → Login */}
+      <Route index element={<Login />} />
       
-    </div>
+      <Route path="login" element={<Login />} />
+      <Route path="signup" element={<SignUp/>} />
+      <Route path="forgot-password" element={<ForgotPassword />} />
+      <Route path="verify-otp" element={<VerifyOtp/>} />
+      <Route path="create-new-pass" element={<CreateNewPass/>} />
+    </Routes>
   )
 }
 
