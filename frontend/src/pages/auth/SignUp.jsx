@@ -36,7 +36,7 @@ const SignUp = () => {
           </button>
         </InputField>
 
-        <PrimaryButton>Sign Up</PrimaryButton>
+        <PrimaryButton onClick = {() => navigate("/auth/verify-account")}>Sign Up</PrimaryButton>
 
         <AuthFooterLink
           text = "Already have an account?"

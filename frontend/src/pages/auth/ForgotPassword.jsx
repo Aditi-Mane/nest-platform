@@ -9,7 +9,7 @@ const ForgotPassword = () => {
   return (
     <AuthLayout>
       <AuthCard>
-        <AuthHeader title = "Forgot Password" subtitle = "Enter your email address to receive a reset link."/>
+        <AuthHeader title = "Forgot Password" subtitle = "Enter your email address to receive an OTP on your email."/>
         <InputField icon={MdEmail} type="email" placeholder="Email address"/>
         <PrimaryButton>Continue</PrimaryButton>
       </AuthCard>

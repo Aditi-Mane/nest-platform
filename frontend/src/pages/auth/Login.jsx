@@ -36,7 +36,7 @@ const Login = () => {
 
         <RememberForgotRow onForgot={() => navigate("/auth/forgot-password")} />
 
-        <PrimaryButton>Login</PrimaryButton>
+        <PrimaryButton type = "submit">Login</PrimaryButton>
 
         <AuthFooterLink
           text="Don’t have an account?"
