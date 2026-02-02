@@ -30,7 +30,7 @@ const VerifyAccount = () => {
             />
 
             <div className="flex flex-col items-center justify-center">
-              <FiUpload className="text-primary text-2xl mb-2" />
+              <FiUpload className="text-text text-2xl mb-2" />
 
               <p className="text-sm text-text">
                 Click to upload or drag & drop
