@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
 
 export const signup = async (req, res) => {
   try {
@@ -34,11 +35,15 @@ export const signup = async (req, res) => {
       })
     }
 
+    //hash the password
+    const saltRounds = 10
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     //user creation
     await User.create({
       name,
       email,
-      password
+      password: hashedPassword
     })
 
     return res.status(201).json({ //201 code for creation purposes
