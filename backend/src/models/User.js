@@ -24,13 +24,12 @@ const userSchema = new mongoose.Schema(
 
     collegeId: {
       type: String,
-      required: true,
-      unique: true
+      unique: true, //prevents duplicate prn
+      sparse: true //ignore unique if value is missing
     },
 
     idCardImage: {
       type: String,
-      required: true
     },
 
     isVerified: {

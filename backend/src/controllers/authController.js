@@ -1,3 +1,5 @@
+import User from "../models/User.js";
+
 export const signup = async (req, res) => {
   try {
     const {name, email, password} = req.body;
@@ -23,12 +25,29 @@ export const signup = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      message: "Validation passed"
+    //check if user email already exists
+    const existingUser = await User.findOne({email});
+
+    if(existingUser){
+      return res.status(400).json({
+        message: "Email already registered"
+      })
+    }
+
+    //user creation
+    await User.create({
+      name,
+      email,
+      password
+    })
+
+    return res.status(201).json({ //201 code for creation purposes
+      message: "User created successfully"
     });
 
 
   } catch (error) {
+    console.log("Signup Error:", error);
     return res.status(500).json({
       message: "Server error"
     });
