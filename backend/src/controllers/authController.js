@@ -5,29 +5,33 @@ export const signup = async (req, res) => {
   try {
     const {name, email, password} = req.body;
 
+    const trimmedName = name?.trim();
+    const normalizedEmail = email?.toLowerCase();
+
     //name
-    if (!name || name.length < 2) {
+    if (!trimmedName || trimmedName.length < 2) {
       return res.status(400).json({
         message: "Name must be at least 2 characters"
       });
     }
 
     //email
-    if (!email || !email.includes("@") || !email.includes(".")) {
+    if (!normalizedEmail || !normalizedEmail.includes("@") || !normalizedEmail.includes(".")) {
       return res.status(400).json({
         message: "Invalid email"
       });
     }
 
     //password
-    if (!password || password.length < 6) {
+    const hasNumber = /\d/.test(password);
+    if (!password || password.length < 6 || !hasNumber) {
       return res.status(400).json({
-        message: "Password must be at least 6 characters"
+        message: "Password must be at least 6 characters and contain a number"
       });
     }
 
     //check if user email already exists
-    const existingUser = await User.findOne({email});
+    const existingUser = await User.findOne({email: normalizedEmail});
 
     if(existingUser){
       return res.status(400).json({
@@ -41,8 +45,8 @@ export const signup = async (req, res) => {
 
     //user creation
     await User.create({
-      name,
-      email,
+      name: trimmedName,
+      email: normalizedEmail,
       password: hashedPassword
     })
 
