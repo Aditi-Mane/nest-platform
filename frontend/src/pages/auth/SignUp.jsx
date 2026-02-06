@@ -9,8 +9,49 @@ import AuthHeader from "../../components/auth/AuthHeader.jsx";
 import AuthFooterLink from "../../components/auth/AuthFooterLink.jsx";
 import InputField from "../../components/auth/InputField.jsx";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx";
+import axios from "axios";
 
 const SignUp = () => {
+
+  //add state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async () =>{
+    try {
+      setError("");
+
+      if( password !== confirmPassword){
+        setError("Passwords do not match")
+        return;
+      }
+
+      setLoading(true);
+
+      //axios sends post request to backend, to which response is sent
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/signup",
+        {
+          name,
+          email,
+          password
+        }
+      );
+
+      // Navigate only if backend success
+      navigate("/auth/verify-account");
+
+    } catch (err) {
+      setError(err?.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
@@ -23,20 +64,27 @@ const SignUp = () => {
           subtitle = "Create a new account to get started and enjoy access to our features."
         />
 
-        <InputField icon={IoPerson} type="text" placeholder="Name"/>
-        <InputField icon={MdEmail} type="email" placeholder="Email address"/>
-        <InputField icon={MdLock} type={showPassword ? "text" : "password"} placeholder="Password">
+        {/* adding controllable inputs */}
+        <InputField icon={IoPerson} type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)}/>
+        <InputField icon={MdEmail} type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)}/>
+        <InputField icon={MdLock} type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}>
           <button onClick = {() => setShowPassword(!showPassword)}>
             {showPassword ? <FaEye/> : <FaEyeSlash/>}
           </button>
         </InputField>
-        <InputField icon={MdLock} type={showConfirmPassword ? "text" : "password"} placeholder="Confirm password">
+        <InputField icon={MdLock} type={showConfirmPassword ? "text" : "password"} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}>
           <button onClick = {() => setShowConfirmPassword(!showConfirmPassword)}>
             {showConfirmPassword ? <FaEye/> : <FaEyeSlash/>}
           </button>
         </InputField>
 
-        <PrimaryButton onClick = {() => navigate("/auth/verify-account")}>Sign Up</PrimaryButton>
+        {error && (
+          <p style={{ color: "red", textAlign: "center", marginTop: "10px",  marginBottom: "-10px", fontSize: "14px" }}>
+            {error}
+          </p>
+        )}
+
+        <PrimaryButton onClick = {handleSignup}>Sign Up</PrimaryButton>
 
         <AuthFooterLink
           text = "Already have an account?"
