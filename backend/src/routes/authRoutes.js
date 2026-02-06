@@ -1,8 +1,9 @@
 import express from "express"
-import { signup } from "../controllers/authController.js";
+import { signup, verifyAccount } from "../controllers/authController.js";
 
 const router = express.Router(); //mini route handler created
 
 router.post("/signup", signup);
+router.post("/verify-account", verifyAccount);
 
 export default router;

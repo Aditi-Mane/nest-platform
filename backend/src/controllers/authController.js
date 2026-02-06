@@ -62,3 +62,14 @@ export const signup = async (req, res) => {
     });
   }
 };
+
+export const verifyAccount = async (req, res) =>{
+  const {collegeId, idCardImage} = req.body;
+
+  const normalizedId = collegeId.toUpperCase();
+  if(!normalizedId || normalizedId.length < 9){
+    return res.status(400).json({
+      message: "Id must be atleast 9 characters"
+    })
+  }
+}
