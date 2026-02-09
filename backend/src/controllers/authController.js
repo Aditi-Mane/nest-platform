@@ -69,7 +69,7 @@ export const signup = async (req, res) => {
 
 export const verifyAccount = async (req, res) =>{
   try {
-    const {collegeId, email} = req.body;
+    const {collegeId} = req.body;
     const file = req.file;
 
     if(!collegeId || collegeId.length !== 9 || !/[a-zA-Z]$/.test(collegeId)){
@@ -84,7 +84,7 @@ export const verifyAccount = async (req, res) =>{
         message: "ID card image is required",
       });
     }
-    
+
     const user = req.user;
 
     if(!user) {
@@ -109,3 +109,49 @@ export const verifyAccount = async (req, res) =>{
     });
   }
 }
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    //check email + password provided
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password required"
+      });
+    }
+
+    //find user by email
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User does not exist"
+      });
+    }
+
+    //compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials"
+      });
+    }
+
+    //generate token
+    const token = generateToken(user._id);
+
+    //send response
+    return res.status(200).json({
+      message: "Login successful",
+      token
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+};
+
