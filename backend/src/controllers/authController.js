@@ -64,12 +64,46 @@ export const signup = async (req, res) => {
 };
 
 export const verifyAccount = async (req, res) =>{
-  const {collegeId, idCardImage} = req.body;
+  try {
+    const {collegeId} = req.body;
+    const file = req.file;
 
-  const normalizedId = collegeId.toUpperCase();
-  if(!normalizedId || normalizedId.length < 9){
-    return res.status(400).json({
-      message: "Id must be atleast 9 characters"
-    })
+    const normalizedId = collegeId.toUpperCase();
+    if(!normalizedId || normalizedId.length !== 9 || !/[a-zA-Z]$/.test(normalizedId)){
+      return res.status(400).json({
+        message: "PRN must be exactly 9 characters long and end with a letter"
+      })
+    }
+
+    if(!file) {
+      return res.status(400).json({
+        message: "ID card image is required",
+      });
+    }
+
+    const userId = req.body.userId; //temporary approach
+
+    const user = await User.findById(userId);
+
+    if(!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.collegeId = collegeId;
+    user.idCardImage = file.path;
+    user.isVerified = false;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Verification submitted successfully. Await admin approval.",
+    });
+  } catch (error) {
+    
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 }
