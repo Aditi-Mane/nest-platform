@@ -5,8 +5,55 @@ import InputField from "../../components/auth/InputField.jsx"
 import { FaIdCard } from "react-icons/fa"
 import { FiUpload } from "react-icons/fi";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx"
+import { useState } from "react"
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 
 const VerifyAccount = () => {
+  const [prn, setPrn] = useState("");
+  const [idImg, setIdImg] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const location = useLocation();
+  const userEmail = location.state?.email;
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIdImg(file);
+    }
+  };
+
+  const handleVerify = async () => {
+    try {
+      setError("");
+      setLoading(true);
+
+      const formData = new FormData();
+
+      formData.append("collegeId", prn);
+      formData.append("email", userEmail);
+      formData.append("idCard", idImg);
+
+      console.log("EMAIL SENDING:", userEmail);
+
+      await axios.post(
+        "http://localhost:5000/api/auth/verify-account",
+        formData
+      )
+      navigate("/auth/verification-status");
+    } catch (err) {
+      console.log(err);
+      setError(err?.response?.data?.message || "Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <AuthLayout>
       <AuthCard>
@@ -15,19 +62,34 @@ const VerifyAccount = () => {
           subtitle = "Enter additional details to get verified as a student of Sinhgad Institutes."
         />
 
-        <InputField icon={FaIdCard} type="text" placeholder="PRN number"/>
+        <InputField icon={FaIdCard} type="text" placeholder="PRN number" value={prn} onChange={(e) => setPrn(e.target.value)}/>
 
         <div className="mt-4">
           <label className="block text-sm font-medium text-text mb-3 text-center">
-            Upload College ID Card
+            {idImg ? "College ID Uploaded ✅" : "Upload College ID Card"}
           </label>
 
           <div className="relative bg-card border-2 border-dashed border-primary rounded-xl px-4 py-6 text-center cursor-pointer hover:bg-background transition">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpg, image/png, image/jpeg"
+              onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
+
+            {idImg ? (
+              <div className="flex flex-col items-center justify-center">
+                <img
+                  src={URL.createObjectURL(idImg)}
+                  alt="Preview"
+                  className="max-h-48 object-contain rounded-lg"
+                />
+
+                <p className="text-xs text-green-500 mt-2">
+                  {idImg.name}
+                </p>
+              </div>
+            ) : (
 
             <div className="flex flex-col items-center justify-center">
               <FiUpload className="text-text text-2xl mb-2" />
@@ -40,12 +102,17 @@ const VerifyAccount = () => {
                 PNG, JPG, JPEG (max 5MB)
               </p>
             </div>
+            )}
           </div>
         </div>
 
+        {error && (
+          <p style={{ color: "red", textAlign: "center", marginTop: "10px",  marginBottom: "-10px", fontSize: "14px" }}>
+            {error}
+          </p>
+        )}
 
-
-        <PrimaryButton type = "submit">Verify Account</PrimaryButton>
+        <PrimaryButton type = "button" onClick={handleVerify} disabled={loading}>{loading ? "Submitting..." : "Verify Account"}</PrimaryButton>
 
       </AuthCard>
     </AuthLayout>

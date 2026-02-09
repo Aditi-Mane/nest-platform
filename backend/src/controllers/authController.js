@@ -65,15 +65,15 @@ export const signup = async (req, res) => {
 
 export const verifyAccount = async (req, res) =>{
   try {
-    const {collegeId} = req.body;
+    const {collegeId, email} = req.body;
     const file = req.file;
 
-    const normalizedId = collegeId.toUpperCase();
-    if(!normalizedId || normalizedId.length !== 9 || !/[a-zA-Z]$/.test(normalizedId)){
+    if(!collegeId || collegeId.length !== 9 || !/[a-zA-Z]$/.test(collegeId)){
       return res.status(400).json({
-        message: "PRN must be exactly 9 characters long and end with a letter"
+        message: "PRN must be 9 characters and end with a letter"
       })
     }
+    const normalizedId = collegeId.toUpperCase();
 
     if(!file) {
       return res.status(400).json({
@@ -81,9 +81,9 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
-    const userId = req.body.userId; //temporary approach
+    // const userId = req.body.userId; //temporary approach
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({email});
 
     if(!user) {
       return res.status(404).json({
@@ -91,7 +91,7 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
-    user.collegeId = collegeId;
+    user.collegeId = normalizedId;
     user.idCardImage = file.path;
     user.isVerified = false;
 
