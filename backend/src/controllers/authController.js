@@ -84,10 +84,8 @@ export const verifyAccount = async (req, res) =>{
         message: "ID card image is required",
       });
     }
-
-    // const userId = req.body.userId; //temporary approach
-
-    const user = await User.findOne({email});
+    
+    const user = req.user;
 
     if(!user) {
       return res.status(404).json({
