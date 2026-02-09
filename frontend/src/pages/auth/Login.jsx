@@ -1,18 +1,53 @@
-import { useState } from "react"
+import { useState } from "react";
+import axios from "axios";
 import { MdEmail, MdLock } from "react-icons/md";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+
 import AuthLayout from "../../components/auth/AuthLayout.jsx";
 import AuthCard from "../../components/auth/AuthCard.jsx";
 import AuthHeader from "../../components/auth/AuthHeader.jsx";
 import AuthFooterLink from "../../components/auth/AuthFooterLink.jsx";
 import InputField from "../../components/auth/InputField.jsx";
-import RememberForgotRow from "../../components/auth/RememberForgotRow.jsx"
+import RememberForgotRow from "../../components/auth/RememberForgotRow.jsx";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    try {
+      setError("");
+      setLoading(true);
+
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password
+        }
+      );
+
+      //store JWT Token
+      localStorage.setItem("token", res.data.token);
+
+      //navigate to marketplace
+      navigate("/marketplace");
+
+    } catch (err) {
+      setError(err?.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthLayout>
@@ -22,21 +57,45 @@ const Login = () => {
           subtitle="Enter your email and password to securely access your account."
         />
 
-        <InputField icon={MdEmail} type="email" placeholder="Email address" />
+        {/* EMAIL */}
+        <InputField
+          icon={MdEmail}
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
+        {/* PASSWORD */}
         <InputField
           icon={MdLock}
           type={showPassword ? "text" : "password"}
           placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         >
-          <button onClick={() => setShowPassword(!showPassword)}>
+          <button type="button" onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? <FaEye /> : <FaEyeSlash />}
           </button>
         </InputField>
 
+        {/* ERROR */}
+        {error && (
+          <p style={{ color: "red", textAlign: "center", marginTop: "10px" }}>
+            {error}
+          </p>
+        )}
+
         <RememberForgotRow onForgot={() => navigate("/auth/forgot-password")} />
 
-        <PrimaryButton type = "submit">Login</PrimaryButton>
+        {/* LOGIN BUTTON */}
+        <PrimaryButton
+          type="button"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </PrimaryButton>
 
         <AuthFooterLink
           text="Don’t have an account?"
@@ -45,7 +104,7 @@ const Login = () => {
         />
       </AuthCard>
     </AuthLayout>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

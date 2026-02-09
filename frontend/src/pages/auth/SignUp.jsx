@@ -42,8 +42,13 @@ const SignUp = () => {
         }
       );
 
+      localStorage.setItem("token", res.data.token);
+
       // Navigate only if backend success
-      navigate("/auth/verify-account");
+      navigate("/auth/verify-account", {
+        state: { email }
+      });
+
 
     } catch (err) {
       setError(err?.response?.data?.message || "Signup failed");

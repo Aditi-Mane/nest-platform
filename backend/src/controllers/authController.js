@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
+import { generateToken } from "../utils/generateToken.js";
 
 export const signup = async (req, res) => {
   try {
@@ -44,14 +45,17 @@ export const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     //user creation
-    await User.create({
+    const user = await User.create({
       name: trimmedName,
       email: normalizedEmail,
       password: hashedPassword
     })
 
+    const token = generateToken(user._id);
+
     return res.status(201).json({ //201 code for creation purposes
-      message: "User created successfully"
+      message: "User created successfully",
+      token
     });
 
 
@@ -64,12 +68,90 @@ export const signup = async (req, res) => {
 };
 
 export const verifyAccount = async (req, res) =>{
-  const {collegeId, idCardImage} = req.body;
+  try {
+    const {collegeId} = req.body;
+    const file = req.file;
 
-  const normalizedId = collegeId.toUpperCase();
-  if(!normalizedId || normalizedId.length < 9){
-    return res.status(400).json({
-      message: "Id must be atleast 9 characters"
-    })
+    if(!collegeId || collegeId.length !== 9 || !/[a-zA-Z]$/.test(collegeId)){
+      return res.status(400).json({
+        message: "PRN must be 9 characters and end with a letter"
+      })
+    }
+    const normalizedId = collegeId.toUpperCase();
+
+    if(!file) {
+      return res.status(400).json({
+        message: "ID card image is required",
+      });
+    }
+
+    const user = req.user;
+
+    if(!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.collegeId = normalizedId;
+    user.idCardImage = file.path;
+    user.isVerified = false;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Verification submitted successfully. Await admin approval.",
+    });
+  } catch (error) {
+    
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 }
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    //check email + password provided
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password required"
+      });
+    }
+
+    //find user by email
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User does not exist"
+      });
+    }
+
+    //compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials"
+      });
+    }
+
+    //generate token
+    const token = generateToken(user._id);
+
+    //send response
+    return res.status(200).json({
+      message: "Login successful",
+      token
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+};
+
