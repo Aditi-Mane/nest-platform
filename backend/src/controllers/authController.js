@@ -164,3 +164,33 @@ export const login = async (req, res) => {
   }
 };
 
+export const forgotPassword = () =>{
+  try {
+    
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
+export const verifyOTP = () =>{
+  try {
+    
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
+export const createNewPass = () =>{
+  try {
+    
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
