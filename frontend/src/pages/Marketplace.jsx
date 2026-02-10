@@ -1,10 +1,14 @@
+import { Routes, Route } from "react-router-dom";
+import  Buying  from "./Marketplace/Buying";
+import ProductDetailPage from "./Marketplace/ProductDetailPage";
 
-const Marketplace = () => {
+function Marketplace() {
   return (
-    <div>
-      <h1>Marketplace</h1>
-    </div>
-  )
+    <Routes>
+      <Route index element={<Buying />} />
+      <Route path="/product/:id" element={<ProductDetailPage />} />
+    </Routes>
+  );
 }
 
-export default Marketplace
+export default Marketplace;
