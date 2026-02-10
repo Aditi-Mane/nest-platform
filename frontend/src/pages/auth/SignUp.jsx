@@ -9,8 +9,7 @@ import AuthHeader from "../../components/auth/AuthHeader.jsx";
 import AuthFooterLink from "../../components/auth/AuthFooterLink.jsx";
 import InputField from "../../components/auth/InputField.jsx";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx";
-import axios from "axios";
-
+import api from "../../api/axios.js";
 const SignUp = () => {
 
   //add state
@@ -33,8 +32,8 @@ const SignUp = () => {
       setLoading(true);
 
       //axios sends post request to backend, to which response is sent
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/signup",
+      const res = await api.post(
+        "/auth/signup",
         {
           name,
           email,
@@ -45,9 +44,7 @@ const SignUp = () => {
       localStorage.setItem("token", res.data.token);
 
       // Navigate only if backend success
-      navigate("/auth/verify-account", {
-        state: { email }
-      });
+      navigate("/auth/verify-account")
 
 
     } catch (err) {

@@ -79,13 +79,21 @@ export const verifyAccount = async (req, res) =>{
     }
     const normalizedId = collegeId.toUpperCase();
 
+    //check duplicate prn
+    const existingId = await User.findOne({collegeId: normalizedId});
+    if(existingId){
+      return res.status(400).json({
+        message: "This PRN is already registered with another account"
+      })
+    }
+
     if(!file) {
       return res.status(400).json({
         message: "ID card image is required",
       });
     }
 
-    const user = req.user;
+    const user = await User.findById(req.user.id);
 
     if(!user) {
       return res.status(404).json({
@@ -103,7 +111,8 @@ export const verifyAccount = async (req, res) =>{
       message: "Verification submitted successfully. Await admin approval.",
     });
   } catch (error) {
-    
+    console.log(error);
+
     return res.status(500).json({
       message: "Server error",
     });
