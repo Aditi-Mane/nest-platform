@@ -211,9 +211,41 @@ export const forgotPassword = async (req, res) =>{
   }
 }
 
-export const verifyOTP = () =>{
+export const verifyOTP = async (req, res) =>{
   try {
+    const { email, otp} = req.body;
     
+    if(!otp || otp.length !== 6){
+      return res.status(400).json({
+        message: "Enter a valid 6 digit OTP"
+      })
+    }
+
+    const user = await User.findOne({email});
+
+    if(!user || !user.resetOtp) {
+      return res.status(400).json({
+        message: "Invalid request"
+      });
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.resetOtp);
+    if(!isOtpValid){
+      return res.status(400).json({
+        message: "Invalid OTP"
+      });
+    }
+
+    if (user.resetOtpExpiry < Date.now()) {
+      return res.status(400).json({
+        message: "OTP expired"
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP verified"
+    });    
+
   } catch (error) {
     return res.status(500).json({
       message: "Server error"
