@@ -46,6 +46,14 @@ const userSchema = new mongoose.Schema(
     isRoleSet: {
       type: Boolean,
       default: false
+    },
+
+    resetOtp: {
+      type: String
+    },
+
+    resetOtpExpiry: {
+      type: Date
     }
   },
   {

@@ -81,7 +81,7 @@ const Login = () => {
 
         {/* ERROR */}
         {error && (
-          <p style={{ color: "red", textAlign: "center", marginTop: "10px" }}>
+          <p style={{ color: "red", textAlign: "center", marginTop: "10px",  marginBottom: "-10px", fontSize: "14px" }}>
             {error}
           </p>
         )}

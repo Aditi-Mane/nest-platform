@@ -164,10 +164,47 @@ export const login = async (req, res) => {
   }
 };
 
-export const forgotPassword = () =>{
+export const forgotPassword = async (req, res) =>{
   try {
-    
-  } catch (error) {
+    const {email} = req.body;
+
+    //email field check
+    if(!email){
+      return res.status(400).json({
+        message: "Enter an email"
+      })
+    }
+    if(!email.includes("@") || !email.includes(".")){
+      return res.status(400).json({
+        message: "Invalid email"
+      })
+    }
+    const user = await User.findOne({email});
+    if(!user){
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpiry = Date.now() + 10 * 60 * 1000;
+
+    //hash the otp
+    const saltRounds = 10;
+    const hashedOtp = await bcrypt.hash(otp.toString(), saltRounds);
+
+    user.resetOtp = hashedOtp;
+    user.resetOtpExpiry = otpExpiry;
+
+    await user.save();
+
+    console.log("RESET OTP:", otp); //temp until nodemailer connected
+
+    return res.status(200).json({
+      message: "OTP sent to email"
+    });
+
+  } catch (error) {    
     return res.status(500).json({
       message: "Server error"
     })
