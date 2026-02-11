@@ -253,9 +253,47 @@ export const verifyOTP = async (req, res) =>{
   }
 }
 
-export const createNewPass = () =>{
+export const createNewPass = async(req, res) =>{
   try {
-    
+    const { email, pass, confirmPass} = req.body;
+
+    if(!pass || !confirmPass){
+      return res.status(400).json({
+        message: "Enter password"
+      })
+    }
+
+    const hasNumber = /\d/.test(pass);
+    if (!pass || pass.length < 6 || !hasNumber) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters and contain a number"
+      });
+    }
+
+    if(pass !== confirmPass){
+      return res.status(400).json({
+        message: "Passwords do not match"
+      })
+    }
+
+    const user = await User.findOne({email});
+    if(!user){
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    const saltRounds = 10;
+    const hashedPass = await bcrypt.hash(pass, saltRounds);
+
+    user.password = hashedPass;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset done"
+    })
+
   } catch (error) {
     return res.status(500).json({
       message: "Server error"
