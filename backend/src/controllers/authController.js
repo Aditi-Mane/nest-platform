@@ -79,13 +79,21 @@ export const verifyAccount = async (req, res) =>{
     }
     const normalizedId = collegeId.toUpperCase();
 
+    //check duplicate prn
+    const existingId = await User.findOne({collegeId: normalizedId});
+    if(existingId){
+      return res.status(400).json({
+        message: "This PRN is already registered with another account"
+      })
+    }
+
     if(!file) {
       return res.status(400).json({
         message: "ID card image is required",
       });
     }
 
-    const user = req.user;
+    const user = await User.findById(req.user.id);
 
     if(!user) {
       return res.status(404).json({
@@ -103,7 +111,8 @@ export const verifyAccount = async (req, res) =>{
       message: "Verification submitted successfully. Await admin approval.",
     });
   } catch (error) {
-    
+    console.log(error);
+
     return res.status(500).json({
       message: "Server error",
     });
@@ -154,4 +163,141 @@ export const login = async (req, res) => {
     });
   }
 };
+
+export const forgotPassword = async (req, res) =>{
+  try {
+    const {email} = req.body;
+
+    //email field check
+    if(!email){
+      return res.status(400).json({
+        message: "Enter an email"
+      })
+    }
+    if(!email.includes("@") || !email.includes(".")){
+      return res.status(400).json({
+        message: "Invalid email"
+      })
+    }
+    const user = await User.findOne({email});
+    if(!user){
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpiry = Date.now() + 10 * 60 * 1000;
+
+    //hash the otp
+    const saltRounds = 10;
+    const hashedOtp = await bcrypt.hash(otp.toString(), saltRounds);
+
+    user.resetOtp = hashedOtp;
+    user.resetOtpExpiry = otpExpiry;
+
+    await user.save();
+
+    console.log("RESET OTP:", otp); //temp until nodemailer connected
+
+    return res.status(200).json({
+      message: "OTP sent to email"
+    });
+
+  } catch (error) {    
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
+export const verifyOTP = async (req, res) =>{
+  try {
+    const { email, otp} = req.body;
+    
+    if(!otp || otp.length !== 6){
+      return res.status(400).json({
+        message: "Enter a valid 6 digit OTP"
+      })
+    }
+
+    const user = await User.findOne({email});
+
+    if(!user || !user.resetOtp) {
+      return res.status(400).json({
+        message: "Invalid request"
+      });
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.resetOtp);
+    if(!isOtpValid){
+      return res.status(400).json({
+        message: "Invalid OTP"
+      });
+    }
+
+    if (user.resetOtpExpiry < Date.now()) {
+      return res.status(400).json({
+        message: "OTP expired"
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP verified"
+    });    
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
+export const createNewPass = async(req, res) =>{
+  try {
+    const { email, pass, confirmPass} = req.body;
+
+    if(!pass || !confirmPass){
+      return res.status(400).json({
+        message: "Enter password"
+      })
+    }
+
+    const hasNumber = /\d/.test(pass);
+    if (!pass || pass.length < 6 || !hasNumber) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters and contain a number"
+      });
+    }
+
+    if(pass !== confirmPass){
+      return res.status(400).json({
+        message: "Passwords do not match"
+      })
+    }
+
+    const user = await User.findOne({email});
+    if(!user){
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    const saltRounds = 10;
+    const hashedPass = await bcrypt.hash(pass, saltRounds);
+
+    user.password = hashedPass;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset done"
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
 

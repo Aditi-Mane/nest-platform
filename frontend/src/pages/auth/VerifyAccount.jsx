@@ -6,9 +6,8 @@ import { FaIdCard } from "react-icons/fa"
 import { FiUpload } from "react-icons/fi";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx"
 import { useState } from "react"
-import axios from "axios"
+import api from "../../api/axios.js"
 import { useNavigate } from "react-router-dom"
-import { useLocation } from "react-router-dom"
 
 const VerifyAccount = () => {
   const [prn, setPrn] = useState("");
@@ -16,9 +15,6 @@ const VerifyAccount = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const location = useLocation();
-  const userEmail = location.state?.email;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -35,15 +31,13 @@ const VerifyAccount = () => {
       const formData = new FormData();
 
       formData.append("collegeId", prn);
-      formData.append("email", userEmail);
       formData.append("idCard", idImg);
 
-      console.log("EMAIL SENDING:", userEmail);
-
-      await axios.post(
-        "http://localhost:5000/api/auth/verify-account",
+      await api.post(
+        "/auth/verify-account",
         formData
-      )
+      );
+
       navigate("/auth/verification-status");
     } catch (err) {
       console.log(err);
