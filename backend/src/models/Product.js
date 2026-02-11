@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const productSchema =new mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -15,25 +15,24 @@ const productSchema =new mongoose.Schema(
       trim: true,
     },
 
-    category:{
+    category: {
       type: String,
       required: true,
       trim: true,
     },
 
-    price:{
+    price: {
       type: Number,
       required: true,
-      default: 1,
     },
 
-    images:[
+    images: [
       {
-      url: {
-        type: String,
-        required: true,
+        url: {
+          type: String,
+          required: true,
+        },
       },
-    },
     ],
 
     createdBy: {
@@ -42,10 +41,10 @@ const productSchema =new mongoose.Schema(
       required: true,
     },
 
-    // ⭐ AI Sentiment Rating System
+    //AI sentiment rating system
     sentimentRating: {
-      type: Number,
-      default: 0, // rating from 1–5 computed automatically
+      type: Number, //0-5
+      default: 0,
     },
 
     ratingCount: {
@@ -58,10 +57,10 @@ const productSchema =new mongoose.Schema(
       neutral: { type: Number, default: 0 },
       negative: { type: Number, default: 0 },
     },
-
   },
-  {timestamp: true}
+  { timestamps: true }
 );
 
-const Product=mongoose.model("Product", productSchema);
+const Product = mongoose.model("Product", productSchema);
+
 export default Product;
