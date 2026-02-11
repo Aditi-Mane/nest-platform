@@ -79,15 +79,15 @@ const Login = () => {
           </button>
         </InputField>
 
+        <RememberForgotRow onForgot={() => navigate("/auth/forgot-password")} />
+
         {/* ERROR */}
         {error && (
           <p style={{ color: "red", textAlign: "center", marginTop: "10px",  marginBottom: "-10px", fontSize: "14px" }}>
             {error}
           </p>
         )}
-
-        <RememberForgotRow onForgot={() => navigate("/auth/forgot-password")} />
-
+        
         {/* LOGIN BUTTON */}
         <PrimaryButton
           type="button"
