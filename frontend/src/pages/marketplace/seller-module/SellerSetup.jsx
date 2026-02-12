@@ -2,7 +2,7 @@
 const SellerSetup = () => {
   return (
     <div>
-      
+      seller setup
     </div>
   )
 }
