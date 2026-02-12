@@ -32,15 +32,30 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
+    //verification Lifecycle
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "under_review", "approved", "rejected"],
+      default: "pending"
+    },
+
+    //roles user has access to
+    availableRoles: {
+      type: [String],
+      enum: ["buyer", "seller", "admin"],
+      default: []
+    },
+
+    //currently active role
+    activeRole: {
+      type: String,
+      enum: ["buyer", "seller", "admin"],
+      default: null
+    },
+
     isVerified: {
       type: Boolean,
       default: false
-    },
-
-    role: {
-      type: String,
-      enum: ["student", "business", "admin"],
-      default: null
     },
 
     isRoleSet: {
