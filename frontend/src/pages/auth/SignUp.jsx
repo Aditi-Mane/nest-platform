@@ -42,9 +42,10 @@ const SignUp = () => {
       );
 
       // Navigate only if backend success
-      navigate("/auth/verify-account")
-
-
+      navigate("/auth/verify-account", {
+        replace: true,
+        state: {userId: res.data.userId}
+      })
     } catch (err) {
       setError(err?.response?.data?.message || "Signup failed");
     } finally {

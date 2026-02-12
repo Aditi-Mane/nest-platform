@@ -48,14 +48,17 @@ export const signup = async (req, res) => {
     const user = await User.create({
       name: trimmedName,
       email: normalizedEmail,
-      password: hashedPassword
+      password: hashedPassword,
+
+      verificationStatus: "pending",
+      availableRoles: [],
+      activeRole: null,
+      isVerified: false
     })
 
-    const token = generateToken(user._id);
-
     return res.status(201).json({ //201 code for creation purposes
-      message: "User created successfully",
-      token
+      message: "Signup successful. Please complete verification.",
+      userId: user._id
     });
 
 
