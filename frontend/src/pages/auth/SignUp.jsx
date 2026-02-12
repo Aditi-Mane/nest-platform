@@ -41,8 +41,6 @@ const SignUp = () => {
         }
       );
 
-      localStorage.setItem("token", res.data.token);
-
       // Navigate only if backend success
       navigate("/auth/verify-account")
 
