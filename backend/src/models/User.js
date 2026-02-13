@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       select: false
     },
 
+    avatar: {
+      type: String,
+      default: ""
+    },
+
     collegeId: {
       type: String,
       unique: true, //prevents duplicate prn
