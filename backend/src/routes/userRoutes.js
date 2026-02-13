@@ -4,7 +4,7 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.patch("/choose-role", setUserRole);
+router.patch("/choose-role", protect, setUserRole);
 router.get("/me", protect ,getCurrentUser)
 
 export default router;

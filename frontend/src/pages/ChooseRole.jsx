@@ -22,7 +22,7 @@ const ChooseRole = () => {
       setLoading(true);
 
       const res = await api.patch(
-        "/choose-role", 
+        "/users/choose-role", 
         {
           selectedRole
         } 
