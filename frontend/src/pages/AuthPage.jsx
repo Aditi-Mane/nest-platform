@@ -6,20 +6,20 @@ import VerifyOtp from "./auth/VerifyOtp.jsx"
 import CreateNewPass from "./auth/CreateNewPass.jsx"
 import VerifyAccount from "./auth/VerifyAccount.jsx"
 import VerificationPending from "./auth/VerificationStatus.jsx"
+import ChooseRole from "./auth/ChooseRole.jsx"
+import PublicRoute from "../routes/PublicRoute.jsx"
 
 const AuthPage = () => {
   return (
     <Routes>
-      {/* Default route: /auth → Login */}
-      <Route index element={<Login />} />
-      
-      <Route path="login" element={<Login />} />
-      <Route path="signup" element={<SignUp/>} />
+      <Route path="login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="signup" element={<PublicRoute><SignUp/></PublicRoute>} />
       <Route path="verify-account" element={<VerifyAccount/>} />
       <Route path="forgot-password" element={<ForgotPassword />} />
       <Route path="verify-otp" element={<VerifyOtp/>} />
       <Route path="create-new-pass" element={<CreateNewPass/>} />
       <Route path="verification-status" element={<VerificationPending/>} />
+      <Route path="choose-role" element={<ChooseRole/>} />
     </Routes>
   )
 }

@@ -7,7 +7,7 @@ import { FiUpload } from "react-icons/fi";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx"
 import { useState } from "react"
 import api from "../../api/axios.js"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 const VerifyAccount = () => {
   const [prn, setPrn] = useState("");
@@ -15,6 +15,9 @@ const VerifyAccount = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const userId = location.state?.userId;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -30,6 +33,7 @@ const VerifyAccount = () => {
 
       const formData = new FormData();
 
+      formData.append("userId", userId);
       formData.append("collegeId", prn);
       formData.append("idCard", idImg);
 
@@ -38,7 +42,7 @@ const VerifyAccount = () => {
         formData
       );
 
-      navigate("/auth/verification-status");
+      navigate("/auth/verification-status", {replace: true});
     } catch (err) {
       console.log(err);
       setError(err?.response?.data?.message || "Verification failed");
