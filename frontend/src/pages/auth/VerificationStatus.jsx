@@ -46,7 +46,7 @@ const VerificationStatus = () => {
   const config = {
     under_review: {
       icon: <FaClock className="text-secondary text-4xl" />,
-      title: "Pending",
+      title: "Verification Pending",
       subtitle: "Our team is reviewing your documents.",
       description:
         "We are verifying your details. You will gain full access once approved.",
