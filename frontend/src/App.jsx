@@ -13,6 +13,7 @@ function App() {
 
       <Route path="/marketplace/*" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminDashboard/>}/>
+      
     </Routes>
   )
 }

@@ -145,7 +145,7 @@ export default function Buying() {
             <ProductCard
               key={product.id}
               {...product}
-              onViewDetails={(id) => navigate(`/product/${id}`)}
+              onViewDetails={(id) => navigate(`/marketplace/buyer/product/${id}`)}
             />
           ))}
         </div>
