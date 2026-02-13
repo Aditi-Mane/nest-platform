@@ -40,7 +40,7 @@ const Login = () => {
       localStorage.setItem("token", res.data.token);
 
       //navigate to marketplace
-      navigate("/marketplace");
+      navigate("/choose-role");
 
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed");
