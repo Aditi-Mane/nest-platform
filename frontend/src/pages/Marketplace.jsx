@@ -1,7 +1,7 @@
 
 import { Routes, Route } from "react-router-dom";
-import  Buying  from "./Marketplace/Buying.jsx";
-import ProductDetailPage from "./Marketplace/ProductDetailPage.jsx";
+import  Buying  from "./marketplace/buyer-module/Buying.jsx";
+import ProductDetailPage from "./marketplace/buyer-module/ProductDetailPage.jsx";
 import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx"
 
 function Marketplace() {
