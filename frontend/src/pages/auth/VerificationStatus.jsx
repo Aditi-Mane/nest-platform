@@ -2,36 +2,104 @@ import AuthLayout from "../../components/auth/AuthLayout.jsx";
 import AuthCard from "../../components/auth/AuthCard.jsx";
 import AuthHeader from "../../components/auth/AuthHeader.jsx";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx";
-import { useNavigate } from "react-router-dom";
-import { FaClock } from "react-icons/fa";
 
-const VerificationPending = () => {
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "../../api/axios.js";
+
+import { FaClock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+
+const VerificationStatus = () => {
+
   const navigate = useNavigate();
+
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStatus();
+  }, []);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await api.get("/users/me");
+      setStatus(res.data.verificationStatus);
+    } catch {
+      navigate("/auth/login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //loading UI
+  if (loading) {
+    return (
+      <AuthLayout>
+        <AuthCard>
+          <p className="text-center text-muted">Checking verification status...</p>
+        </AuthCard>
+      </AuthLayout>
+    );
+  }
+
+  //config Map
+  const config = {
+    under_review: {
+      icon: <FaClock className="text-secondary text-4xl" />,
+      title: "Pending",
+      subtitle: "Our team is reviewing your documents.",
+      description:
+        "We are verifying your details. You will gain full access once approved.",
+      buttonText: "Back to Login",
+      buttonAction: () => navigate("/auth/login")
+    },
+
+    approved: {
+      icon: <FaCheckCircle className="text-secondary text-4xl" />,
+      title: "Verification Approved",
+      subtitle: "You now have full access to Nest.",
+      description:
+        "You can now continue to set up your experience and access the marketplace.",
+      buttonText: "Continue",
+      buttonAction: () => navigate("/resolve")
+    },
+
+    rejected: {
+      icon: <FaTimesCircle className="text-secondary text-4xl" />,
+      title: "Verification Rejected",
+      subtitle: "Your submission could not be verified.",
+      description:
+        "Please check your details and try submitting again or contact support.",
+      buttonText: "Back to Login",
+      buttonAction: () => navigate("/auth/login")
+    }
+  };
+
+  const current = config[status] || config.pending;
 
   return (
     <AuthLayout>
       <AuthCard>
 
         <div className="flex justify-center mb-4">
-          <FaClock className="text-muted text-4xl" />
+          {current.icon}
         </div>
 
         <AuthHeader
-          title="Verification Status: Pending"
-          subtitle="Your details are under review."
+          title={current.title}
+          subtitle={current.subtitle}
         />
 
         <p className="text-sm text-text text-center mt-5 leading-relaxed">
-          This usually takes a few hours. You will be able to access the full platform once approved.
+          {current.description}
         </p>
 
-
-        <div>
+        <div className="mt-6">
           <PrimaryButton
             type="button"
-            onClick={() => navigate("/auth/login")}
+            onClick={current.buttonAction}
           >
-            Back to Login
+            {current.buttonText}
           </PrimaryButton>
         </div>
 
@@ -40,4 +108,4 @@ const VerificationPending = () => {
   );
 };
 
-export default VerificationPending;
+export default VerificationStatus;

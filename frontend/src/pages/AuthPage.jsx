@@ -11,7 +11,7 @@ import PublicRoute from "../routes/PublicRoute.jsx"
 const AuthPage = () => {
   return (
     <Routes>
-      <Route path="login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="login" element={<Login />} />
       <Route path="signup" element={<PublicRoute><SignUp/></PublicRoute>} />
       <Route path="verify-account" element={<VerifyAccount/>} />
       <Route path="forgot-password" element={<ForgotPassword />} />

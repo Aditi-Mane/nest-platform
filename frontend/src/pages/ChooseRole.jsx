@@ -1,7 +1,7 @@
 import { HiMiniShoppingBag } from "react-icons/hi2";
-import { GiSellCard, GiWoodenClogs } from "react-icons/gi";
+import { GiSellCard} from "react-icons/gi";
 import { useState } from "react";
-import api from "../api/axios";
+import api from "../api/axios.js";
 import { useNavigate } from "react-router-dom";
 
 const ChooseRole = () => {
