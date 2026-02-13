@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SlidersHorizontal, Grid3x3, List } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { CategoryFilter } from "@/components/CategoryFilter";
@@ -13,70 +13,42 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Buying() {
   const navigate = useNavigate();
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
 
-  const allProducts = [
-    {
-      id: "1",
-      name: "Organic Chemistry Notes - Complete Set",
-      description: "Comprehensive handwritten notes covering all Organic Chemistry 1 & 2 topics",
-      category: "Study Notes",
-      image: "https://images.unsplash.com/photo-1724166595400-fdfcdb29685e?w=600",
-      price: 25,
-      condition: "Like New",
-      seller: {
-        name: "Sarah Chen",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
-        university: "MIT",
-        rating: 4.9
-      },
-      aiMatch: 92,
-      isFeatured: true
-    },
-    {
-      id: "2",
-      name: "Hand-woven Macrame Wall Hanging",
-      description: "Beautiful bohemian-style wall art, perfect for dorm room decoration",
-      category: "Handcrafts",
-      image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600",
-      price: 35,
-      condition: "New",
-      seller: {
-        name: "Marcus Johnson",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-        university: "Stanford",
-        rating: 4.8
-      },
-      aiMatch: 88,
-      isFeatured: true
-    },
-    {
-      id: "3",
-      name: "Data Structures Textbook + Notes",
-      description: "Complete CS textbook with color-coded notes and practice problems",
-      category: "Books",
-      image: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=600",
-      price: 45,
-      condition: "Very Good",
-      seller: {
-        name: "Emily Rodriguez",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
-        university: "UCLA",
-        rating: 5.0
-      },
-      aiMatch: 95
-    },
-    // ⬇️ keep rest of products same (no change)
-  ];
+  //Backend products state
+  const [products, setProducts] = useState([]);
+
+  //Loading state
+  const [loading, setLoading] = useState(true);
+
+  //Fetch products from backend
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await axios.get("http://localhost:5000/api/products");
+
+        // backend should return { products: [...] }
+        setProducts(res.data.products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl mb-2">Marketplace</h1>
@@ -85,7 +57,7 @@ export default function Buying() {
           </p>
         </div>
 
-        {/* Filters */}
+        {/* Filters (still hardcoded UI only) */}
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-8">
           <div className="flex flex-col lg:flex-row gap-4 mb-6">
             <Input
@@ -103,7 +75,6 @@ export default function Buying() {
                   <SelectItem value="popular">Most Popular</SelectItem>
                   <SelectItem value="price-low">Price: Low to High</SelectItem>
                   <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="match">AI Match Score</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -133,29 +104,34 @@ export default function Buying() {
           </div>
         </div>
 
-        {/* Products */}
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
-          }
-        >
-          {allProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              {...product}
-              onViewDetails={(id) => navigate(`/marketplace/buyer/product/${id}`)}
-            />
-          ))}
-        </div>
+        {/*Products Section */}
+        {loading ? (
+          <p className="text-center text-lg">Loading products...</p>
+        ) : products.length === 0 ? (
+          <p className="text-center text-lg text-gray-500">
+            No products available right now.
+          </p>
+        ) : (
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
+            }
+          >
+            {products.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}  
+                onViewDetails={() =>
+                  navigate(`/marketplace/buyer/product/${product._id}`)
+                }
+              />
+            ))}
+          </div>
+        )}
 
-        {/* Load more */}
-        <div className="mt-12 text-center">
-          <Button variant="outline" size="lg" className="rounded-full px-8">
-            Load More Items
-          </Button>
-        </div>
+       
       </div>
     </div>
   );

@@ -1,126 +1,107 @@
-import { Heart, ShoppingCart, Star, Sparkles } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"; // ✅ added
 
-export function ProductCard({
-  id,
-  name,
-  description,
-  category,
-  image,
-  price,
-  condition,
-  seller,
-  aiMatch,
-  isFeatured,
-  onViewDetails
-}) {
+export function ProductCard({ product, onViewDetails }) {
+  if (!product) return null;
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden rounded-2xl border-border">
-      
+
       {/* Image */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-60 overflow-hidden">
         <ImageWithFallback
-          src={image}
-          alt={name}
+          src={product.images?.[0]?.url}
+          alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white"
-        >
-          <Heart className="h-4 w-4" />
-        </Button>
-
-        {isFeatured && (
-          <Badge className="absolute top-3 left-3 bg-[#10B981] gap-1">
-            <Star className="h-3 w-3" />
-            Featured
-          </Badge>
-        )}
-
-        {condition && (
+        {/* Condition Badge */}
+        {product.condition && (
           <Badge
             variant="secondary"
             className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm"
           >
-            {condition}
+            {product.condition}
           </Badge>
         )}
       </div>
 
       {/* Content */}
       <CardContent className="p-4">
+        {/* Category */}
         <Badge variant="outline" className="mb-2">
-          {category}
+          {product.category}
         </Badge>
 
-        <h3 className="mb-2 line-clamp-1">{name}</h3>
+        {/* Name */}
+        <h3 className="mb-2 line-clamp-1 font-bold text-lg">
+          {product.name}
+        </h3>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {description}
+        {/* Seller Info */}
+        {product.createdBy && (
+          <div className="flex items-center gap-2 mb-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={product.createdBy.avatar || ""} />
+              <AvatarFallback>
+                {product.createdBy.name?.[0] || "U"}
+              </AvatarFallback>
+            </Avatar>
+
+            <p className="text-xs text-muted-foreground truncate">
+              {product.createdBy.name}
+            </p>
+          </div>
+        )}
+
+        {/* Description */}
+        <p className="text-sm font-medium text-muted-foreground line-clamp-2 mb-3">
+          {product.description}
         </p>
 
-        {/* Seller */}
-        <div className="flex items-center gap-2 mb-3">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={seller.avatar} />
-            <AvatarFallback>{seller.name[0]}</AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-xs truncate">{seller.name}</p>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-xs">{seller.rating}</span>
-          </div>
-        </div>
-
-        {/* AI Match */}
-        {aiMatch && (
-          <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-[#2563EB]/10 to-[#10B981]/10 rounded-lg mb-3">
-            <Sparkles className="h-3 w-3 text-[#2563EB]" />
-            <span className="text-xs">AI Match: {aiMatch}%</span>
-          </div>
+        {/* Rating (Sentiment Rating from backend) */}
+        {product.sentimentRating && (
+          <p className="text-xs text-muted-foreground mb-2">
+            ⭐ {product.sentimentRating} ({product.ratingCount} reviews)
+          </p>
         )}
 
         {/* Price */}
         <div className="flex items-center justify-between">
-          <p
-            className="text-2xl text-[#2563EB]"
-            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
-          >
-            ${price}
+          <p className="text-2xl font-semibold text-primary">
+            ₹{product.price}
           </p>
         </div>
       </CardContent>
 
       {/* Actions */}
       <CardFooter className="p-4 pt-0 gap-2">
+        {/* View Details */}
         <Button
           variant="outline"
-          className="flex-1 rounded-xl"
+          className="flex-1 rounded-xl border-primary text-primary hover:bg-primary/10"
           onClick={(e) => {
             e.stopPropagation();
-            onViewDetails(id);
+            onViewDetails(product._id);
           }}
         >
           View Details
         </Button>
 
+        {/* Add to Cart */}
         <Button
-          className="flex-1 rounded-xl bg-[#2563EB] hover:bg-[#2563EB]/90 gap-2"
-          onClick={(e) => e.stopPropagation()}
+          className="flex-1 rounded-xl bg-primary text-white hover:bg-primary/90 gap-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log("Added to cart:", product._id);
+          }}
         >
           <ShoppingCart className="h-4 w-4" />
-          Add to Cart
+          Add
         </Button>
       </CardFooter>
     </Card>
