@@ -48,14 +48,17 @@ export const signup = async (req, res) => {
     const user = await User.create({
       name: trimmedName,
       email: normalizedEmail,
-      password: hashedPassword
+      password: hashedPassword,
+
+      verificationStatus: "pending",
+      availableRoles: [],
+      activeRole: null,
+      isVerified: false
     })
 
-    const token = generateToken(user._id);
-
     return res.status(201).json({ //201 code for creation purposes
-      message: "User created successfully",
-      token
+      message: "Signup successful. Please complete verification.",
+      userId: user._id
     });
 
 
@@ -69,15 +72,28 @@ export const signup = async (req, res) => {
 
 export const verifyAccount = async (req, res) =>{
   try {
-    const {collegeId} = req.body;
+    const {userId, collegeId} = req.body;
     const file = req.file;
 
-    if(!collegeId || collegeId.length !== 9 || !/[a-zA-Z]$/.test(collegeId)){
+    if(!userId){
       return res.status(400).json({
-        message: "PRN must be 9 characters and end with a letter"
+        message: "User Id is required"
       })
     }
+
+    if(!collegeId){
+      return res.status(400).json({
+        message: "PRN is required"
+      });
+    }
+
     const normalizedId = collegeId.toUpperCase();
+
+    if(normalizedId.length !== 9 || !/^[A-Z0-9]{8}[A-Z]$/.test(normalizedId)){
+      return res.status(400).json({
+        message: "PRN must have 8 numbers and end with a letter"
+      })
+    }
 
     //check duplicate prn
     const existingId = await User.findOne({collegeId: normalizedId});
@@ -93,7 +109,7 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if(!user) {
       return res.status(404).json({
@@ -101,8 +117,22 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
+    //prevent duplicate submission
+    if (user.verificationStatus === "under_review") {
+      return res.status(400).json({
+        message: "Verification already submitted and under review"
+      });
+    }
+
+    if (user.verificationStatus === "approved") {
+      return res.status(400).json({
+        message: "User already verified"
+      });
+    }
+
     user.collegeId = normalizedId;
     user.idCardImage = file.path;
+    user.verificationStatus = "under_review"
     user.isVerified = false;
 
     await user.save();
