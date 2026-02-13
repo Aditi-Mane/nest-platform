@@ -1,9 +1,11 @@
+import { Route, Routes } from "react-router-dom"
+import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx"
 
 const Marketplace = () => {
   return (
-    <div>
-      <h1>Marketplace</h1>
-    </div>
+    <Routes>
+      <Route path="seller/setup" element={<SellerSetup/>}/>
+    </Routes>
   )
 }
 
