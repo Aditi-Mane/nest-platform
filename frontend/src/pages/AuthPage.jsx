@@ -7,6 +7,7 @@ import CreateNewPass from "./auth/CreateNewPass.jsx"
 import VerifyAccount from "./auth/VerifyAccount.jsx"
 import VerificationPending from "./auth/VerificationStatus.jsx"
 import PublicRoute from "../routes/PublicRoute.jsx"
+import RegistrationCompleted from "./auth/RegistrationCompleted.jsx"
 
 const AuthPage = () => {
   return (
@@ -18,6 +19,7 @@ const AuthPage = () => {
       <Route path="verify-otp" element={<VerifyOtp/>} />
       <Route path="create-new-pass" element={<CreateNewPass/>} />
       <Route path="verification-status" element={<VerificationPending/>} />
+      <Route path="registration" element={<RegistrationCompleted/>} />
     </Routes>
   )
 }

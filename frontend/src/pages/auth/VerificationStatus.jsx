@@ -51,7 +51,10 @@ const VerificationStatus = () => {
       description:
         "We are verifying your details. You will gain full access once approved.",
       buttonText: "Back to Login",
-      buttonAction: () => navigate("/auth/login")
+      buttonAction: () => {
+        localStorage.removeItem("token");
+        navigate("/auth/login");
+      }
     },
 
     approved: {
@@ -71,11 +74,15 @@ const VerificationStatus = () => {
       description:
         "Please check your details and try submitting again or contact support.",
       buttonText: "Back to Login",
-      buttonAction: () => navigate("/auth/login")
+      buttonAction: () => {
+        localStorage.removeItem("token");
+        navigate("/auth/login");
+      }
     }
   };
 
-  const current = config[status] || config.pending;
+  const normalizedStatus = status?.toLowerCase();
+  const current = config[normalizedStatus] || config.under_review;
 
   return (
     <AuthLayout>
@@ -93,8 +100,7 @@ const VerificationStatus = () => {
         <p className="text-sm text-text text-center mt-5 leading-relaxed">
           {current.description}
         </p>
-
-        <div className="mt-6">
+        <div>
           <PrimaryButton
             type="button"
             onClick={current.buttonAction}

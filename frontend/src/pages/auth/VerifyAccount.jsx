@@ -42,7 +42,7 @@ const VerifyAccount = () => {
         formData
       );
 
-      navigate("/auth/verification-status", {replace: true});
+      navigate("/auth/registration", {replace: true});
     } catch (err) {
       console.log(err);
       setError(err?.response?.data?.message || "Verification failed");

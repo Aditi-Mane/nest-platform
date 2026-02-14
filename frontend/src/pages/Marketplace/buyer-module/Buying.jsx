@@ -67,7 +67,7 @@ export default function Buying() {
 
             <div className="flex gap-2">
               <Select defaultValue="recent">
-                <SelectTrigger className="w-[180px] rounded-xl">
+                <SelectTrigger className="w-45 rounded-xl">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
