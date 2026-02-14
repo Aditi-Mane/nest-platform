@@ -35,6 +35,11 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
+    whatsIncluded: {
+     type: [String],
+     default: [],
+    },
+ 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
