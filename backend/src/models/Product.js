@@ -57,6 +57,33 @@ const productSchema = new mongoose.Schema(
       neutral: { type: Number, default: 0 },
       negative: { type: Number, default: 0 },
     },
+
+    // Product condition (New, Used, Like New, etc.)
+    condition: {
+      type: String,
+      default: "Good",
+      trim: true,
+    },
+
+    // Stock / availability
+    stock: {
+      type: Number,
+      default: 1,
+    },
+
+    // Location (useful for campus-based marketplace)
+    location: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Product status lifecycle
+    status: {
+      type: String,
+      enum: ["available", "sold", "reserved"],
+      default: "available",
+    },
   },
   { timestamps: true }
 );
