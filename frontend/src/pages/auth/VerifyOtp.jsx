@@ -54,7 +54,7 @@ const VerifyOtp = () => {
           </p>
         )}
 
-        <PrimaryButton type="button" onClick={handleVerifyOtp}>Verify OTP</PrimaryButton>
+        <PrimaryButton type="button" disabled={loading} onClick={handleVerifyOtp}>{loading ? "Verifying OTP..." : "Continue"}</PrimaryButton>
       </AuthCard>
     </AuthLayout>
   )

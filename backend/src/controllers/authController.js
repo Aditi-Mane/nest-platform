@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/generateToken.js";
+import { getTransporter } from "../utils/mailer.js";
 
 export const signup = async (req, res) => {
   try {
@@ -196,6 +197,7 @@ export const login = async (req, res) => {
 
 export const forgotPassword = async (req, res) =>{
   try {
+    const transporter = getTransporter();
     const {email} = req.body;
 
     //email field check
@@ -228,13 +230,29 @@ export const forgotPassword = async (req, res) =>{
 
     await user.save();
 
-    console.log("RESET OTP:", otp); //temp until nodemailer connected
+    //send mail here
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: email,
+      subject: "Password Reset OTP - NEST",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Password Reset</h2>
+          <p>Your OTP for password reset is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+          <p>If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
 
     return res.status(200).json({
       message: "OTP sent to email"
     });
 
-  } catch (error) {    
+  } catch (error) {  
+    console.log(error);
+    
     return res.status(500).json({
       message: "Server error"
     })
