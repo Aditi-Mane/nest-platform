@@ -11,11 +11,7 @@ function Marketplace() {
       <Route path="buyer" element={<Buying />}/>
       <Route path="buyer/product/:id" element={<ProductDetailPage />} />
       <Route path="seller/setup" element={<SellerSetup/>}/>
-<<<<<<< HEAD
       <Route path="seller" element={<SellerDashboard/>}/>
-=======
-      
->>>>>>> main
     </Routes>
   )
 
