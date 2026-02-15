@@ -41,10 +41,16 @@ const SignUp = () => {
         }
       );
 
+      if (!res?.data?.email) {
+        setError("Signup failed");
+        return;
+      }
+      localStorage.setItem("signupEmail", res.data.email);
+
       // Navigate only if backend success
-      navigate("/auth/verify-account", {
+      navigate("/auth/verify-email-otp", {
         replace: true,
-        state: {userId: res.data.userId}
+        state: {email: res?.data?.email}
       })
     } catch (err) {
       setError(err?.response?.data?.message || "Signup failed");
