@@ -5,6 +5,7 @@ import { getTransporter } from "../utils/mailer.js";
 
 export const signup = async (req, res) => {
   try {
+    const transporter = getTransporter();
     const {name, email, password} = req.body;
 
     const trimmedName = name?.trim();
@@ -68,7 +69,21 @@ export const signup = async (req, res) => {
 
     await user.save();
 
-    console.log(otp);
+    //send mail here
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: email,
+      subject: "Email Verification OTP - NEST",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Email Verification</h2>
+          <p>Your OTP for email verification is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+          <p>If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
     
     return res.status(201).json({ //201 code for creation purposes
       message: "Signup successful. Please complete verification.",

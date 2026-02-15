@@ -91,7 +91,7 @@ const SignUp = () => {
           </p>
         )}
 
-        <PrimaryButton onClick = {handleSignup}>Sign Up</PrimaryButton>
+        <PrimaryButton onClick = {handleSignup} disabled={loading}>{loading ? "Sending OTP..." : "Sign Up"}</PrimaryButton>
 
         <AuthFooterLink
           text = "Already have an account?"
