@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
     //verification Lifecycle
     verificationStatus: {
       type: String,
-      enum: ["pending", "under_review", "approved", "rejected"],
+      enum: ["email_verified","pending", "under_review", "approved", "rejected"],
       default: "pending"
     },
 
@@ -63,9 +63,12 @@ const userSchema = new mongoose.Schema(
       default: false
     },
 
-    isRoleSet: {
-      type: Boolean,
-      default: false
+    verificationOtp: {
+      type: String
+    },
+
+    verificationOtpExpiry: {
+      type: Date
     },
 
     resetOtp: {

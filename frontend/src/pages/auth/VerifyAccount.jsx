@@ -17,7 +17,9 @@ const VerifyAccount = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const userId = location.state?.userId;
+  const userId =
+  location.state?.userId ||
+  localStorage.getItem("tempUserId");
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -31,6 +33,11 @@ const VerifyAccount = () => {
       setError("");
       setLoading(true);
 
+      if (!userId || userId === "undefined") {
+        setError("Session expired. Please verify email again.");
+        return;
+      }
+
       const formData = new FormData();
 
       formData.append("userId", userId);
@@ -41,8 +48,10 @@ const VerifyAccount = () => {
         "/auth/verify-account",
         formData
       );
-
-      navigate("/auth/verification-status", {replace: true});
+        
+      localStorage.removeItem("tempUserId");
+      
+      navigate("/auth/registration", {replace: true});
     } catch (err) {
       console.log(err);
       setError(err?.response?.data?.message || "Verification failed");

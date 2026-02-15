@@ -1,9 +1,11 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/generateToken.js";
+import { getTransporter } from "../utils/mailer.js";
 
 export const signup = async (req, res) => {
   try {
+    const transporter = getTransporter();
     const {name, email, password} = req.body;
 
     const trimmedName = name?.trim();
@@ -56,9 +58,36 @@ export const signup = async (req, res) => {
       isVerified: false
     })
 
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpiry = Date.now() + 10 * 60 * 1000;
+
+    //hash the otp
+    const hashedOtp = await bcrypt.hash(otp.toString(), saltRounds);
+
+    user.verificationOtp = hashedOtp;
+    user.verificationOtpExpiry = otpExpiry;
+
+    await user.save();
+
+    //send mail here
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: email,
+      subject: "Email Verification OTP - NEST",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Email Verification</h2>
+          <p>Your OTP for email verification is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+          <p>If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
+    
     return res.status(201).json({ //201 code for creation purposes
       message: "Signup successful. Please complete verification.",
-      userId: user._id
+      email: normalizedEmail
     });
 
 
@@ -70,6 +99,7 @@ export const signup = async (req, res) => {
   }
 };
 
+import mongoose from "mongoose";
 export const verifyAccount = async (req, res) =>{
   try {
     const {userId, collegeId} = req.body;
@@ -109,6 +139,18 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
+    if (!userId || userId === "undefined") {
+      return res.status(400).json({
+        message: "Invalid user id"
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid user id format"
+      });
+    }
+
     const user = await User.findById(userId);
 
     if(!user) {
@@ -133,7 +175,6 @@ export const verifyAccount = async (req, res) =>{
     user.collegeId = normalizedId;
     user.idCardImage = file.path;
     user.verificationStatus = "under_review"
-    user.isVerified = false;
 
     await user.save();
 
@@ -148,6 +189,62 @@ export const verifyAccount = async (req, res) =>{
     });
   }
 }
+
+export const verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!otp || otp.length !== 6) {
+      return res.status(400).json({
+        message: "Enter a valid 6 digit OTP"
+      });
+    }
+
+    const normalizedEmail = email?.toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user || !user.verificationOtp || !user.verificationOtpExpiry) {
+      return res.status(400).json({
+        message: "Invalid request"
+      });
+    }
+
+    // Expiry first
+    if (user.verificationOtpExpiry < Date.now()) {
+      return res.status(400).json({
+        message: "OTP expired"
+      });
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.verificationOtp);
+
+    if (!isOtpValid) {
+      return res.status(400).json({
+        message: "Invalid OTP"
+      });
+    }
+
+    // CLEAR OTP
+    user.verificationOtp = undefined;
+    user.verificationOtpExpiry = undefined;
+
+    user.verificationStatus = "email_verified";
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "OTP verified",
+      userId: user._id.toString()
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+};
 
 export const login = async (req, res) => {
   try {
@@ -196,6 +293,7 @@ export const login = async (req, res) => {
 
 export const forgotPassword = async (req, res) =>{
   try {
+    const transporter = getTransporter();
     const {email} = req.body;
 
     //email field check
@@ -228,13 +326,29 @@ export const forgotPassword = async (req, res) =>{
 
     await user.save();
 
-    console.log("RESET OTP:", otp); //temp until nodemailer connected
+    //send mail here
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: email,
+      subject: "Password Reset OTP - NEST",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Password Reset</h2>
+          <p>Your OTP for password reset is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+          <p>If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
 
     return res.status(200).json({
       message: "OTP sent to email"
     });
 
-  } catch (error) {    
+  } catch (error) {  
+    console.log(error);
+    
     return res.status(500).json({
       message: "Server error"
     })
@@ -251,11 +365,19 @@ export const verifyOTP = async (req, res) =>{
       })
     }
 
-    const user = await User.findOne({email});
+    const normalizedEmail = email?.toLowerCase();
 
-    if(!user || !user.resetOtp) {
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if(!user || !user.resetOtp || !user.resetOtpExpiry) {
       return res.status(400).json({
         message: "Invalid request"
+      });
+    }
+
+    if (user.resetOtpExpiry < Date.now()) {
+      return res.status(400).json({
+        message: "OTP expired"
       });
     }
 
@@ -266,11 +388,10 @@ export const verifyOTP = async (req, res) =>{
       });
     }
 
-    if (user.resetOtpExpiry < Date.now()) {
-      return res.status(400).json({
-        message: "OTP expired"
-      });
-    }
+    user.resetOtp = undefined;
+    user.resetOtpExpiry = undefined;
+
+    await user.save();
 
     return res.status(200).json({
       message: "OTP verified"

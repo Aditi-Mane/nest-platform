@@ -49,7 +49,13 @@ const ForgotPassword = () => {
           </p>
         )}
 
-        <PrimaryButton type= "button" onClick={handleForgotPass}>Continue</PrimaryButton>
+        <PrimaryButton
+          type="button"
+          onClick={handleForgotPass}
+          disabled={loading}
+        >
+          {loading ? "Sending OTP..." : "Continue"}
+        </PrimaryButton>
       </AuthCard>
     </AuthLayout>
   )
