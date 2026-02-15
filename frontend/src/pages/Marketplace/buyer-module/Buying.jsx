@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { SlidersHorizontal, Grid3x3, List } from "lucide-react";
-import { ProductCard } from "@/components/ProductCard";
-import { CategoryFilter } from "@/components/CategoryFilter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ProductCard } from "@/components/ProductCard.jsx";
+import { CategoryFilter } from "@/components/CategoryFilter.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
 import {
   Select,
   SelectContent,
