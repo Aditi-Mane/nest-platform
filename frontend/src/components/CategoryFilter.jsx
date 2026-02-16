@@ -35,7 +35,7 @@ export function CategoryFilter({ selectedCategory, onSelectCategory }) {
             variant={isActive ? "default" : "outline"}
             className={`cursor-pointer px-4 py-2 gap-2 rounded-full transition-all ${
               isActive
-                ? "bg-[#2563EB] hover:bg-[#2563EB]/90"
+                ? "bg-primary hover:bg-primary/90"
                 : "hover:bg-muted"
             }`}
             onClick={() => onSelectCategory(category.id)}
