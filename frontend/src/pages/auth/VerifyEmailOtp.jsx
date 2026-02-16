@@ -8,7 +8,7 @@ import { useState } from 'react'
 import api from '../../api/axios.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-const VerifyOtp = () => {
+const VerifyEmailOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,25 +16,37 @@ const VerifyOtp = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const email = location.state?.email;
+  const email = location.state?.email || localStorage.getItem("signupEmail");
 
-  const handleVerifyOtp = async () =>{
+  const handleVerifyEmailOtp = async () =>{
     try {
       setError("");
       setLoading(true);
 
-      await api.post(
-        "/auth/verify-otp",
+      const res = await api.post(
+        "/auth/verify-email-otp",
         {
           email,
           otp
         }
       )
-      navigate("/auth/create-new-pass", {
-        state: {email}
+
+      if (!res?.data?.userId) {
+        setError("Verification failed");
+        return;
+      }
+      localStorage.removeItem("signupEmail");
+
+      localStorage.setItem("tempUserId", res.data.userId);
+
+      navigate("/auth/verify-account", {
+        state: {userId: res?.data?.userId}
       });
 
     } catch (error) {
+      console.log("FULL ERROR:", error);
+  console.log("BACKEND RESPONSE:", error?.response);
+  console.log("BACKEND DATA:", error?.response?.data);
       setError(error?.response?.data?.message || "OTP verification failed")
     } finally {
       setLoading(false);
@@ -44,7 +56,7 @@ const VerifyOtp = () => {
   return (
     <AuthLayout>
       <AuthCard>
-        <AuthHeader title = "OTP verification" subtitle = "Please enter the OTP sent to your registered email."/>
+        <AuthHeader title = "Verifu Email" subtitle = "Please enter the OTP sent to your registered email."/>
 
         <InputField icon={GrSecure} type="text" placeholder="Enter OTP" value={otp} onChange={(e) => {setOtp(e.target.value)}}/>
 
@@ -54,10 +66,10 @@ const VerifyOtp = () => {
           </p>
         )}
 
-        <PrimaryButton type="button" disabled={loading} onClick={handleVerifyOtp}>{loading ? "Verifying OTP..." : "Continue"}</PrimaryButton>
+        <PrimaryButton type="button" disabled={loading} onClick={handleVerifyEmailOtp}>{loading ? "Verifying OTP..." : "Continue"}</PrimaryButton>
       </AuthCard>
     </AuthLayout>
   )
 }
 
-export default VerifyOtp
+export default VerifyEmailOtp
