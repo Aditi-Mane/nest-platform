@@ -46,17 +46,19 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    //AI sentiment rating system
+    //Product's sentiment rating system => from ml-services (sentiment analyzer)
     sentimentRating: {
       type: Number, //0-5
       default: 0,
     },
 
+    //No. of ratings
     ratingCount: {
       type: Number,
       default: 0,
     },
 
+    //from ml-services (sentiment analyzer) --> from dashboard analytics
     sentimentBreakdown: {
       positive: { type: Number, default: 0 },
       neutral: { type: Number, default: 0 },

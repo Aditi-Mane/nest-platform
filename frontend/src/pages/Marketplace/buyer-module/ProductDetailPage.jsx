@@ -42,6 +42,9 @@ export default function ProductDetailPage() {
   const[product, setProduct]=useState(null);
   const isSold= product?.status=== "sold";
 
+  const [reviews, setReviews] =useState([]);
+  const [loadingReviews, setLoadingReviews] =useState(true);
+
   //fetch product details from backend
   useEffect(()=>{
     async function fetchProduct(){
@@ -53,8 +56,23 @@ export default function ProductDetailPage() {
         console.log("Error fetching product:", err);
 
       }
+     
     }
+    async function fetchReviews(){
+        try{
+          const res=await axios.get(
+              `http://localhost:5000/api/reviews/product/${id}`
+          );
+          setReviews(res.data.reviews);
+        }catch(err){
+           console.log("Error fetching reviews:", err);
+        } finally {
+           setLoadingReviews(false);
+        }
+      }
     fetchProduct();
+    fetchReviews();
+
   },[id]);
 
   //format createdAt(Posted)
@@ -86,26 +104,7 @@ export default function ProductDetailPage() {
     }
   ];
 
-  const reviews = [
-    {
-      author: "Michael Brown",
-      avatar:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-      rating: 5,
-      date: "1 week ago",
-      comment:
-        "These notes are amazing! Helped me ace my Orgo exam. Very detailed and well-organized."
-    },
-    {
-      author: "Emma Wilson",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
-      rating: 5,
-      date: "2 weeks ago",
-      comment:
-        "Clear handwriting, great diagrams. Worth every penny!"
-    }
-  ];
+ 
 
 if (!product) {
   return (
@@ -145,7 +144,7 @@ if (!product) {
                 </div>
               </div>
               <div className="p-4 flex gap-2 overflow-x-auto">
-                {product.images.map((imgObj, i) => (
+                {product.images?.map((imgObj, i) => (
                   <div
                     key={i}
                     className="w-20 h-20 rounded-lg overflow-hidden border cursor-pointer"
@@ -241,88 +240,182 @@ if (!product) {
 
               </CardContent>
             </Card>
-            {/* Reviews
-            <Card className="rounded-2xl bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Reviews</span>
-                  <span className="text-sm text-muted">
-                    ⭐ {product.seller.rating} ({product?.seller?.reviews})
-                  </span>
-                </CardTitle>
-              </CardHeader>
+           {/* Reviews Section */}
+<Card className="rounded-2xl bg-card border-border">
+  <CardHeader>
+    <CardTitle className="flex items-center justify-between">
+      <span>Reviews</span>
 
-              <CardContent className="space-y-6">
-                {reviews.map((review, i) => (
-                  <div key={i}>
+      <span className="text-sm text-muted-foreground">
+        {reviews.length} Reviews
+      </span>
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent className="space-y-6">
+    {/* Loading */}
+    {loadingReviews && (
+      <p className="text-sm text-muted-foreground">
+        Loading reviews...
+      </p>
+    )}
+
+    {/* No Reviews */}
+    {!loadingReviews && reviews.length === 0 && (
+      <p className="text-sm text-muted-foreground">
+        No reviews yet. Be the first to review this product!
+      </p>
+       )}
+
+           {/* Reviews List */}
+            {!loadingReviews &&
+                reviews.map((review, i) => (
+                  <div key={review._id}>
                     {i > 0 && <Separator className="mb-6" />}
 
                     <div className="flex items-start gap-4">
+                      {/* Avatar */}
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={review.avatar} />
-                        <AvatarFallback>{review.author[0]}</AvatarFallback>
+                        <AvatarImage src={review.user?.avatar || ""} />
+                        <AvatarFallback>
+                          {review.user?.name?.[0] || "U"}
+                        </AvatarFallback>
                       </Avatar>
 
-                      <div>
-                        <p className="font-semibold">{review.author}</p>
-                        <p className="text-sm text-muted">{review.date}</p>
-                        <p className="text-sm text-muted mt-2">
-                          {review.comment}
+                      {/* Review Content */}
+                      <div className="flex-1">
+                        {/* Name + Stars */}
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold">
+                            {review.user?.name || "Anonymous"}
+                          </p>
+
+                          {/* Star Rating */}
+                          <div className="flex items-center gap-1 text-yellow-500">
+                            {"⭐".repeat(review.starRating || 0)}
+                          </div>
+                        </div>
+
+                        {/* Date */}
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric"
+                          })}
+                        </p>
+
+                        {/* Review Text */}
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {review.text}
                         </p>
                       </div>
                     </div>
                   </div>
                 ))}
-              </CardContent>
-            </Card> */}
-          </div> 
-
-          {/* Sidebar
+            </CardContent>
+          </Card>
+          </div>
+          {/*SideBar */}
+                    {/* Sidebar */}
           <div className="space-y-6">
-            <Card className="rounded-2xl  top-24">
+            {/* Purchase Card */}
+            <Card className="rounded-2xl sticky top-24">
               <CardContent className="p-6 space-y-4">
-                <Button  disabled={isSold}  className="w-full rounded-xl gap-2">
+                  <Button className="w-full rounded-xl bg-[#10B981] hover:bg-[#10B981]/90 gap-2" size="lg">
                   <ShoppingCart className="h-5 w-5" />
-                  {isSold ? "Sold Out" : "Add to Cart"}
+                  Add to Cart
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-xl" 
+                  size="lg"
+                  onClick={() => onNavigate('checkout')}
+                >
+                  Buy Now
                 </Button>
 
-                <Button disabled={isSold} variant="outline" className="w-full rounded-xl">
-                  {isSold ? "Unavailable" : "Buy Now"}
-                </Button>
+                <Separator />
+                <div className="text-center text-sm text-muted-foreground">
+                  <Shield className="h-5 w-5 mx-auto mb-2" />
+                  <p>Secure payment through Nest</p>
+                  <p>Money-back guarantee</p>
+                </div>
               </CardContent>
             </Card>
 
+            {/* Seller Card */}
             <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle>Seller Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4">
-                  <Avatar>
-                    <AvatarImage src={product?.seller?.avatar} />
-                    <AvatarFallback>
-                      {product?.seller?.name?? "Seller"}
-                    </AvatarFallback>
+                <div className="flex items-start gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={product.seller.avatar} />
+                    <AvatarFallback>{product.seller.name[0]}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p>{product.seller.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {product?.seller?.university ?? "SPPU"}
-                    </p>
+                  <div className="flex-1">
+                    <h4 className="mb-1">{product.seller.name}</h4>
+                    <p className="text-sm text-muted-foreground mb-1">{product.seller.university}</p>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm">{product.seller.rating} ({product.seller.reviews})</span>
+                    </div>
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={() => navigate("/messages")}
+                <Separator />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Items Sold</span>
+                    <span>{product.seller.itemsSold}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Response Time</span>
+                    <span>{product.seller.responseTime}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Member Since</span>
+                    <span>Jan 2024</span>
+                  </div>
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-xl gap-2"
+                  onClick={() => onNavigate('messages')}
                 >
                   <MessageSquare className="h-4 w-4" />
                   Message Seller
                 </Button>
               </CardContent>
             </Card>
-          </div> */}
+
+            {/* Similar Items */}
+            <Card className="rounded-2xl">
+              <CardHeader>
+                <CardTitle>Similar Items</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {similarItems.map((item, i) => (
+                  <div key={i} className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                      <ImageWithFallback src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate mb-1">{item.name}</p>
+                      <p className="text-sm text-[#2563EB]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                        ${item.price}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
         </div>
       </div>
     </div>
