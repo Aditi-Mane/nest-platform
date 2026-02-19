@@ -41,6 +41,8 @@ export default function ProductDetailPage() {
   const navigate = useNavigate(); 
   const[product, setProduct]=useState(null);
   const isSold= product?.status=== "sold";
+  const seller = product?.createdBy;
+  console.log(seller);
 
   const [reviews, setReviews] =useState([]);
   const [loadingReviews, setLoadingReviews] =useState(true);
@@ -72,6 +74,7 @@ export default function ProductDetailPage() {
       }
     fetchProduct();
     fetchReviews();
+    
 
   },[id]);
 
@@ -292,7 +295,14 @@ if (!product) {
 
                           {/* Star Rating */}
                           <div className="flex items-center gap-1 text-yellow-500">
-                            {"⭐".repeat(review.starRating || 0)}
+                           
+                            {Array.from({ length: review.starRating || 0 }).map((_, index) => (
+                              <Star
+                                key={index}
+                                className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                              />
+                            ))}
+                         
                           </div>
                         </div>
 
@@ -316,26 +326,34 @@ if (!product) {
             </CardContent>
           </Card>
           </div>
-          {/*SideBar */}
-                    {/* Sidebar */}
+        
+            {/* Sidebar */}
           <div className="space-y-6">
-            {/* Purchase Card */}
-            <Card className="rounded-2xl sticky top-24">
+                   {/* Purchase Card */}
+            <Card className="rounded-2xl top-24  self-start">
               <CardContent className="p-6 space-y-4">
-                  <Button className="w-full rounded-xl bg-[#10B981] hover:bg-[#10B981]/90 gap-2" size="lg">
-                  <ShoppingCart className="h-5 w-5" />
-                  Add to Cart
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-xl" 
+                <Button
+                  className="w-full rounded-xl bg-[#10B981] hover:bg-[#10B981]/90 gap-2"
                   size="lg"
-                  onClick={() => onNavigate('checkout')}
+                  disabled={product?.status === "sold"}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {product?.status === "sold" ? "Sold Out" : "Add to Cart"}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  size="lg"
+                  disabled={product?.status === "sold"}
+                
+                  onClick={() => navigate("/checkout")}
                 >
                   Buy Now
                 </Button>
 
                 <Separator />
+
                 <div className="text-center text-sm text-muted-foreground">
                   <Shield className="h-5 w-5 mx-auto mb-2" />
                   <p>Secure payment through Nest</p>
@@ -345,56 +363,75 @@ if (!product) {
             </Card>
 
             {/* Seller Card */}
-            <Card className="rounded-2xl">
-              <CardHeader>
-                <CardTitle>Seller Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={product.seller.avatar} />
-                    <AvatarFallback>{product.seller.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h4 className="mb-1">{product.seller.name}</h4>
-                    <p className="text-sm text-muted-foreground mb-1">{product.seller.university}</p>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm">{product.seller.rating} ({product.seller.reviews})</span>
+           
+            {seller && (
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Seller Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={seller.avatar} />
+                      <AvatarFallback>{seller.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h4 className="mb-1">{seller.name}</h4>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {seller?.collegeName ?? "N/A"}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm">
+                          {seller.rating ?? 0} ({seller.reviewCount ?? 0} reviews)
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Items Sold</span>
-                    <span>{product.seller.itemsSold}</span>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Items Sold</span>
+                      <span>{seller.itemsSold ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Response Time
+                      </span>
+                      <span>{seller.responseTime || "Within a day"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Member Since
+                      </span>
+                      <span>
+                        {seller.createdAt
+                          ? new Date(seller.createdAt).toLocaleDateString(
+                              "en-IN",
+                              { month: "short", year: "numeric" }
+                            )
+                          : "N/A"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Response Time</span>
-                    <span>{product.seller.responseTime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Member Since</span>
-                    <span>Jan 2024</span>
-                  </div>
-                </div>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-xl gap-2"
-                  onClick={() => onNavigate('messages')}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Message Seller
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl gap-2"
+                   
+                    onClick={() => navigate("/messages")}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Message Seller
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Similar Items */}
-            <Card className="rounded-2xl">
+            {/* <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle>Similar Items</CardTitle>
               </CardHeader>
@@ -413,7 +450,7 @@ if (!product) {
                   </div>
                 ))}
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
         </div>

@@ -37,6 +37,40 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
+
+    collegeName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Cached average rating (updated via Review post-save hook after taking review)
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+
+    // Cached total review count (updated via Review post-save hook after taking review)
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+
+    // Cached sold items count (incremented when product.status → "sold")
+    itemsSold: {
+      type: Number,
+      default: 0,
+    },
+
+    // e.g. "Within 1 hour", "Within a day" — seller can set this
+    responseTime: {
+      type: String,
+      default: "Within a day",
+      trim: true,
+    },
+   
     //verification Lifecycle
     verificationStatus: {
       type: String,

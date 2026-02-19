@@ -51,7 +51,7 @@ export default function Buying() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl mb-2">Marketplace</h1>
+          <h1 className="text-4xl mb-2 font-semi-bold">Marketplace</h1>
           <p className="text-muted-foreground">
             Discover books, notes, and handcrafts from fellow students
           </p>

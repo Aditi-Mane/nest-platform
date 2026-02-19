@@ -39,7 +39,7 @@ const productSchema = new mongoose.Schema(
      type: [String],
      default: [],
     },
- 
+    //Seller
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -72,20 +72,20 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Stock / availability
+    // Stock /  -> set by seller
     stock: {
       type: Number,
       default: 1,
     },
 
-    // Location (useful for campus-based marketplace)
+    // Location (useful for campus-based marketplace)-> set while creating listing
     location: {
       type: String,
       trim: true,
       default: "",
     },
 
-    // Product status lifecycle
+    // Product status lifecycle (after order placed logic)
     status: {
       type: String,
       enum: ["available", "sold", "reserved"],
