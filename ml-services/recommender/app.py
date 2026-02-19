@@ -1,9 +1,16 @@
+from pymongo import MongoClient
+from bson import ObjectId
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+client = MongoClient(process.env.M)  
+db = client["nestdb"]
+products_collection = db["products"]
 
 app = FastAPI()
 

@@ -4,7 +4,8 @@ import Product from '../models/Product.js';
 export const getAllProducts=async(req,res)=>{
   try{
     const products=await Product.find()
-    .populate("createdBy", "name avatar");
+    .populate("createdBy", 
+      "name avatar collegeName rating reviewCount itemsSold responseTime createdAt");
 
     res.status(200).json({
       success:true,
@@ -26,7 +27,8 @@ export const getAllProducts=async(req,res)=>{
 export const getProductById=async(req,res)=>{
     try{
       const product =await Product.findById(req.params.id)
-      .populate("createdBy", "name avatar");
+      .populate("createdBy", 
+      "name avatar collegeName rating reviewCount itemsSold responseTime createdAt");
       
 
       if(!product){
