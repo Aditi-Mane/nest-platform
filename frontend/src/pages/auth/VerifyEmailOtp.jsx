@@ -56,7 +56,7 @@ const VerifyEmailOtp = () => {
   return (
     <AuthLayout>
       <AuthCard>
-        <AuthHeader title = "Verifu Email" subtitle = "Please enter the OTP sent to your registered email."/>
+        <AuthHeader title = "Verify Email" subtitle = "Please enter the OTP sent to your registered email."/>
 
         <InputField icon={GrSecure} type="text" placeholder="Enter OTP" value={otp} onChange={(e) => {setOtp(e.target.value)}}/>
 

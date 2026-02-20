@@ -9,7 +9,7 @@ const storage = multer.diskStorage({ //later memoryStorage with AWS
 
   //what to name the file
   filename: (req, file, cb) =>{
-    const uniqueName = Date.now() + "-" + file.originalname.replace("/\s+/g", "_");
+    const uniqueName = Date.now() + "-" + file.originalname.replace(/\s+/g, "_");
     cb(null, uniqueName); //save with this name, null = no errors
   }
 })

@@ -9,7 +9,7 @@ import authRoutes from "./routes/authRoutes.js"
 import adminRoutes from "./routes/adminRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
 import productRoutes from "./routes/productRoutes.js"
-// import sellerProductRoutes from "./routes/sellerproductRoutes.js"
+import sellerRoutes from "./routes/sellerRoutes.js"
 
 connectDB()
 
@@ -22,6 +22,7 @@ app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/seller", sellerRoutes)
 
 app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")

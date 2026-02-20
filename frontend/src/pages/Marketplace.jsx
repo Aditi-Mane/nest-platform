@@ -10,12 +10,15 @@ import SellerAnalytics from "./marketplace/seller-module/SellerAnalytics.jsx";
 import SellerAI from "./marketplace/seller-module/SellerAI.jsx";
 import SellerMessages from "./marketplace/seller-module/SellerMessages.jsx";
 import SellerPayments from "./marketplace/seller-module/SellerPayments.jsx";
+import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx";
 
 function Marketplace() {
   return (
     <Routes>
       <Route path="buyer" element={<Buying />}/>
       <Route path="buyer/product/:id" element={<ProductDetailPage />} />
+
+      <Route path="seller/setup" element={<SellerSetup />}/>
 
       <Route path="seller" element={<SellerPanel />}>
         <Route index element={<Navigate to="dashboard" replace />} />
