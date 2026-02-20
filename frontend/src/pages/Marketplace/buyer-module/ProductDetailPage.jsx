@@ -86,6 +86,41 @@ export default function ProductDetailPage() {
       year: "numeric" 
   }):"Recently";
 
+
+  // handle add to cart
+  const handleAddToCart =async()=>{
+    try{
+       const token = localStorage.getItem("token");
+
+          await axios.post(
+            "http://localhost:5000/api/cart/add",
+            { productId: product._id, quantity: 1 },
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          );
+        navigate("/marketplace/buyer/cart");
+  
+    }catch(error){
+        console.log("Add to cart error: ", error);
+    }
+  }
+  //handle buy now (temporary)
+  const handleBuyNow=async()=>{
+    try{
+        await axios.post(
+          "http://localhost:5000/api/cart/add",
+          {productId: product._id},
+          { withCredentials: true}
+        );
+        navigate("/marketplace/buyer/checkout");
+  
+    }catch(error){
+        console.log( error);
+    }
+  };
+
+
   const similarItems = [
     {
       name: "General Chemistry Notes",
@@ -336,6 +371,7 @@ if (!product) {
                   className="w-full rounded-xl bg-[#10B981] hover:bg-[#10B981]/90 gap-2"
                   size="lg"
                   disabled={product?.status === "sold"}
+                  onClick={handleAddToCart}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {product?.status === "sold" ? "Sold Out" : "Add to Cart"}
@@ -347,7 +383,7 @@ if (!product) {
                   size="lg"
                   disabled={product?.status === "sold"}
                 
-                  onClick={() => navigate("/checkout")}
+                  onClick={handleBuyNow}
                 >
                   Buy Now
                 </Button>

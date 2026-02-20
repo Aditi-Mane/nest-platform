@@ -66,10 +66,10 @@ export function Navigation({ currentPage, onNavigate }) {
             <Button
               variant="ghost"
               size="icon"
-              className="relative rounded-xl hover:bg-[var(--color-card)]"
+              className="relative rounded-xl hover:bg-card"
               onClick={() => onNavigate("cart")}
             >
-              <ShoppingCart className="h-5 w-5 text-[var(--color-text)]" />
+              <ShoppingCart className="h-5 w-5 text-text" />
 
               <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white" variant={undefined}>
                 3
