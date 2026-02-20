@@ -20,12 +20,21 @@ const reviewSchema=new mongoose.Schema(
       minlength: 3,
     },
 
+    //star-rating
+    starRating:{
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    //from ml-services
     sentiment: {
       type: String,
       enum: ["positive", "neutral", "negative"],
       default: null,
     },
 
+    //from ml-services
     confidence: {
       type: Number,
       default: null,
