@@ -27,34 +27,38 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] =useState(true);
 
+  //fetching cart
+  const fetchCart = async () => {
+  try {
+    setLoading(true);
+
+    const { data } = await axios.get(
+      "http://localhost:5000/api/cart",
+      { withCredentials: true }
+    );
+
+    const formattedItems = data.cartItems.map((item) => ({
+      id: item.product._id,
+      name: item.product.name,
+      price: item.product.price,
+      image: item.product.images?.[0],
+      category: item.product.category,
+      quantity: item.quantity,
+      seller: item.product.createdBy,
+    }));
+
+    setCartItems(formattedItems);
+
+  } catch (error) {
+    console.log("Cart Fetch Error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 useEffect(()=>{
-  const fetchCart= async() => {
-      try{
-        setLoading(true);
-        const {data} =await axios.get("http://localhost:5000/api/cart/mt-cart",
-          {
-            withCredentials: true,
-          }
-        );
-         // Convert backend cart structure → frontend cartItems
-         const formattedItems =data.cat.items.map((item)=>({
-          id: item.product._id,
-          name: item.product.name,
-          price: item.product.price,
-          image: item.product.images?.[0],
-          category: item.product.category,
-          quantity: item.quantity,
-          seller: item.product.createdBy,
-         }));
-          setCartItems(formattedItems);
-    }
-    catch (error) {
-      console.log("Cart Fetch Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-    fetchCart()
+    fetchCart();
 },[]);
 
   // Update Quantity
