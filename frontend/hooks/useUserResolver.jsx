@@ -27,7 +27,11 @@ const useUserResolver = () => {
       }
 
       if (user.activeRole === "seller") {
-        setDestination("/marketplace/seller");
+        if(user.sellerStatus === "active"){
+          setDestination("/marketplace/seller");
+        } else {
+          setDestination("/marketplace/seller/setup");
+        }
       } else {
         setDestination("/marketplace/buyer");
       }

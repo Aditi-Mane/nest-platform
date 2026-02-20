@@ -2,7 +2,7 @@
 const SellerDashboard = () => {
   return (
     <div>
-      WELCOME TO THE SELLER DASHBOARD
+      Dashboard
     </div>
   )
 }

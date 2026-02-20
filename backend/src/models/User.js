@@ -97,6 +97,19 @@ const userSchema = new mongoose.Schema(
       default: false
     },
 
+    sellerStatus: {
+      type: String,
+      enum: ["none", "pending", "active"],
+      default: "none",
+    },
+
+    //seller Info
+    storeName: { type: String, trim: true },
+    storeDescription: { type: String, trim: true },
+    storeLogo: { type: String },
+    storeLocation: { type: String, trim: true },
+    payoutUPI: { type: String, trim: true },
+
     verificationOtp: {
       type: String
     },

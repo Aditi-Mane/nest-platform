@@ -28,10 +28,14 @@ const ChooseRole = () => {
         } 
       )
 
-      const role = res?.data?.activeRole;
+      const { activeRole, sellerStatus } = res.data;
 
-      if(role === "seller") {
-        navigate("/marketplace/seller");
+      if (activeRole === "seller") {
+        if (sellerStatus === "active") {
+          navigate("/marketplace/seller");
+        } else {
+          navigate("/marketplace/seller/setup");
+        }
       } else {
         navigate("/marketplace/buyer");
       }

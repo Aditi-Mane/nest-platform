@@ -39,7 +39,8 @@ export const setUserRole = async (req, res) => {
 
     return res.status(200).json({
       message: "User role has been set",
-      activeRole: user.activeRole
+      activeRole: user.activeRole,
+      sellerStatus: user.sellerStatus
     });
 
   } catch (error) {
@@ -58,7 +59,7 @@ export const getCurrentUser = async (req, res) =>{
       })
     }
 
-    const user = await User.findById(req.user._id).select("verificationStatus activeRole availableRoles email name");
+    const user = await User.findById(req.user._id).select("verificationStatus activeRole sellerStatus availableRoles email name");
     if(!user){
       return res.status(404).json({
         message: "User not found"
