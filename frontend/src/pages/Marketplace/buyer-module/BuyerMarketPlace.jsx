@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { SlidersHorizontal, Grid3x3, List } from "lucide-react";
+
+import { useState, useEffect, useMemo } from "react";
+import { SlidersHorizontal, Grid3x3, List, ShoppingBag } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard.jsx";
 import { CategoryFilter } from "@/components/CategoryFilter.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -17,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function Buying() {
   const navigate = useNavigate();
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  
   const [viewMode, setViewMode] = useState("grid");
 
   const { products, favourites, toggleFavourite } = useOutletContext();
@@ -27,6 +28,26 @@ export default function Buying() {
 
   // //Loading state
   // const [loading, setLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  //Search filters logic
+  //Why useMemo?
+  // -> So filtering doesn’t run unnecessarily on every render.
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory =
+        selectedCategory === "all" ||
+        product.category === selectedCategory;
+
+      const matchesSearch =
+        product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, searchQuery, selectedCategory]);
 
   //Fetch products from backend
   // useEffect(() => {
@@ -53,19 +74,28 @@ export default function Buying() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl mb-2 font-semi-bold">Marketplace</h1>
+         <div className="flex items-center gap-3">
+            <ShoppingBag className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold">Marketplace</h1>
+          </div>
           <p className="text-muted-foreground">
             Discover books, notes, and handcrafts from fellow students
           </p>
         </div>
 
-        {/* Filters (still hardcoded UI only) */}
+        {/* Search Filters */}
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-8">
           <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            <Input
-              placeholder="Search for books, notes, handcrafts..."
-              className="rounded-xl"
-            />
+          <Input
+          placeholder="Search for books, notes, handcrafts..."
+          value={searchQuery}
+          onChange={(e)=> setSearchQuery(e.target.value)}
+          className="rounded-xl border border-border 
+                    focus:border-secondary 
+                    focus:outline-none 
+                    focus-visible:ring-2 
+                    focus-visible:ring-secondary"
+          />
 
             <div className="flex gap-2">
               <Select defaultValue="recent">
@@ -109,7 +139,7 @@ export default function Buying() {
         {/*Products Section */}
         {products.length === 0 ?  (
           <p className="text-center text-lg">Loading products...</p>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <p className="text-center text-lg text-gray-500">
             No products available right now.
           </p>
@@ -121,7 +151,7 @@ export default function Buying() {
                 : "space-y-4"
             }
           >
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard
                 key={product._id}
                 product={product}

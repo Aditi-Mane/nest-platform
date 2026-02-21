@@ -16,9 +16,19 @@ const productSchema = new mongoose.Schema(
     },
 
     category: {
-      type: String,
+       type: String,
       required: true,
-      trim: true,
+      enum: [
+          "Study Material",
+          "Electronics",
+          "Fashion",
+          "Hostel Essentials",
+          "Handmade",
+          "Sports",
+          "Services",
+          "Other"
+      ],
+
     },
 
     price: {

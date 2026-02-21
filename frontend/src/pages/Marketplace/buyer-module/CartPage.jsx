@@ -9,7 +9,8 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import axios from "axios"
+import axios from "axios";
+import api from "../../../api/axios.js";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -32,10 +33,9 @@ export default function CartPage() {
   try {
     setLoading(true);
 
-    const { data } = await axios.get(
-      "http://localhost:5000/api/cart",
-      { withCredentials: true }
-    );
+         
+    const { data } = await api.get("/cart");
+
 
     const formattedItems = data.cartItems.map((item) => ({
       id: item.product._id,
@@ -62,20 +62,18 @@ useEffect(()=>{
 },[]);
 
   // Update Quantity
-  const updateQuantity = (id, change) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
-  };
+  const updateQuantity = async (id, change) => {
+        const item = cartItems.find((i) => i.id === id);
+        const newQty = Math.max(1, item.quantity + change);
+        setCartItems((items) => items.map((i) => i.id === id ? { ...i, quantity: newQty } : i));
+        await api.put(`/cart/update/${id}`, { quantity: newQty },);
+};
 
   //  Remove Item
-  const removeItem = (id) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
-  };
+ const removeItem = async (id) => {
+  await api.delete(`/cart/remove/${id}`);
+  setCartItems((items) => items.filter((item) => item.id !== id));
+};
 
   //  Price Calculations
   const subtotal = cartItems.reduce(
@@ -312,12 +310,13 @@ useEffect(()=>{
               Looks like you haven’t added anything yet.
             </p>
 
-            <Button
-              className="mt-6 rounded-xl bg-primary text-white hover:opacity-90 px-6"
-              onClick={() => navigate("/marketplace/buyer")}
-            >
-              Start Shopping!
-            </Button>
+          <Button
+            variant="ghost"
+            className="mt-2 text-primary text-lg  hover:bg-transparent hover:underline"
+            onClick={() => navigate("/marketplace/buyer")}
+          >
+            Explore the marketplace →
+          </Button>
           </div>
 
         )}

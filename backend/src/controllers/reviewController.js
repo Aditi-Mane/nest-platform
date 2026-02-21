@@ -17,7 +17,7 @@ export const getReviewsByProduct = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Server error while fetching reviews",
+      message: "Server error while fetching reviews"
     });
   }
 };

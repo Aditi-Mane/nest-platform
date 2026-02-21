@@ -35,17 +35,21 @@ import { Separator } from "@/components/ui/separator";
 import { useParams, useNavigate } from "react-router-dom";
 import {useEffect, useState} from "react";
 import axios from "axios";
+import api from "../../../api/axios.js";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate(); 
   const[product, setProduct]=useState(null);
-  const isSold= product?.status=== "sold";
+  const isUnavailable = product?.status !== "available";
   const seller = product?.createdBy;
   console.log(seller);
 
   const [reviews, setReviews] =useState([]);
   const [loadingReviews, setLoadingReviews] =useState(true);
+
+  //selected photo
+  const [selectedImage, setSelectedImage] = useState(null);
 
   //fetch product details from backend
   useEffect(()=>{
@@ -54,6 +58,11 @@ export default function ProductDetailPage() {
         const res=await axios.get(
         `http://localhost:5000/api/products/${id}`);
         setProduct(res.data.product);
+
+        //set image default -> the first one
+        if (res.data.product.images?.length > 0) {
+           setSelectedImage(res.data.product.images[0].url);
+        }
       }catch(err){
         console.log("Error fetching product:", err);
 
@@ -92,7 +101,7 @@ export default function ProductDetailPage() {
     try{
        const token = localStorage.getItem("token");
 
-          await axios.post(
+          await api.post(
             "http://localhost:5000/api/cart/add",
             { productId: product._id, quantity: 1 },
             {
@@ -108,10 +117,10 @@ export default function ProductDetailPage() {
   //handle buy now (temporary)
   const handleBuyNow=async()=>{
     try{
-        await axios.post(
-          "http://localhost:5000/api/cart/add",
+        await api.post(
+          "/cart/add",
           {productId: product._id},
-          { withCredentials: true}
+         
         );
         navigate("/marketplace/buyer/checkout");
   
@@ -152,7 +161,7 @@ if (!product) {
   );
 }
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-10">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Back */}
         <Button
@@ -168,12 +177,13 @@ if (!product) {
           {/* Main */}
           <div className="lg:col-span-2 space-y-6">
             {/* Images */}
-            <Card className="rounded-2xl overflow-hidden">
-              <div className="relative h-96">
+            <Card className="rounded-2xl overflow-hidden border-border shadow-sm hover:shadow-lg transition-shadow duration-300">
+              <div className="h-96 w-full bg-backgroud rounded-xl overflow-hidden flex items-center justify-center py-3">
+                
                 <ImageWithFallback
-                  src={product.images?.[0]?.url}
+                  src={selectedImage}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain transition-opacity duration-300"
                 />
                 <div className="absolute top-4 right-4 flex gap-2">
                   <Button size="icon" variant="secondary">
@@ -185,7 +195,10 @@ if (!product) {
                 {product.images?.map((imgObj, i) => (
                   <div
                     key={i}
-                    className="w-20 h-20 rounded-lg overflow-hidden border cursor-pointer"
+                    onClick={() => setSelectedImage(imgObj.url)}
+                    className={`w-20 h-20 rounded-lg overflow-hidden border cursor-pointer 
+                      ${selectedImage === imgObj.url ? "border-primary" : ""}
+                    `}
                   >
                     <ImageWithFallback
                       src={imgObj.url}
@@ -207,9 +220,11 @@ if (!product) {
                   <Badge variant="outline">{product.condition}</Badge>
                 </div>
 
-                <p className="text-4xl text-[#2563EB] mb-4">
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <p className="text-4xl text-primary mb-4 font-bold tracking-tight">
                   ₹{product.price}
                 </p>
+                </div>
 
                 <div className="flex gap-3 mb-4">
   
@@ -219,16 +234,17 @@ if (!product) {
                 </Badge>
 
                 {/* Status */}
-                <Badge
-                  variant="secondary"
-                  className={
-                    product?.status === "sold"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                  }
-                >
-                  {product?.status?.toUpperCase() ?? "available"}
-                </Badge>
+               <Badge
+                className={
+                  product?.status === "sold"
+                    ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm"
+                    : product?.status === "reserved"
+                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm"
+                    : "bg-gradient-to-r from-emerald-400 to-green-600 text-white shadow-sm"
+                }
+              >
+                {product?.status?.toUpperCase() ?? "AVAILABLE"}
+              </Badge>
               </div>
 
                 <p className="text-muted-foreground mb-6 font-medium">
@@ -279,7 +295,7 @@ if (!product) {
               </CardContent>
             </Card>
            {/* Reviews Section */}
-<Card className="rounded-2xl bg-card border-border">
+<Card className="rounded-2xl bg-card/80 backdrop-blur-sm border-border shadow-sm">
   <CardHeader>
     <CardTitle className="flex items-center justify-between">
       <span>Reviews</span>
@@ -367,27 +383,44 @@ if (!product) {
                    {/* Purchase Card */}
             <Card className="rounded-2xl top-24  self-start">
               <CardContent className="p-6 space-y-4">
-                <Button
-                  className="w-full rounded-xl bg-[#10B981] hover:bg-[#10B981]/90 gap-2"
+            <Button
+              className={`w-full rounded-xl gap-2 transition-all duration-300 shadow-sm
+                    ${
+                      isUnavailable
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5"
+                    }
+                  `}
                   size="lg"
-                  disabled={product?.status === "sold"}
+                  disabled={isUnavailable}
                   onClick={handleAddToCart}
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  {product?.status === "sold" ? "Sold Out" : "Add to Cart"}
+                  {product?.status === "sold"
+                    ? "Sold Out"
+                    : product?.status === "reserved"
+                    ? "Reserved"
+                    : "Add to Cart"}
                 </Button>
 
                 <Button
-                  variant="outline"
-                  className="w-full rounded-xl"
+                  className={`w-full rounded-xl transition-all duration-300 shadow-md
+                    ${
+                      isUnavailable
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-linear-to-r from-emerald-500 via-green-500 to-teal-500 text-white hover:from-emerald-600 hover:via-green-600 hover:to-teal-600 hover:shadow-xl hover:-translate-y-1"
+                    }
+                  `}
                   size="lg"
-                  disabled={product?.status === "sold"}
-                
+                  disabled={isUnavailable}
                   onClick={handleBuyNow}
                 >
-                  Buy Now
+                  {product?.status === "sold"
+                    ? "Unavailable"
+                    : product?.status === "reserved"
+                    ? "Currently Reserved"
+                    : "Buy Now"}
                 </Button>
-
                 <Separator />
 
                 <div className="text-center text-sm text-muted-foreground">
@@ -401,7 +434,7 @@ if (!product) {
             {/* Seller Card */}
            
             {seller && (
-              <Card className="rounded-2xl">
+              <Card className="rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Seller Information</CardTitle>
                 </CardHeader>
@@ -455,8 +488,7 @@ if (!product) {
 
                   <Button
                     variant="outline"
-                    className="w-full rounded-xl gap-2"
-                   
+                    className="w-full rounded-xl gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary transition-all duration-300"
                     onClick={() => navigate("/messages")}
                   >
                     <MessageSquare className="h-4 w-4" />

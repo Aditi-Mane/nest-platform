@@ -18,7 +18,7 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-background)]">
+    <nav className="sticky top-0 z-50 w-full border-b border-border bg-[var(--color-background)]">
       <div className="max-w-7xl mx-auto px-2 py-0">
         <div className="flex items-center justify-between h-16">
 
@@ -93,12 +93,12 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
             <Button
               variant="ghost"
               size="icon"
-              className="relative rounded-xl hover:bg-[var(--color-card)] transition-all duration-200"
+              className="relative rounded-xl hover:bg-card transition-all duration-200"
               onClick={() => onNavigate("cart")}
             >
-              <ShoppingCart className="h-5 w-5 text-[var(--color-text)]" />
+              <ShoppingCart className="h-5 w-5 text-text" />
 
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white">
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white" >
                 3
               </Badge>
             </Button>
