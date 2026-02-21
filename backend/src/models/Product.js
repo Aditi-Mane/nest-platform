@@ -17,6 +17,16 @@ const productSchema = new mongoose.Schema(
 
     category: {
       type: String,
+      enum: [
+        "Study Material",
+        "Electronics",
+        "Hostel Essentials",
+        "Fashion",
+        "Handmade",
+        "Services",
+        "Startup Resources",
+        "Sports"
+      ],
       required: true,
       trim: true,
     },
@@ -65,10 +75,10 @@ const productSchema = new mongoose.Schema(
       negative: { type: Number, default: 0 },
     },
 
-    // Product condition (New, Used, Like New, etc.)
+    // Product condition (New, Used)
     condition: {
       type: String,
-      default: "Good",
+      enum: ["New", "Used"],
       trim: true,
     },
 

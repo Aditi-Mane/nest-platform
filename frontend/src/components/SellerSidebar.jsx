@@ -290,18 +290,18 @@ const SellerSidebar = () => {
     "text-[var(--color-muted)] hover:bg-[#f4ecdd] hover:text-[var(--color-primary)]";
 
   return (
-    <div className="w-72 h-screen bg-[var(--color-card)] border-r border-[var(--color-border)] flex flex-col justify-between">
+    <div className="w-72 h-screen bg-card border-r border-border flex flex-col justify-between">
 
       {/* TOP SECTION */}
       <div>
         {/* LOGO */}
-        <div className="flex items-center gap-3 p-5 border-b border-[var(--color-border)]">
-          <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center text-lg">
+        <div className="flex items-center gap-3 p-5 border-b border-border">
+          <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center text-lg">
             <GoPackage size={27} />
           </div>
           <div>
             <h1 className="font-bold text-lg">NEST</h1>
-            <p className="text-sm text-[var(--color-muted)]">
+            <p className="text-sm text-muted">
               Seller Dashboard
             </p>
           </div>
@@ -311,7 +311,7 @@ const SellerSidebar = () => {
         <div className="p-4 space-y-3">
 
           <NavLink
-            to="/seller/dashboard"
+            to="/marketplace/seller/dashboard"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -321,7 +321,7 @@ const SellerSidebar = () => {
           </NavLink>
 
           <NavLink
-            to="/seller/setup"
+            to="/marketplace/seller/products"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -331,7 +331,7 @@ const SellerSidebar = () => {
           </NavLink>
 
           <NavLink
-            to="/seller/orders"
+            to="/marketplace/seller/orders"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -341,7 +341,7 @@ const SellerSidebar = () => {
           </NavLink>
 
           <NavLink
-            to="/seller/analytics"
+            to="/marketplace/seller/analytics"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -359,7 +359,7 @@ const SellerSidebar = () => {
               <div className="flex items-center gap-3">
                 <LiaRobotSolid size={20} />
                 AI Insights
-                <span className="text-xs bg-[#efe6d6] text-[var(--color-primary)] px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-[#efe6d6] text-primary px-2 py-0.5 rounded-full">
                   AI
                 </span>
               </div>
@@ -369,7 +369,7 @@ const SellerSidebar = () => {
             {openAI && (
               <div className="ml-6 mt-1 space-y-1">
                 <NavLink
-                  to="/seller/sales-prediction"
+                  to="/marketplace/seller/sales-prediction"
                   className={({ isActive }) =>
                     `${baseLink} ${
                       isActive ? activeLink : normalLink
@@ -381,7 +381,7 @@ const SellerSidebar = () => {
                 </NavLink>
 
                 <NavLink
-                  to="/seller/sentiment"
+                  to="/marketplace/seller/sentiment"
                   className={({ isActive }) =>
                     `${baseLink} ${
                       isActive ? activeLink : normalLink
@@ -396,7 +396,7 @@ const SellerSidebar = () => {
           </div>
 
           <NavLink
-            to="/seller/messages"
+            to="/marketplace/seller/messages"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -406,7 +406,7 @@ const SellerSidebar = () => {
           </NavLink>
 
           <NavLink
-            to="/seller/payments"
+            to="/marketplace/seller/payments"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -416,7 +416,7 @@ const SellerSidebar = () => {
           </NavLink>
 
           <NavLink
-            to="/seller/settings"
+            to="/marketplace/seller/settings"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
@@ -429,14 +429,14 @@ const SellerSidebar = () => {
       </div>
 
       {/* PROFILE */}
-      <div className="p-4 border-t border-[var(--color-border)]">
+      <div className="p-4 border-t border-border">
         <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
             S
           </div>
           <div>
             <p className="font-medium text-sm">Seller Name</p>
-            <p className="text-xs text-[var(--color-muted)]">
+            <p className="text-xs text-muted">
               seller@example.com
             </p>
           </div>

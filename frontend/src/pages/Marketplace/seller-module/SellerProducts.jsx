@@ -1,11 +1,29 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import productsData from "../../../../../backend/src/models/sellerProducts";
+import { useState, useRef, useEffect } from "react";
+import api from "../../../api/axios.js";
+
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
-  const [products, setProducts] = useState(productsData);
+  const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 6;
+
+  const categories = [
+    "Study Material",
+    "Electronics",
+    "Hostel Essentials",
+    "Fashion",
+    "Handmade",
+    "Services",
+    "Startup Resources",
+    "Sports"
+  ];
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,20 +35,28 @@ const SellerProducts = () => {
 
   const fileInputRef = useRef(null);
 
-  const lowStock = products.filter((p) => p.stock <= 5).length;
-  const revenue = products.reduce((a, b) => a + b.revenue, 0);
-  const avgRating =
-    products.length > 0
-      ? products.reduce((a, b) => a + b.rating, 0) / products.length
-      : 0;
+  const avgRating = products.length > 0 ? products.reduce((a, b) => a + b.rating, 0) / products.length: 0;
 
-  // DELETE PRODUCT (unchanged)
-  const handleDelete = (id) => {
-    if (window.confirm("Delete this product?")) {
-      setProducts(products.filter((p) => p.id !== id));
-    }
-  };
+  useEffect(() => {
+    const fetchMyProducts = async () => {
+      try {
+        setFetchLoading(true);
+        const { data } = await api.get(
+          `/seller/my-products?page=${page}&limit=${limit}`
+        );
 
+        setProducts(data.products);
+        setTotalPages(data.totalPages);
+      } catch (error) {
+        console.error("Failed to load products", error);
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    fetchMyProducts();
+  }, [page]);
+  
   // FORM CHANGE
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -69,75 +95,101 @@ const SellerProducts = () => {
     };
   }, [formData.images]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     if (
       !formData.name ||
-      !formData.category ||
-      !formData.price ||
       !formData.description ||
-      formData.images.length === 0
+      !formData.category ||
+      !formData.price
     ) {
-      alert("All fields are required!");
+      setError("Please fill all required fields.");
       return;
     }
 
-    const newProduct = {
-      id: Date.now(),
-      name: formData.name,
-      description: formData.description,
-      category: formData.category,
-      price: parseFloat(formData.price),
-      stock: 10,
-      rating: 0,
-      reviews: 0,
-      sales: 0,
-      revenue: 0,
-      views: 0,
-      conversion: 0,
-      status: "Active",
+    if (formData.images.length === 0) {
+      setError("At least one product image is required.");
+      return;
+    }
 
-      // ✅ USE UPLOADED IMAGE
-      // image: formData.images[0].preview,
-      image: formData.images[0].preview.toString()
-    };
+    if (Number(formData.price) <= 0) {
+      setError("Price must be greater than 0.");
+      return;
+    }
 
-    setProducts([...products, newProduct]);
-    setShowModal(false);
+    try {
+      setLoading(true);
 
-    setFormData({
-      name: "",
-      category: "",
-      price: "",
-      description: "",
-      images: [],
-    });
+      const form = new FormData();
+
+      form.append("name", formData.name.trim());
+      form.append("description", formData.description.trim());
+      form.append("category", formData.category);
+      form.append("price", Number(formData.price));
+
+      if (formData.condition) {
+        form.append("condition", formData.condition);
+      }
+
+      form.append("stock", formData.stock ? Number(formData.stock) : 1);
+
+      formData.images.forEach((img) => {
+        form.append("images", img.file);
+      });
+
+      const { data } = await api.post(
+        "/seller/create",
+        form,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setProducts((prev) => [data.product, ...prev]);
+      setShowModal(false);
+
+      setFormData({
+        name: "",
+        category: "",
+        price: "",
+        description: "",
+        images: [],
+        condition: "",
+        stock: "",
+      });
+
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Something went wrong while creating product."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="p-6 text-[var(--color-text)]">
+    <div className="p-6 text-text">
 
       {/* HEADER */}
       <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold">Products</h1>
-            <p className="text-[var(--color-muted)]">
+            <p className="text-muted">
               Manage your product inventory and performance
             </p>
-            <p className="mt-2 text-sm flex items-center gap-3 text-[var(--color-muted)]">
+            <p className="mt-2 text-sm flex items-center gap-3 text-muted">
             <span>{products.length} products</span>
-
-            <span className="text-gray-400">•</span>
-
-            <span>{lowStock} low stock alerts</span>
-
             <span className="text-gray-400">•</span>
 
             <span>
               Avg rating:{" "}
-              <span className="font-medium text-[var(--color-text)]">
-                {avgRating.toFixed(1)}
+              <span className="font-medium text-text">
+                4.4
               </span>{" "}
               <span className="text-yellow-500">⭐</span>
             </span>
@@ -146,7 +198,7 @@ const SellerProducts = () => {
 
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-lg shadow"
+          className="bg-primary text-white px-5 py-2 rounded-lg shadow"
         >
           + Add Product
         </button>
@@ -154,49 +206,48 @@ const SellerProducts = () => {
 
       {/* STATS */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div className="bg-[var(--color-card)] border border-[var(--color-border)] p-4 rounded-xl">
-          <p className="text-sm text-[var(--color-muted)]">Total Products</p>
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Total Products</p>
           <h2 className="text-2xl font-bold">{products.length}</h2>
         </div>
 
-        <div className="bg-[var(--color-card)] border border-[var(--color-border)] p-4 rounded-xl">
-          <p className="text-sm text-[var(--color-muted)]">Total Revenue</p>
-          <h2 className="text-2xl font-bold">${revenue}</h2>
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Total Revenue</p>
+          <h2 className="text-2xl font-bold">₹ 0</h2>
         </div>
 
-        {/* <div className="bg-[var(--color-card)] border border-[var(--color-border)] p-4 rounded-xl">
-          <p className="text-sm text-[var(--color-muted)]">Low Stock</p>
-          <h2 className="text-2xl font-bold text-red-500">{lowStock}</h2>
-        </div> */}
-
-        <div className="bg-[var(--color-card)] border border-[var(--color-border)] p-4 rounded-xl">
-          <p className="text-sm text-[var(--color-muted)]">Avg Rating</p>
-          <h2 className="text-2xl font-bold">⭐ {avgRating.toFixed(1)}</h2>
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Avg Rating</p>
+          <h2 className="text-2xl font-bold">⭐ 4.4</h2>
         </div>
       </div>
+
+      {fetchLoading && (
+        <p className="text-muted mb-4">Loading products...</p>
+      )}
 
       {/* PRODUCT GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((p) => {
-          const low = p.stock <= 5;
 
           return (
             <div
               key={p.id}
-              className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl shadow-sm hover:shadow-md transition"
+              className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition"
             >
               {/* IMAGE */}
-              <div className="h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
-                {p.image && p.image.length > 10 ? (
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-5xl">{p.image}</span>
-                )}
-              </div>
+             
+                <div className="h-44 bg-[#efe6d6] overflow-hidden rounded-t-2xl group cursor-pointer">
+                  {p.images?.length > 0 ? (
+                    <img
+                      src={p.images[0].url}
+                      alt={p.name}
+                      className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                    />
+                  ) : (
+                    <span className="text-sm text-muted">No Image</span>
+                  )}
+                </div>
 
               <div className="p-6">
 
@@ -205,73 +256,54 @@ const SellerProducts = () => {
                   <h3 className="text-lg font-semibold">
                     {p.name}
                   </h3>
-
-                  <span
-                    className={`text-xs px-3 py-1 rounded-full ${
-                      low
-                        ? "bg-red-100 text-red-600"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {low ? "Low Stock" : "Active"}
-                  </span>
                 </div>
 
                 {/* DESCRIPTION */}
-                <p className="text-sm text-[var(--color-muted)] mt-2">
+                <p className="text-sm text-muted mt-2">
                   {p.description}
                 </p>
 
                 {/* CATEGORY + RATING */}
                 <div className="flex items-center gap-3 mt-3">
-                  <span className="text-xs px-3 py-1 rounded-full border border-[var(--color-border)] bg-[#efe6d6]">
+                  <span className="text-xs px-3 py-1 rounded-full border border-border bg-[#efe6d6]">
                     {p.category}
                   </span>
 
-                  <span className="text-sm text-[var(--color-primary)]">
-                    ⭐ {p.rating} ({p.reviews})
+                  <span className="text-sm text-primary">
+                    ⭐ 4.6 (3)
                   </span>
                 </div>
 
                 {/* STATS BOX */}
-                <div className="grid grid-cols-3 gap-4 mt-4 bg-[#efe6d6] border border-[var(--color-border)] rounded-xl p-3 text-sm">
+                <div className="grid grid-cols-3 gap-4 mt-4 bg-[#efe6d6] border border-border rounded-xl p-3 text-sm">
 
                   <div>
-                    <p className="text-[var(--color-muted)]">Sales</p>
-                    <p className="font-semibold">{p.sales}</p>
+                    <p className="text-muted">Sales</p>
+                    <p className="font-semibold">0</p>
                   </div>
 
                   <div>
-                    <p className="text-[var(--color-muted)]">Revenue</p>
+                    <p className="text-muted">Revenue</p>
                     <p className="font-semibold text-green-700">
-                      ${p.revenue}
+                      0
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[var(--color-muted)]">Views</p>
-                    <p className="font-semibold">{p.views}</p>
+                    <p className="text-muted">Views</p>
+                    <p className="font-semibold">0</p>
                   </div>
-
-                  {/* <div>
-                    <p className="text-[var(--color-muted)]">Conv. Rate</p>
-                    <p className="font-semibold">
-                      {p.conversion}%
-                    </p>
-                  </div> */}
 
                 </div>
 
                 {/* PRICE + STOCK */}
                 <div className="flex justify-between items-center mt-5">
-                  <h2 className="text-2xl font-bold text-[var(--color-primary)]">
-                    ${p.price}
+                  <h2 className="text-2xl font-bold text-primary">
+                    ₹{p.price}
                   </h2>
 
                   <span
-                    className={`text-sm ${
-                      low ? "text-red-500" : "text-[var(--color-muted)]"
-                    }`}
+                    className="text-sm text-muted"
                   >
                     Stock: {p.stock}
                   </span>
@@ -280,7 +312,7 @@ const SellerProducts = () => {
                 {/* ACTIONS */}
                 <div className="flex items-center justify-between mt-5">
 
-                  <button className="flex-1 border border-[var(--color-border)] rounded-xl py-2 hover:bg-[#f1e7d5] transition">
+                  <button className="flex-1 border border-border rounded-xl py-2 hover:bg-[#f1e7d5] transition">
                     Edit
                   </button>
 
@@ -299,26 +331,95 @@ const SellerProducts = () => {
         })}
       </div>
 
+      {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-3 mt-10">
+
+            {/* PREVIOUS */}
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((prev) => prev - 1)}
+              className="px-4 py-2 border border-border bg-card rounded-xl 
+                        disabled:opacity-40 disabled:cursor-not-allowed
+                        hover:bg-background transition"
+            >
+              ← Previous
+            </button>
+
+            {/* PAGE NUMBERS */}
+            {[...Array(totalPages)].map((_, index) => {
+              const pageNumber = index + 1;
+
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => setPage(pageNumber)}
+                  className={`w-10 h-10 rounded-xl border transition
+                    ${
+                      page === pageNumber
+                        ? "bg-primary text-white border-primary"
+                        : "bg-card border-border hover:bg-background"
+                    }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+
+            {/* NEXT */}
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((prev) => prev + 1)}
+              className="px-4 py-2 border border-border bg-card rounded-xl 
+                        disabled:opacity-40 disabled:cursor-not-allowed
+                        hover:bg-background transition"
+            >
+              Next →
+            </button>
+
+          </div>
+        )}
+
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-[var(--color-card)] w-[600px] rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
 
-            <h2 className="text-2xl font-bold mb-6">Add New Product</h2>
+          <div className="bg-card w-162.5 rounded-2xl p-8 max-h-[90vh] overflow-y-auto shadow-xl">
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <h2 className="text-2xl font-bold text-text">
+              Add New Product
+            </h2>
+
+            <p className="text-sm text-muted mt-2 mb-8">
+              Fill in the details below to add a new product to your store.
+              All fields marked with <span className="text-primary">*</span> are required.
+            </p>
+
+            {error && (
+              <div className="bg-red-100 text-red-700 border border-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
 
               {/* IMAGE UPLOAD */}
               <div>
-                <label className="block font-medium mb-2">
-                  Product Images *
+                <label className="block font-medium text-text mb-2">
+                  Product Images <span className="text-primary">*</span>
                 </label>
 
                 <div
                   onClick={() => fileInputRef.current.click()}
-                  className="border-2 border-dashed border-[var(--color-primary)] rounded-xl p-6 text-center cursor-pointer hover:bg-[#f5eee3]"
+                  className="border-2 border-dashed border-border rounded-2xl p-8 text-center cursor-pointer hover:bg-background transition"
                 >
-                  Click to upload images
+                  <p className="text-text font-medium">
+                    Click to upload images
+                  </p>
+                  <p className="text-sm text-muted mt-1">
+                    You can select multiple images (PNG, JPG, up to 5MB each)
+                  </p>
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -336,12 +437,12 @@ const SellerProducts = () => {
                         <img
                           src={img.preview}
                           alt="preview"
-                          className="w-full h-24 object-cover rounded-lg border"
+                          className="w-full h-24 object-cover rounded-xl border border-border"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full"
+                          className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full"
                         >
                           ✕
                         </button>
@@ -351,61 +452,162 @@ const SellerProducts = () => {
                 )}
               </div>
 
-              <input
-                type="text"
-                name="name"
-                placeholder="Product Name *"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full border rounded-xl px-4 py-2"
-              />
+              {/* PRODUCT NAME */}
+              <div>
+                <label className="block font-medium text-text mb-2">
+                  Product Name <span className="text-primary">*</span>
+                </label>
 
-              <div className="flex gap-4">
                 <input
                   type="text"
-                  name="category"
-                  placeholder="Category *"
-                  value={formData.category}
+                  name="name"
+                  placeholder="e.g., Handmade Ceramic Mug"
+                  value={formData.name}
                   onChange={handleChange}
-                  className="flex-1 border rounded-xl px-4 py-2"
+                  maxLength={120}
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
                 />
-                <input
-                  type="number"
-                  name="price"
-                  placeholder="Price *"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="flex-1 border rounded-xl px-4 py-2"
-                />
+
+                <div className="flex justify-between text-xs mt-2 text-muted">
+                  <span>Choose a clear, descriptive name</span>
+                  <span>{formData.name.length}/120</span>
+                </div>
               </div>
 
-              <textarea
-                name="description"
-                placeholder="Description *"
-                value={formData.description}
-                onChange={handleChange}
-                rows="4"
-                className="w-full border rounded-xl px-4 py-2"
-              />
+              {/* CATEGORY + PRICE */}
+              <div className="grid grid-cols-2 gap-4">
 
-              <div className="flex justify-between pt-4">
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Category <span className="text-primary">*</span>
+                  </label>
+
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                  >
+                    <option value="">Select Category *</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Price (₹) <span className="text-primary">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 text-muted">₹</span>
+                    <input
+                      type="number"
+                      name="price"
+                      placeholder="0.00"
+                      value={formData.price}
+                      onChange={handleChange}
+                      className="w-full border border-border bg-background rounded-xl pl-8 pr-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              {/* CONDITION + STOCK (Optional) */}
+              <div className="grid grid-cols-2 gap-4">
+
+                {/* CONDITION */}
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Condition
+                  </label>
+
+                  <select
+                    name="condition"
+                    value={formData.condition || ""}
+                    onChange={handleChange}
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                  >
+                    <option value="">Select Condition</option>
+                    <option value="New">New</option>
+                    <option value="Used">Used</option>
+                  </select>
+
+                  <p className="text-xs text-muted mt-2">
+                    Only applicable for physical products
+                  </p>
+                </div>
+
+                {/* STOCK */}
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Stock Quantity
+                  </label>
+
+                  <input
+                    type="number"
+                    name="stock"
+                    placeholder="Default: 1"
+                    value={formData.stock || ""}
+                    onChange={handleChange}
+                    min="1"
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                  />
+
+                  <p className="text-xs text-muted mt-2">
+                    Leave empty to set default stock (1)
+                  </p>
+                </div>
+
+              </div>
+
+              {/* DESCRIPTION */}
+              <div>
+                <label className="block font-medium text-text mb-2">
+                  Description <span className="text-primary">*</span>
+                </label>
+
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="5"
+                  placeholder="Describe your product in detail. Include materials, dimensions, care instructions, etc."
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text resize-none"
+                />
+
+                <p className="text-xs text-muted mt-2">
+                  Detailed descriptions help customers make informed decisions
+                </p>
+              </div>
+
+              {/* FOOTER BUTTONS */}
+              <div className="border-t border-border pt-6 flex gap-4">
+
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 border rounded-xl"
+                  className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-xl"
+                  disabled={loading}
+                  className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Add Product
+                  {loading ? "Adding Product..." : "Add Product"}
                 </button>
+
               </div>
 
             </form>
+
           </div>
         </div>
       )}
