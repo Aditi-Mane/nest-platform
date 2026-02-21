@@ -275,23 +275,23 @@ export default function CartPage() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-2xl font-semibold text-text">
-              Your cart is empty 🛒
-            </p>
-
-            <p className="text-sm text-muted mt-2">
-              Looks like you haven’t added anything yet.
-            </p>
-
-            <Button
-              variant="ghost"
-              className="mt-2 text-primary text-lg hover:bg-transparent hover:underline"
-              onClick={() => navigate("/marketplace/buyer")}
-            >
-              Explore the marketplace →
-            </Button>
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          {/* Cart icon inside circle like Wishlist */}
+          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 text-blue-500 text-3xl">
+            🛒
           </div>
+          <p className="text-2xl font-semibold text-text">Your cart is empty</p>
+          <p className="text-sm text-muted text-center">
+            Looks like you haven’t added anything yet.
+          </p>
+          <Button
+            variant="ghost"
+            className="mt-2 text-primary text-lg hover:bg-transparent hover:underline"
+            onClick={() => navigate("/marketplace/buyer")}
+          >
+            Explore the marketplace →
+          </Button>
+        </div>
         )}
       </div>
     </div>

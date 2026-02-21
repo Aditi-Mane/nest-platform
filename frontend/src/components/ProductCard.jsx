@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 
 import { ImageWithFallback } from "./figma/ImageWithFallBack";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"; 
+
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 
@@ -40,7 +40,7 @@ import { Badge } from "./ui/badge";
             className={`h-6 w-6 transition-all duration-300 ${
               isFavourite
                 ? "fill-red-500 text-red-500"
-                : "text-white"
+                : "text-rose-600"
             }`}
           />
         </button>

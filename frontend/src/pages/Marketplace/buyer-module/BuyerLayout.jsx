@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from '../../../api/axios.js'
 import { Outlet, useLocation, useNavigate} from "react-router-dom"
 import {Navigation} from "../../../components/Navigation";
 
@@ -10,20 +10,17 @@ export default function BuyerLayout(){
   const [products, setProducts] = useState([]);
   const [favourites, setFavourites] = useState([]);
   
-  // Load wishlist from DB
+  
   useEffect(() => {
+    async function fetchProducts() {
+    const res = await api.get("/products");
+    setProducts(res.data.products);
+  }
     async function fetchWishlist() {
       try {
-        const userId = localStorage.getItem("userId");
-
-        // 🛑 STOP if no userId
-        if (!userId) {
-          console.log("No userId found in localStorage");
-          return;
-        }
-
-        const res = await axios.get(
-          `http://localhost:5000/api/wishlist/${userId}`
+        
+        const res = await api.get(
+          `/wishlist`
         );
 
         setFavourites(res.data.map((product) => product._id));
@@ -32,24 +29,17 @@ export default function BuyerLayout(){
         console.error("Error fetching wishlist:", error);
       }
     }
-
+    fetchProducts();
     fetchWishlist();
   }, []);
 
   // favourite Handler
   const toggleFavourite = async (productId) => {
     try {
-      const userId = localStorage.getItem("userId");
 
-      // 🛑 Stop if no userId
-      if (!userId) {
-        console.log("No userId found, cannot update wishlist");
-        return;
-      }
-
-      const res = await axios.post(
-        "http://localhost:5000/api/wishlist/toggle",
-        { userId, productId }
+      const res = await api.post(
+        "wishlist/toggle",
+        { productId }
       );
 
       setFavourites(res.data.wishlist);
