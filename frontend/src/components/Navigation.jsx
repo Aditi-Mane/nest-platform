@@ -9,6 +9,7 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useCart } from "../context/CartContext.jsx";
 
 export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   const navItems = [
@@ -16,6 +17,8 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
     { id: "ventures", label: "Ventures", icon: Lightbulb },
     { id: "messages", label: "Messages", icon: MessageSquare },
   ];
+  const { cartItems } = useCart();
+  const cartCount = cartItems.length;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-[var(--color-background)]">
@@ -32,7 +35,7 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
             </div>
 
             <span className="text-xl font-semibold text-[var(--color-text)]">
-              Nest
+              NEST
             </span>
           </div>
 
@@ -98,9 +101,13 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
             >
               <ShoppingCart className="h-5 w-5 text-text" />
 
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white" >
-                3
-              </Badge>
+              {cartCount > 0 && (
+                <Badge
+                  className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white"
+                >
+                  {cartCount > 5 ? "5+" : cartCount}
+                </Badge>
+              )}
             </Button>
 
             {/* Profile Avatar */}

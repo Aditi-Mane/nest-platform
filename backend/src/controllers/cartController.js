@@ -9,7 +9,7 @@ export const getUserCart = async (req, res) => {
         path: "items.product",
         populate: {
           path: "createdBy", // seller reference
-          select: "name avatar university"
+          select: "name avatar collegeName"
         }
       });
 

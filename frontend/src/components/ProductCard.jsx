@@ -7,12 +7,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 
-export function ProductCard({ product, onViewDetails, isFavourite, onToggleFavourite}) {
-  const isUnavailable = product.status !== "available";
-
+ 
+    export function ProductCard({ 
+      product, 
+      onViewDetails, 
+      isFavourite, 
+      onToggleFavourite,
+      onAddToCart 
+    }) {
   if (!product) return null;
-  
-
+  const isUnavailable = product.status !== "available";
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden rounded-2xl border-border">
 
@@ -69,7 +73,7 @@ export function ProductCard({ product, onViewDetails, isFavourite, onToggleFavou
       {/* Content */}
       <CardContent className="p-4">
         {/* Category */}
-        <Badge variant="outline" className="mb-2">
+        <Badge className="bg-secondary text-white">
           {product.category}
         </Badge>
 
@@ -141,7 +145,7 @@ export function ProductCard({ product, onViewDetails, isFavourite, onToggleFavou
         onClick={(e) => {
           e.stopPropagation();
           if (!isUnavailable) {
-            console.log("Added to cart:", product._id);
+            onAddToCart(product._id);
           }
         }}
       >

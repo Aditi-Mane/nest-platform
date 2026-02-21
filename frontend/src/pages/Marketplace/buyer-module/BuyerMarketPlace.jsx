@@ -1,11 +1,15 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { SlidersHorizontal, Grid3x3, List, ShoppingBag } from "lucide-react";
+
 import { ProductCard } from "@/components/ProductCard.jsx";
 import { CategoryFilter } from "@/components/CategoryFilter.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { useNavigate, useOutletContext } from "react-router-dom";
+
+import api from "../../../api/axios.js"; 
+
 import {
   Select,
   SelectContent,
@@ -14,6 +18,9 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import axios from "axios";
+import {useCart} from "../../../context/CartContext.jsx";
 
 export default function Buying() {
   const navigate = useNavigate();
@@ -32,6 +39,7 @@ export default function Buying() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  const {addToCart} =useCart();
   //Search filters logic
   //Why useMemo?
   // -> So filtering doesn’t run unnecessarily on every render.
@@ -48,25 +56,6 @@ export default function Buying() {
       return matchesCategory && matchesSearch;
     });
   }, [products, searchQuery, selectedCategory]);
-
-  //Fetch products from backend
-  // useEffect(() => {
-  //   async function fetchProducts() {
-  //     try {
-  //       const res = await axios.get("http://localhost:5000/api/products");
-
-  //       // backend should return { products: [...] }
-  //       setProducts(res.data.products);
-  //     } catch (error) {
-  //       console.error("Error fetching products:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   fetchProducts();
-  // }, []);
-
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,6 +149,7 @@ export default function Buying() {
                 onViewDetails={() =>
                   navigate(`/marketplace/buyer/product/${product._id}`)
                 }
+                onAddToCart={addToCart}
               />
             ))}
           </div>

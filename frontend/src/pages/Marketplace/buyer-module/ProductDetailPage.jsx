@@ -36,8 +36,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import {useEffect, useState} from "react";
 import axios from "axios";
 import api from "../../../api/axios.js";
+import { useCart } from "../../../context/CartContext.jsx";
 
 export default function ProductDetailPage() {
+  const { addToCart } = useCart();
   const { id } = useParams();
   const navigate = useNavigate(); 
   const[product, setProduct]=useState(null);
@@ -55,8 +57,8 @@ export default function ProductDetailPage() {
   useEffect(()=>{
     async function fetchProduct(){
       try{
-        const res=await axios.get(
-        `http://localhost:5000/api/products/${id}`);
+        const res=await api.get(
+        `/products/${id}`);
         setProduct(res.data.product);
 
         //set image default -> the first one
@@ -71,8 +73,8 @@ export default function ProductDetailPage() {
     }
     async function fetchReviews(){
         try{
-          const res=await axios.get(
-              `http://localhost:5000/api/reviews/product/${id}`
+          const res=await api.get(
+              `/reviews/product/${id}`
           );
           setReviews(res.data.reviews);
         }catch(err){
@@ -97,38 +99,22 @@ export default function ProductDetailPage() {
 
 
   // handle add to cart
-  const handleAddToCart =async()=>{
-    try{
-       const token = localStorage.getItem("token");
-
-          await api.post(
-            "http://localhost:5000/api/cart/add",
-            { productId: product._id, quantity: 1 },
-            {
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          );
-        navigate("/marketplace/buyer/cart");
-  
-    }catch(error){
-        console.log("Add to cart error: ", error);
-    }
+  const handleAddToCart = async () => {
+  try {
+    await addToCart(product._id);
+    navigate("/marketplace/buyer/cart");
+  } catch (error) {
+    console.log(error);
   }
-  //handle buy now (temporary)
-  const handleBuyNow=async()=>{
-    try{
-        await api.post(
-          "/cart/add",
-          {productId: product._id},
-         
-        );
-        navigate("/marketplace/buyer/checkout");
-  
-    }catch(error){
-        console.log( error);
-    }
-  };
-
+};
+  const handleBuyNow = async () => {
+  try {
+    await addToCart(product._id);
+    navigate("/marketplace/buyer/checkout");
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   const similarItems = [
     {
@@ -216,7 +202,9 @@ if (!product) {
                 <h1 className="text-3xl mb-2 font-bold">{product.name}</h1>
 
                 <div className="flex gap-2 mb-4">
-                  <Badge variant="secondary">{product.category}</Badge>
+                 <Badge className="bg-secondary text-white">
+                {product.category}
+                </Badge>
                   <Badge variant="outline">{product.condition}</Badge>
                 </div>
 
@@ -383,18 +371,18 @@ if (!product) {
                    {/* Purchase Card */}
             <Card className="rounded-2xl top-24  self-start">
               <CardContent className="p-6 space-y-4">
-            <Button
-              className={`w-full rounded-xl gap-2 transition-all duration-300 shadow-sm
-                    ${
-                      isUnavailable
-                        ? "bg-muted text-muted-foreground cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5"
-                    }
-                  `}
-                  size="lg"
-                  disabled={isUnavailable}
-                  onClick={handleAddToCart}
-                >
+          <Button
+                    className={`w-full rounded-xl gap-2 transition-all duration-300
+                      ${
+                        isUnavailable
+                          ? "bg-muted text-background cursor-not-allowed"
+                          : "bg-secondary text-background hover:bg-secondary focus:bg-secondary active:bg-secondary shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                      }
+                    `}
+                    size="lg"
+                    disabled={isUnavailable}
+                    onClick={handleAddToCart}
+                  >
                   <ShoppingCart className="h-5 w-5" />
                   {product?.status === "sold"
                     ? "Sold Out"
@@ -404,17 +392,17 @@ if (!product) {
                 </Button>
 
                 <Button
-                  className={`w-full rounded-xl transition-all duration-300 shadow-md
-                    ${
-                      isUnavailable
-                        ? "bg-muted text-muted-foreground cursor-not-allowed"
-                        : "bg-linear-to-r from-emerald-500 via-green-500 to-teal-500 text-white hover:from-emerald-600 hover:via-green-600 hover:to-teal-600 hover:shadow-xl hover:-translate-y-1"
-                    }
-                  `}
-                  size="lg"
-                  disabled={isUnavailable}
-                  onClick={handleBuyNow}
-                >
+                    className={`w-full rounded-xl transition-all duration-300 shadow-md
+                      ${
+                        isUnavailable
+                          ? "bg-muted text-background cursor-not-allowed"
+                          : "bg-primary text-background hover:brightness-95 hover:shadow-lg hover:-translate-y-1"
+                      }
+                    `}
+                    size="lg"
+                    disabled={isUnavailable}
+                    onClick={handleBuyNow}
+                  >
                   {product?.status === "sold"
                     ? "Unavailable"
                     : product?.status === "reserved"
