@@ -3,9 +3,9 @@ import User from "../models/User.js";
 //Get wishlist
 export const getWishlist = async (req, res) => {
   try {
-    console.log("Fetching wishlist for:", req.params.userId);
-
-    const user = await User.findById(req.params.userId).populate("wishlist");
+   
+    const userId =req.user._id;
+    const user = await User.findById(userId).populate("wishlist");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -21,10 +21,8 @@ export const getWishlist = async (req, res) => {
 // Toggle wishlist item
 export const toggleWishlist = async (req, res) => {
   try {
-    const { userId, productId } = req.body;
-
-    console.log("Toggle request:", userId, productId);
-
+    const userId =req.user._id;
+    const { productId } =req.body;
     const user = await User.findById(userId);
 
     if (!user) {
