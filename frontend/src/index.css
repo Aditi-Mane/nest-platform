@@ -9,3 +9,23 @@
   --color-card: #FBF6ED;         /* soft warm card */
   --color-border: #CFAE8E;       /* dried leaf tan */
 }
+
+/* AUTUMN THEMED SCROLLBAR */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
