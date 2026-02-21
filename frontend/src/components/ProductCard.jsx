@@ -1,12 +1,15 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent, CardFooter } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"; 
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Badge } from "./ui/badge";
 
-export function ProductCard({ product, onViewDetails }) {
+ 
+
+export function ProductCard({ product, onViewDetails, isFavourite, onToggleFavourite}) {
   if (!product) return null;
+  
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden rounded-2xl border-border">
@@ -18,7 +21,22 @@ export function ProductCard({ product, onViewDetails }) {
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-
+        {/* Favourite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavourite();
+          }}
+          className="absolute top-3 right-3 transition-transform hover:scale-110"
+        >
+          <Heart
+            className={`h-6 w-6 transition-all duration-300 ${
+              isFavourite
+                ? "fill-red-500 text-red-500"
+                : "text-white"
+            }`}
+          />
+        </button>
         {/* Condition Badge */}
         {product.condition && (
           <Badge

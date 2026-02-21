@@ -3,14 +3,14 @@ import {
   Lightbulb,
   MessageSquare,
   ShoppingCart,
+  Heart,
 } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
-export function Navigation({ currentPage, onNavigate }) {
-  // Buyer Navigation Items
+export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   const navItems = [
     { id: "marketplace", label: "Home", icon: Home },
     { id: "ventures", label: "Ventures", icon: Lightbulb },
@@ -21,7 +21,7 @@ export function Navigation({ currentPage, onNavigate }) {
     <nav className="sticky top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-background)]">
       <div className="max-w-7xl mx-auto px-2 py-0">
         <div className="flex items-center justify-between h-16">
-          
+
           {/* Logo */}
           <div
             className="flex items-center gap-2 cursor-pointer"
@@ -48,10 +48,13 @@ export function Navigation({ currentPage, onNavigate }) {
                   variant="ghost"
                   onClick={() => onNavigate(item.id)}
                   className={`gap-4 rounded-xl px-4 transition-all
-                    ${isActive
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-card)]"}
-                  `} size={undefined}                >
+                    ${
+                      isActive
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-card)]"
+                    }
+                  `}
+                >
                   <Icon className="h-4 w-4" />
                   {item.label}
                 </Button>
@@ -61,17 +64,41 @@ export function Navigation({ currentPage, onNavigate }) {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            
-            {/* Cart Button */}
+
+            {/* Wishlist */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative rounded-xl hover:bg-card"
+              className="relative rounded-xl hover:bg-[var(--color-card)] transition-all duration-200"
+              onClick={() => onNavigate("wishlist")}
+            >
+              <Heart
+                className={`h-5 w-5 transition-all duration-300 ${
+                  currentPage === "wishlist"
+                    ? "text-[var(--color-primary)] fill-[var(--color-primary)]"
+                    : wishlistCount > 0
+                    ? "text-red-500 fill-red-500"
+                    : "text-[var(--color-text)]"
+                }`}
+              />
+
+              {wishlistCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white">
+                  {wishlistCount}
+                </Badge>
+              )}
+            </Button>
+
+            {/* Cart */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative rounded-xl hover:bg-[var(--color-card)] transition-all duration-200"
               onClick={() => onNavigate("cart")}
             >
-              <ShoppingCart className="h-5 w-5 text-text" />
+              <ShoppingCart className="h-5 w-5 text-[var(--color-text)]" />
 
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white" variant={undefined}>
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white">
                 3
               </Badge>
             </Button>
@@ -81,11 +108,12 @@ export function Navigation({ currentPage, onNavigate }) {
               className="cursor-pointer border border-[var(--color-border)]"
               onClick={() => onNavigate("profile")}
             >
-              <AvatarImage src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=100" className={undefined} />
+              <AvatarImage src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=100" />
               <AvatarFallback className="bg-[var(--color-card)] text-[var(--color-text)]">
                 JD
               </AvatarFallback>
             </Avatar>
+
           </div>
         </div>
       </div>

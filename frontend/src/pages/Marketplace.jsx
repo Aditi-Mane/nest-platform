@@ -10,10 +10,10 @@ import SellerAI from "./marketplace/seller-module/SellerAI.jsx";
 import SellerMessages from "./marketplace/seller-module/SellerMessages.jsx";
 import SellerPayments from "./marketplace/seller-module/SellerPayments.jsx";
 import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx";
-import BuyerMarketPlace from "./marketplace/buyer-module/BuyerMarketPlace.jsx";
+import BuyerMarketPlace from "./Marketplace/buyer-module/BuyerMarketPlace.jsx";
 import CartPage from "./marketplace/buyer-module/CartPage.jsx"
-import BuyerLayout from "./marketplace/buyer-module/BuyerLayout.jsx"
-
+import BuyerLayout from "./Marketplace/buyer-module/BuyerLayout.jsx"
+import Wishlist from "./Marketplace/buyer-module/Wishlist.jsx";
 function Marketplace() {
   return (
     <Routes>
@@ -31,9 +31,10 @@ function Marketplace() {
       </Route>
 
       <Route path="buyer" element={<BuyerLayout />}>
-       <Route index element={<BuyerMarketPlace/>}/>
-       <Route path="product/:id" element={<ProductDetailPage />} />
-       <Route path="cart" element={<CartPage/>}/>
+        <Route index element={<BuyerMarketPlace />} />
+        <Route path="product/:id" element={<ProductDetailPage />} />
+        <Route path="cart" element={<CartPage />} />
+        <Route path="wishlist" element={<Wishlist />} />
       </Route>
     </Routes>
   )

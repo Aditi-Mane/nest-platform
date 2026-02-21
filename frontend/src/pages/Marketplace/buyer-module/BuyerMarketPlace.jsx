@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/ProductCard.jsx";
 import { CategoryFilter } from "@/components/CategoryFilter.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -12,8 +13,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 export default function Buying() {
   const navigate = useNavigate();
@@ -21,29 +20,32 @@ export default function Buying() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
 
-  //Backend products state
-  const [products, setProducts] = useState([]);
+  const { products, favourites, toggleFavourite } = useOutletContext();
 
-  //Loading state
-  const [loading, setLoading] = useState(true);
+  // //Backend products state
+  // const [products, setProducts] = useState([]);
+
+  // //Loading state
+  // const [loading, setLoading] = useState(true);
 
   //Fetch products from backend
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await axios.get("http://localhost:5000/api/products");
+  // useEffect(() => {
+  //   async function fetchProducts() {
+  //     try {
+  //       const res = await axios.get("http://localhost:5000/api/products");
 
-        // backend should return { products: [...] }
-        setProducts(res.data.products);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  //       // backend should return { products: [...] }
+  //       setProducts(res.data.products);
+  //     } catch (error) {
+  //       console.error("Error fetching products:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
 
-    fetchProducts();
-  }, []);
+  //   fetchProducts();
+  // }, []);
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -105,7 +107,7 @@ export default function Buying() {
         </div>
 
         {/*Products Section */}
-        {loading ? (
+        {products.length === 0 ?  (
           <p className="text-center text-lg">Loading products...</p>
         ) : products.length === 0 ? (
           <p className="text-center text-lg text-gray-500">
@@ -122,7 +124,9 @@ export default function Buying() {
             {products.map((product) => (
               <ProductCard
                 key={product._id}
-                product={product}  
+                product={product}
+                isFavourite={favourites.includes(product._id)}
+                onToggleFavourite={() => toggleFavourite(product._id)}
                 onViewDetails={() =>
                   navigate(`/marketplace/buyer/product/${product._id}`)
                 }
