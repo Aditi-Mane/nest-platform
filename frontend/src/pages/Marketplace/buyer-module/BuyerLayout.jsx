@@ -13,9 +13,13 @@ export default function BuyerLayout(){
   
   useEffect(() => {
     async function fetchProducts() {
-    const res = await api.get("/products");
-    setProducts(res.data.products);
-  }
+      try {
+        const res = await api.get("/products");
+        setProducts(res.data.products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    }
     async function fetchWishlist() {
       try {
         
@@ -59,6 +63,8 @@ export default function BuyerLayout(){
       ? "messages"
       : location.pathname.includes("ventures")
       ? "ventures"
+      : location.pathname.includes("ProfilePage")
+      ? "ProfilePage"
       : "marketplace";
 
   return(
@@ -73,7 +79,7 @@ export default function BuyerLayout(){
           if (page === "cart") navigate("/marketplace/buyer/cart");
           if (page === "messages") navigate("/messages");
           if (page === "ventures") navigate("/ventures");
-          if (page === "profile") navigate("/profile");
+          if (page === "profile") navigate("/marketplace/buyer/ProfilePage");
         }}
       />
 

@@ -14,6 +14,7 @@ import BuyerMarketPlace from "./Marketplace/buyer-module/BuyerMarketPlace.jsx";
 import CartPage from "./Marketplace/buyer-module/CartPage.jsx";
 import BuyerLayout from "./Marketplace/buyer-module/BuyerLayout.jsx"
 import Wishlist from "./Marketplace/buyer-module/Wishlist.jsx";
+import { ProfilePage } from "./Marketplace/buyer-module/ProfilePage.jsx";
 function Marketplace() {
   return (
     <Routes>
@@ -35,6 +36,7 @@ function Marketplace() {
         <Route path="product/:id" element={<ProductDetailPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="wishlist" element={<Wishlist />} />
+        <Route path="ProfilePage" element={<ProfilePage/>} />
       </Route>
     </Routes>
   )
