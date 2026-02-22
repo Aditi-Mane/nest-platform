@@ -97,7 +97,7 @@ export const createProduct = async (req, res) => {
       category,
       price: Number(price),
       images: imageUrls,
-      condition: condition || "Good",
+      condition: condition,
       stock: stock ? Number(stock) : 1,
       location: user.storeLocation || "",
       createdBy: user._id,
@@ -133,14 +133,28 @@ export const getMyProducts = async (req, res) =>{
       createdBy: sellerId,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       products,
       total,
       totalPages: Math.ceil(total / limit),
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
+      message: "Server error while fetching seller products",
+    });
+  }
+}
+
+//edit product info
+export const editProductInfo = async (req, res) =>{
+  try {
+    
+    return res.status(200).json({
+      message: "Product has been edited successfully"
+    })
+  } catch (error) {
+    return res.status(500).json({
       message: "Server error while fetching seller products",
     });
   }
