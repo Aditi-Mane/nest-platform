@@ -7,7 +7,7 @@ export const createConversation =async (req,res)=>{
     const {productId} =req.body;
 
     //1. Check product exists
-    const product = await Product.findOne(productId);
+    const product = await Product.findById(productId);
 
     if(!product) {
       return res.status(404).json({ message: "Product not found" });
