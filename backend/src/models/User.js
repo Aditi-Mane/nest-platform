@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    //profile update 
+    university: { type: String },
+    major: { type: String },
+    year: { type: String },
+    bio: { type: String },
+    avatar: { type: String },
+
     // Cached average rating (updated via Review post-save hook after taking review)
     rating: {
       type: Number,
