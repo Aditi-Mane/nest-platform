@@ -3,21 +3,21 @@ import mongoose from "mongoose";
 const orderSchema = new mongoose.Schema(
   {
     // Which product was purchased
-    product: {
+    productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
     },
 
     // Buyer (who placed the order)
-    buyer: {
+    buyerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
     // Seller (owner of the product)
-    seller: {
+    sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -30,7 +30,7 @@ const orderSchema = new mongoose.Schema(
       min: 1,
     },
 
-    //  Total amount paid
+    //  Total amount paid(optional)
     totalPrice: {
       type: Number,
       required: true,
@@ -43,11 +43,18 @@ const orderSchema = new mongoose.Schema(
       default: "upi",
     },
 
-    //  Order status
     status: {
       type: String,
-      enum: ["pending", "paid", "cancelled"],
-      default: "paid",
+      enum: ["otp_generated", "completed"],
+      default: "otp_generated",
+    },
+
+    otp: {
+      type: String,
+    },
+
+    otpExpiry: {
+      type: Date,
     },
   },
   { timestamps: true }

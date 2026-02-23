@@ -13,6 +13,7 @@ import sellerRoutes from "./routes/sellerRoutes.js"
 import reviewRoutes from "./routes/reviewRoutes.js"
 import cartRoutes from "./routes/cartRoutes.js"
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import conversationRoutes from "./routes/conversationRoutes.js";
 
 connectDB()
 
@@ -34,6 +35,7 @@ app.use("/api/seller", sellerRoutes)
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/conversations", conversationRoutes);
 
 
 app.get("/",(req, res)=>{
