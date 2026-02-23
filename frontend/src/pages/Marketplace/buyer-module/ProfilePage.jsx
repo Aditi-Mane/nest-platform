@@ -18,28 +18,10 @@ import {
 } from "@/components/ui/tabs";
 
 export function ProfilePage() {
-  const [user, setUser] = useState();
+
+  const { user, setUser, loading } = useUser();
   const [purchaseHistory, setPurchaseHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
-
-  // ================= FETCH PROFILE =================
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const res = await api.get("/users/me");
-        console.log("User from /me FULL:", JSON.stringify(res.data, null, 2));
-        setUser(res.data);
-      } catch (error) {
-        console.error("Failed to load profile", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProfile();
-    
-  }, []);
 
   // ================= SAVE PROFILE =================
   const handleSave = async () => {
@@ -64,7 +46,6 @@ export function ProfilePage() {
       const res = await api.put("/users/update-avatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log("Updated user:", res.data);
       setUser(res.data);
     } catch (error) {
       console.error("Image upload failed", error);
@@ -99,9 +80,13 @@ export function ProfilePage() {
             {/* Avatar */}
             <div className="flex flex-col items-center gap-3">
               <Avatar className="h-28 w-28">
-                <img
-                  src={`http://localhost:5000${user.avatar}`}
-                  className="h-28 w-28 rounded-full object-cover"
+                <AvatarImage
+                  src={
+                    user?.avatar
+                      ? `http://localhost:5000${user.avatar}`
+                      : undefined
+                  }
+                  className="object-cover"
                 />
                 <AvatarFallback className="text-2xl font-bold">
                   {user.name?.charAt(0).toUpperCase()}
@@ -199,12 +184,16 @@ export function ProfilePage() {
 
             {/* Avatar Upload */}
             <div className="flex flex-col items-center gap-4 mb-6">
-              <Avatar className="h-24 w-24">
-                <img
-                  src={`http://localhost:5000${user.avatar}`}
-                  className="h-28 w-28 rounded-full object-cover"
+              <Avatar className="h-28 w-28">
+                <AvatarImage
+                  src={
+                    user?.avatar
+                      ? `http://localhost:5000${user.avatar}`
+                      : undefined
+                  }
+                  className="object-cover"
                 />
-                <AvatarFallback className="text-xl font-bold">
+                <AvatarFallback className="text-2xl font-bold">
                   {user.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
