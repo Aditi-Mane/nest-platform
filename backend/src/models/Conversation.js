@@ -31,6 +31,10 @@ const conversationSchema =new mongoose.Schema(
       default: "",
     },
 
+    unreadCountSeller: {
+      type: Number,
+      default: 0
+    },
 
   },
   { timestamps: true }

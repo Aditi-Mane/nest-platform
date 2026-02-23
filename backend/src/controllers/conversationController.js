@@ -50,9 +50,9 @@ export const createConversation =async (req,res)=>{
 export const getSellerConversations = async(req, res) =>{
   try {
     const sellerId = req.user._id;
-    
+
     const conversations = await Conversation.find({sellerId})
-    .populate("productId", "name, images, price, status")
+    .populate("productId", "name images price status")
     .populate("buyerId", "name avatar")
     .sort({updatedAt: -1})
 
