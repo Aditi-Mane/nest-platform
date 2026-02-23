@@ -45,3 +45,24 @@ export const createConversation =async (req,res)=>{
   }
 
 };
+
+//to get all seller conversations
+export const getSellerConversations = async(req, res) =>{
+  try {
+    const sellerId = req.user._id;
+    
+    const conversations = await Conversation.find({sellerId})
+    .populate("productId", "name, images, price, status")
+    .populate("buyerId", "name avatar")
+    .sort({updatedAt: -1})
+
+    return res.status(200).json({
+      message: "Fetched seller conversations successfully",
+      conversations
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error whilst fetching conversations"
+    })
+  }
+}

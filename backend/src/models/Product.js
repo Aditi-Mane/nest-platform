@@ -28,17 +28,6 @@ const productSchema = new mongoose.Schema(
         "Other"
       ],
       required: true,
-      enum: [
-          "Study Material",
-          "Electronics",
-          "Fashion",
-          "Hostel Essentials",
-          "Handmade",
-          "Sports",
-          "Services",
-          "Other"
-      ],
-
     },
 
     price: {
