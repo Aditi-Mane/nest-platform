@@ -247,3 +247,37 @@ export const editProduct = async (req, res) => {
     });
   }
 };
+
+// DELETE PRODUCT
+export const deleteProduct = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    //ensure seller owns this product
+    if (product.createdBy.toString() !== sellerId.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to delete this product",
+      });
+    }
+
+    await product.deleteOne();
+
+    return res.status(200).json({
+      message: "Product deleted successfully",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error while deleting product",
+    });
+  }
+};

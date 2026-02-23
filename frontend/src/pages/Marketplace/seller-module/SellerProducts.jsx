@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import api from "../../../api/axios.js";
 import { TfiPencilAlt } from "react-icons/tfi";
+import { RiDeleteBin6Line } from "react-icons/ri";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
@@ -63,6 +64,27 @@ const SellerProducts = () => {
   // FORM CHANGE
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/seller/delete/${id}`);
+
+      //remove from UI instantly
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+        "Failed to delete product"
+      );
+    }
   };
 
   // IMAGE UPLOAD (fixed properly)
@@ -385,10 +407,14 @@ const SellerProducts = () => {
 
                   <button
                     onClick={() => handleDelete(p._id)}
-                    className="ml-3 text-red-500 hover:text-red-700"
-                  >
-                    🗑
-                  </button>
+                    className="ml-3 flex items-center justify-center 
+                      w-10 h-10 rounded-xl
+                      border border-border
+                    
+                      text-muted
+                      hover:text-red-700
+                      transition duration-200"
+                  ><RiDeleteBin6Line size={20}/></button>
 
                 </div>
 
