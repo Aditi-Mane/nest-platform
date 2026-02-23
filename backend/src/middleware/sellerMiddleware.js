@@ -1,6 +1,6 @@
-const checkSeller = (req, res, next) => {
+export const checkSeller = (req, res, next) => {
   if (
-    req.user.role !== "seller" ||
+    req.user.activeRole !== "seller" ||
     req.user.sellerStatus !== "active"
   ) {
     return res.status(403).json({
