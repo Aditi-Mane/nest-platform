@@ -159,38 +159,51 @@ const SellerChatDetails = () => {
         <h3 style={{ marginBottom: "20px" }}>Conversation</h3>
 
         {/* ✅ Dynamic Messages */}
-        {messages.map((msg) => {
-          const isSeller = msg.senderId?._id === currentUser?._id;
+        <div className="flex flex-col gap-3">
+          {messages.map((msg) => {
+            const senderId =
+              typeof msg.senderId === "object"
+                ? msg.senderId._id
+                : msg.senderId;
 
-          const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+            const isMe =
+              String(senderId) === String(currentUser?._id);
 
-          return (
-            <div
-            key={msg._id}
-            className={`flex flex-col mb-3 ${
-              isSeller ? "items-end" : "items-start"
-            }`}
-          >
-            <div
-              className={`px-4 py-3 rounded-xl max-w-xs ${
-                isSeller
-                  ? "bg-primary text-white"
-                  : "bg-background border border-border"
-              }`}
-            >
-              {msg.text}
-            </div>
+            const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
 
-            <span className="text-xs text-muted mt-1">
-              {formattedTime}
-            </span>
-          </div>
-            
-          );
-        })}
+            return (
+              <div
+                key={msg._id}
+                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+              >
+                <div className="flex flex-col max-w-xs">
+                  {/* Bubble */}
+                  <div
+                    className={`px-4 py-3 rounded-2xl ${
+                      isMe
+                        ? "bg-primary text-white rounded-br-md"
+                        : "bg-card border border-border text-text rounded-bl-md"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+
+                  {/* Time */}
+                  <span
+                    className={`text-xs mt-1 text-muted ${
+                      isMe ? "text-right" : "text-left"
+                    }`}
+                  >
+                    {formattedTime}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         {/* Message Input */}
         <div
