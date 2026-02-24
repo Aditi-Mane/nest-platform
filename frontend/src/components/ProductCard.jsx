@@ -1,13 +1,22 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent, CardFooter } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"; 
 
-export function ProductCard({ product, onViewDetails }) {
+import { ImageWithFallback } from "./figma/ImageWithFallBack";
+
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Badge } from "./ui/badge";
+
+ 
+    export function ProductCard({ 
+      product, 
+      onViewDetails, 
+      isFavourite, 
+      onToggleFavourite,
+      onAddToCart 
+    }) {
   if (!product) return null;
-
+  const isUnavailable = product.status !== "available";
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden rounded-2xl border-border">
 
@@ -19,13 +28,44 @@ export function ProductCard({ product, onViewDetails }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
+        {/* Favourite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavourite();
+          }}
+          className="absolute top-3 right-3 transition-transform hover:scale-110"
+        >
+          <Heart
+            className={`h-6 w-6 transition-all duration-300 ${
+              isFavourite
+                ? "fill-red-500 text-red-500"
+                : "text-rose-600"
+            }`}
+          />
+        </button>
+    
         {/* Condition Badge */}
         {product.condition && (
           <Badge
-            variant="secondary"
             className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm"
           >
             {product.condition}
+          </Badge>
+        )}
+
+        {/* Status Badge */}
+        {product.status !== "available" && (
+          <Badge
+            className={`absolute top-3 right-3
+              ${
+                product?.status === "sold"
+                  ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-sm"
+                  : "bg-linear-to-r from-amber-400 to-orange-500 text-white shadow-sm"
+              }
+            `}
+          >
+            {product?.status?.toUpperCase()}
           </Badge>
         )}
       </div>
@@ -33,7 +73,7 @@ export function ProductCard({ product, onViewDetails }) {
       {/* Content */}
       <CardContent className="p-4">
         {/* Category */}
-        <Badge variant="outline" className="mb-2">
+        <Badge className="bg-secondary text-white">
           {product.category}
         </Badge>
 
@@ -93,16 +133,29 @@ export function ProductCard({ product, onViewDetails }) {
         </Button>
 
         {/* Add to Cart */}
-        <Button
-          className="flex-1 rounded-xl bg-primary text-white hover:bg-primary/90 gap-2"
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log("Added to cart:", product._id);
-          }}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Add
-        </Button>
+      <Button
+        disabled={isUnavailable}
+        className={`flex-1 rounded-xl gap-2
+          ${
+            isUnavailable
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-primary text-white hover:bg-primary/90"
+          }
+        `}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isUnavailable) {
+            onAddToCart(product._id);
+          }
+        }}
+      >
+        <ShoppingCart className="h-4 w-4" />
+        {product.status === "sold"
+          ? "Sold"
+          : product.status === "reserved"
+          ? "Reserved"
+          : "Add"}
+      </Button> 
       </CardFooter>
     </Card>
   );

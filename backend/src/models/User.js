@@ -52,6 +52,14 @@ const userSchema = new mongoose.Schema(
       max: 5,
     },
 
+    // User Wishlist (stores product references)
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product", // reference to Product model
+      }
+    ],
+
     // Cached total review count (updated via Review post-save hook after taking review)
     reviewCount: {
       type: Number,

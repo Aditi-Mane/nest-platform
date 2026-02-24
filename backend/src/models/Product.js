@@ -28,7 +28,6 @@ const productSchema = new mongoose.Schema(
         "Other"
       ],
       required: true,
-      trim: true,
     },
 
     price: {

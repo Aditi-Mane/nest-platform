@@ -263,22 +263,20 @@
 
 // export default SellerSidebar;
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { GoPackage } from "react-icons/go";
 import { MdOutlineAnalytics } from "react-icons/md";
 import { TbPackage } from "react-icons/tb";
-import { LuClipboardList } from "react-icons/lu";
-import { DiGoogleAnalytics } from "react-icons/di";
 import { LiaRobotSolid } from "react-icons/lia";
 import { MdAnalytics } from "react-icons/md";
 import { FaRegSmile } from "react-icons/fa";
-import { LuMessageSquare } from "react-icons/lu";
 import { MdOutlinePayment } from "react-icons/md";
 import { IoSettingsSharp } from "react-icons/io5";
-import { GoPeople } from "react-icons/go";
 import { MdReplay } from "react-icons/md";
 import { SiGoogleanalytics } from "react-icons/si";
+import { IoPeople } from "react-icons/io5";
+
 
 import { useEffect } from "react";
 import api from "../api/axios.js";
@@ -345,7 +343,7 @@ const SellerSidebar = () => {
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <GoPeople size={20}/>
+            <IoPeople size={20}/>
             Buyer Requests
           </NavLink>
 
