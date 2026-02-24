@@ -19,6 +19,10 @@ const SellerMessages = () => {
   const themeColor = "#c05621";
   const softBorder = "#c8a97e";
 
+  const activeNegotiations = 1;
+  const reservedProducts = 1;
+  const completedSales = 1;
+
   const navigate = useNavigate();
 
   const requests = [
@@ -27,7 +31,7 @@ const SellerMessages = () => {
       product: "Handmade Ceramic Mug",
       buyer: "Emma Wilson",
       time: "5 min ago",
-      price: "$24.99",
+      price: "24.99",
       message: "Can you do $22? I'll pick it up today.",
       status: "Negotiating",
     },
@@ -36,7 +40,7 @@ const SellerMessages = () => {
       product: "Organic Cotton Tote Bag",
       buyer: "James Chen",
       time: "1 hour ago",
-      price: "$18.50",
+      price: "18.50",
       message: "Great! When can we meet?",
       status: "Deal Confirmed",
     },
@@ -45,7 +49,7 @@ const SellerMessages = () => {
       product: "Vintage Notebook Set",
       buyer: "Sarah Miller",
       time: "30 min ago",
-      price: "$32.00",
+      price: "32.00",
       message: "Hi! Is this still available?",
       status: "Initiated",
     },
@@ -105,62 +109,41 @@ const SellerMessages = () => {
   });
 
   return (
-    <div
-      style={{
-        padding: "40px",
-        background: "#e8dccb",
-        minHeight: "100vh",
-        fontFamily: "Segoe UI, sans-serif",
-      }}
-    >
-      <h1 style={{ fontSize: "28px", marginBottom: "6px" }}>
-        All Buyer Requests
-      </h1>
+    <div className="bg-background min-h-screen p-6">
+      <div mb-6>
+        <h1 className="text-3xl font-bold">All Buyer Requests</h1>
+          <p className="text-muted">
+            Complete list of all conversations and negotiations with potential buyers
+          </p>
+      </div>
 
-      <p style={{ color: "#6b6b6b", fontSize: "15px", marginBottom: "28px" }}>
-         Complete list of all conversations and negotiations with potential buyers
-      </p>
+      {/* STATS CARDS */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 mt-6">
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Active Negotiations</p>
+          <h2 className="text-2xl font-bold">{activeNegotiations}</h2>
+          <p className="text-sm text-muted">Ongoing conversations</p>
+        </div>
 
-       {/* ✅ SUMMARY CARDS (ADDED BACK ABOVE SEARCH) */}
-       <div style={{ display: "flex", gap: "20px", marginBottom: "30px" }}>
-         {[
-          { title: "ACTIVE NEGOTIATIONS", count: 1, color: "#3b82f6" },
-          { title: "RESERVED PRODUCTS", count: 1, color: "#facc15" },
-          { title: "COMPLETED SALES", count: 1, color: "#22c55e" },
-        ].map((card, index) => (
-          <div
-            key={index}
-            style={{
-              flex: 1,
-              background: "#f2eadf",
-              padding: "6px",
-              borderRadius: "18px",
-              borderLeft: `5px solid ${card.color}`,
-              boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-            }}
-          >
-            <p style={{ fontSize: "14px", color: "#555" }}>{card.title}</p>
-            <h2 style={{ fontSize: "32px", margin: "10px 0" }}>
-              {card.count}
-            </h2>
-            <span style={{ fontSize: "14px", color: "#777" }}>
-              {card.title === "ACTIVE NEGOTIATIONS"
-                ? "Ongoing conversations"
-                : card.title === "RESERVED PRODUCTS"
-                ? "Awaiting delivery"
-                : "Successfully delivered"}
-            </span>
-          </div>
-        ))}
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Reserved Products</p>
+          <h2 className="text-2xl font-bold">{reservedProducts}</h2>
+          <p className="text-sm text-muted">Awaiting delivery</p>
+        </div>
+
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Completed Sales</p>
+          <h2 className="text-2xl font-bold">{completedSales}</h2>
+          <p className="text-sm text-muted">Successfully delivered</p>
+        </div>
       </div>
 
       {/* SEARCH + STATUS (UNCHANGED) */}
       <div style={{ display: "flex", gap: "14px", marginBottom: "25px" }}>
-        <div
+        <div className="bg-card"
           style={{
             display: "flex",
             alignItems: "center",
-            background: "#f4eee6",
             padding: "10px 14px",
             borderRadius: "12px",
             flex: 1,
@@ -188,7 +171,7 @@ const SellerMessages = () => {
           />
         </div>
 
-        <select
+        <select className="bg-card"
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value)}
           onFocus={() => setActiveField("status")}
@@ -200,7 +183,6 @@ const SellerMessages = () => {
               activeField === "status"
                 ? `1.5px solid ${themeColor}`
                 : `1.5px solid ${softBorder}`,
-            background: "#f4eee6",
             fontSize: "14px",
             minWidth: "170px",
             cursor: "pointer",
@@ -218,17 +200,15 @@ const SellerMessages = () => {
           <option>Initiated</option>
           <option>Negotiating</option>
           <option>Deal Confirmed</option>
-          <option>Completed</option>
           <option>Cancelled</option>
         </select>
       </div>
 
       {/* CARDS */}
       {filteredRequests.map((item) => (
-        <div
+        <div className="bg-card"
           key={item.id}
           style={{
-            background: "#f2eadf",
             padding: "20px 25px",
             borderRadius: "16px",
             marginBottom: "14px",
@@ -260,11 +240,25 @@ const SellerMessages = () => {
               >
                 {item.product[0]}
               </div>
+              
+            <div className="flex flex-col gap-1">
+              {/* Product + Price row */}
+              <div className="flex items-center gap-3">
+                <h3 className="text-base font-medium">
+                  {item.product}
+                </h3>
 
-              <h3 style={{ margin: 0, fontSize: "16px" }}>
-                {item.product}
-              </h3>
+                <p className="text-sm font-semibold" style={{ color: themeColor }}>
+                  Price: ₹{item.price}
+                </p>
+              </div>
+
+              {/* Buyer */}
+              <p className="text-sm text-muted">
+                Buyer: {item.buyer}
+              </p>
             </div>
+          </div>
 
             {/* RIGHT SIDE */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -318,20 +312,6 @@ const SellerMessages = () => {
                 paddingTop: "12px",
               }}
             >
-              <p style={{ fontSize: "14px", color: "#777", margin: "6px 0" }}>
-                Buyer: {item.buyer}
-              </p>
-
-              <p
-                style={{
-                  fontWeight: 600,
-                  fontSize: "15px",
-                  color: themeColor,
-                  margin: "6px 0",
-                }}
-              >
-                Price: {item.price}
-              </p>
 
               <p
                 style={{
@@ -341,7 +321,7 @@ const SellerMessages = () => {
                   margin: 0,
                 }}
               >
-                "{item.message}"
+                Last Message: "{item.message}"
               </p>
             </div>
           )}
