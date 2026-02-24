@@ -1,9 +1,15 @@
-import { useState, useEffect } from "react";
-import { SlidersHorizontal, Grid3x3, List } from "lucide-react";
+
+import { useState, useEffect, useMemo } from "react";
+import { SlidersHorizontal, Grid3x3, List, ShoppingBag } from "lucide-react";
+
 import { ProductCard } from "@/components/ProductCard.jsx";
 import { CategoryFilter } from "@/components/CategoryFilter.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
+import { useNavigate, useOutletContext } from "react-router-dom";
+
+import api from "../../../api/axios.js"; 
+
 import {
   Select,
   SelectContent,
@@ -12,38 +18,44 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
+
 import axios from "axios";
+import {useCart} from "../../../context/CartContext.jsx";
 
 export default function Buying() {
   const navigate = useNavigate();
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  
   const [viewMode, setViewMode] = useState("grid");
 
-  //Backend products state
-  const [products, setProducts] = useState([]);
+  const { products, favourites, toggleFavourite } = useOutletContext();
 
-  //Loading state
-  const [loading, setLoading] = useState(true);
+  // //Backend products state
+  // const [products, setProducts] = useState([]);
 
-  //Fetch products from backend
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await axios.get("http://localhost:5000/api/products");
+  // //Loading state
+  // const [loading, setLoading] = useState(true);
 
-        // backend should return { products: [...] }
-        setProducts(res.data.products);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
-    fetchProducts();
-  }, []);
+  const {addToCart} =useCart();
+  //Search filters logic
+  //Why useMemo?
+  // -> So filtering doesn’t run unnecessarily on every render.
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory =
+        selectedCategory === "all" ||
+        product.category === selectedCategory;
+
+      const matchesSearch =
+        product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, searchQuery, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,19 +63,28 @@ export default function Buying() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl mb-2 font-semi-bold">Marketplace</h1>
+         <div className="flex items-center gap-3">
+            <ShoppingBag className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold">Marketplace</h1>
+          </div>
           <p className="text-muted-foreground">
             Discover books, notes, and handcrafts from fellow students
           </p>
         </div>
 
-        {/* Filters (still hardcoded UI only) */}
+        {/* Search Filters */}
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-8">
           <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            <Input
-              placeholder="Search for books, notes, handcrafts..."
-              className="rounded-xl"
-            />
+          <Input
+          placeholder="Search for books, notes, handcrafts..."
+          value={searchQuery}
+          onChange={(e)=> setSearchQuery(e.target.value)}
+          className="rounded-xl border border-border 
+                    focus:border-secondary 
+                    focus:outline-none 
+                    focus-visible:ring-2 
+                    focus-visible:ring-secondary"
+          />
 
             <div className="flex gap-2">
               <Select defaultValue="recent">
@@ -105,9 +126,9 @@ export default function Buying() {
         </div>
 
         {/*Products Section */}
-        {loading ? (
+        {products.length === 0 ?  (
           <p className="text-center text-lg">Loading products...</p>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <p className="text-center text-lg text-gray-500">
             No products available right now.
           </p>
@@ -119,13 +140,16 @@ export default function Buying() {
                 : "space-y-4"
             }
           >
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard
                 key={product._id}
-                product={product}  
+                product={product}
+                isFavourite={favourites.includes(product._id)}
+                onToggleFavourite={() => toggleFavourite(product._id)}
                 onViewDetails={() =>
                   navigate(`/marketplace/buyer/product/${product._id}`)
                 }
+                onAddToCart={addToCart}
               />
             ))}
           </div>
