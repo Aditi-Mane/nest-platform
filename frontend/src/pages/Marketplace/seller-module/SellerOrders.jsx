@@ -37,48 +37,32 @@ const SellerOrderHistory = () => {
   const pending = orders.filter(o => o.status !== "completed").length;
 
   return (
-    <div className="bg-[#e6dcc8] min-h-screen px-8 py-5">
+    <div className="bg-background min-h-screen p-6">
 
       {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-[36px] font-semibold text-[#1f1f1f]">
-          Order History
-        </h1>
-        <p className="text-[#5f6b57] mt-2 text-[16px]">
-          View all your completed and ongoing orders
-        </p>
+      <div mb-6>
+        <h1 className="text-3xl font-bold">Order History</h1>
+          <p className="text-muted">
+            View all your completed and ongoing orders
+          </p>
       </div>
 
       {/* STATS CARDS */}
-      <div className="grid grid-cols-3 gap-2 mb-8">
-
-        <div className="bg-[#f2eadf] rounded-[18px] p-4 border-l-[6px] border-[#4f6f2f] shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
-          <p className="text-[13px] tracking-wide text-[#4f6f2f] font-medium">
-            TOTAL ORDERS
-          </p>
-          <h2 className="text-[38px] font-semibold mt-2 text-[#1f1f1f]">
-            {total}
-          </h2>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 mt-6">
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Total Orders</p>
+          <h2 className="text-2xl font-bold">{total}</h2>
         </div>
 
-        <div className="bg-[#f2eadf] rounded-[18px] p-4 border-l-[6px] border-[#4f6f2f] shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
-          <p className="text-[13px] tracking-wide text-[#4f6f2f] font-medium">
-            COMPLETED
-          </p>
-          <h2 className="text-[38px] font-semibold mt-2 text-[#4f6f2f]">
-            {completed}
-          </h2>
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Completed</p>
+          <h2 className="text-2xl font-bold">{completed}</h2>
         </div>
 
-        <div className="bg-[#f2eadf] rounded-[18px] p-4 border-l-[6px] border-[#e0a100] shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
-          <p className="text-[13px] tracking-wide text-[#e0a100] font-medium">
-            PENDING DELIVERY
-          </p>
-          <h2 className="text-[38px] font-semibold mt-2 text-[#e0a100]">
-            {pending}
-          </h2>
+        <div className="bg-card border border-border p-4 rounded-xl">
+          <p className="text-sm text-muted">Pending Delivery</p>
+          <h2 className="text-2xl font-bold">{pending}</h2>
         </div>
-
       </div>
 
       {/* ORDER CARDS */}
@@ -86,7 +70,7 @@ const SellerOrderHistory = () => {
         {orders.map(order => (
           <div
             key={order.id}
-            className="bg-[#f2eadf] rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+            className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
 
             {/* LEFT SIDE */}
