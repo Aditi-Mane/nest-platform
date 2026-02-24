@@ -428,7 +428,7 @@
 
 // export default SellerChatDetails;
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useLocation,
   useNavigate,

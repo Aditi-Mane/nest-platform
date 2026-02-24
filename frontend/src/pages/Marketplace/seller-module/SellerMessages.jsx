@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MessageSquare,
   CheckCircle,
@@ -9,12 +9,16 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import api from "../../../api/axios.js";
 
 const SellerMessages = () => {
-  const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeField, setActiveField] = useState(null);
   const [openCard, setOpenCard] = useState(null); // 👈 for dropdown toggle
+
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const themeColor = "#c05621";
   const softBorder = "#c8a97e";
@@ -25,36 +29,20 @@ const SellerMessages = () => {
 
   const navigate = useNavigate();
 
-  const requests = [
-    {
-      id: 1,
-      product: "Handmade Ceramic Mug",
-      buyer: "Emma Wilson",
-      time: "5 min ago",
-      price: "24.99",
-      message: "Can you do $22? I'll pick it up today.",
-      status: "Negotiating",
-    },
-    {
-      id: 2,
-      product: "Organic Cotton Tote Bag",
-      buyer: "James Chen",
-      time: "1 hour ago",
-      price: "18.50",
-      message: "Great! When can we meet?",
-      status: "Deal Confirmed",
-    },
-    {
-      id: 3,
-      product: "Vintage Notebook Set",
-      buyer: "Sarah Miller",
-      time: "30 min ago",
-      price: "32.00",
-      message: "Hi! Is this still available?",
-      status: "Initiated",
-    },
-  ];
-
+  useEffect(() => {
+    const fetchSellerConversations = async() =>{
+      try {
+        const res = await api.get("/conversations/seller");
+        setRequests(res.data.conversations);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSellerConversations();
+  }, [])
+  
   const statusStyle = (status) => {
     const base = {
       display: "inline-flex",
@@ -67,30 +55,36 @@ const SellerMessages = () => {
     };
 
     switch (status) {
-      case "Negotiating":
+      case "negotiating":
         return { ...base, background: "#e6f0ff", color: "#2563eb" };
-      case "Deal Confirmed":
-      case "Completed":
+      case "deal_confirmed":
         return { ...base, background: "#e6f7ed", color: "#15803d" };
-      case "Initiated":
+      case "initiated":
         return { ...base, background: "#fff6db", color: "#a16207" };
-      case "Cancelled":
+      case "cancelled":
         return { ...base, background: "#fde8e8", color: "#b91c1c" };
       default:
         return base;
     }
   };
 
+  const formatStatus = (status) => {
+    if (!status) return "";
+
+    return status
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   const renderIcon = (status) => {
     switch (status) {
-      case "Negotiating":
+      case "negotiating":
         return <MessageSquare size={14} />;
-      case "Deal Confirmed":
-      case "Completed":
+      case "deal_confirmed":
         return <CheckCircle size={14} />;
-      case "Initiated":
+      case "initiated":
         return <Clock size={14} />;
-      case "Cancelled":
+      case "cancelled":
         return <XCircle size={14} />;
       default:
         return null;
@@ -98,19 +92,22 @@ const SellerMessages = () => {
   };
 
   const filteredRequests = requests.filter((item) => {
+    const productName = item.productId?.name || "";
+    const buyerName = item.buyerId?.name || "";
+
     const matchStatus =
-      selectedStatus === "All Status" || item.status === selectedStatus;
+      selectedStatus === "all" || item.status === selectedStatus;
 
     const matchSearch =
-      item.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.buyer.toLowerCase().includes(searchTerm.toLowerCase());
+      productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      buyerName.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchStatus && matchSearch;
   });
 
   return (
     <div className="bg-background min-h-screen p-6">
-      <div mb-6>
+      <div className="mb-6">
         <h1 className="text-3xl font-bold">All Buyer Requests</h1>
           <p className="text-muted">
             Complete list of all conversations and negotiations with potential buyers
@@ -196,18 +193,18 @@ const SellerMessages = () => {
             backgroundPosition: "right 14px center",
           }}
         >
-          <option>All Status</option>
-          <option>Initiated</option>
-          <option>Negotiating</option>
-          <option>Deal Confirmed</option>
-          <option>Cancelled</option>
+          <option value="all">All Status</option>
+          <option value="initiated">Initiated</option>
+          <option value="negotiating">Negotiating</option>
+          <option value="deal_confirmed">Deal Confirmed</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
       {/* CARDS */}
       {filteredRequests.map((item) => (
         <div className="bg-card"
-          key={item.id}
+          key={item._id}
           style={{
             padding: "20px 25px",
             borderRadius: "16px",
@@ -238,24 +235,24 @@ const SellerMessages = () => {
                   fontSize: "18px",
                 }}
               >
-                {item.product[0]}
+                {item.productId?.name?.[0]}
               </div>
               
             <div className="flex flex-col gap-1">
               {/* Product + Price row */}
               <div className="flex items-center gap-3">
                 <h3 className="text-base font-medium">
-                  {item.product}
+                  {item.productId?.name}
                 </h3>
 
                 <p className="text-sm font-semibold" style={{ color: themeColor }}>
-                  Price: ₹{item.price}
+                  Price: ₹{item.productId?.price}
                 </p>
               </div>
 
               {/* Buyer */}
               <p className="text-sm text-muted">
-                Buyer: {item.buyer}
+                Buyer: {item.buyerId?.name}
               </p>
             </div>
           </div>
@@ -263,12 +260,12 @@ const SellerMessages = () => {
             {/* RIGHT SIDE */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span style={statusStyle(item.status)}>
-                {renderIcon(item.status)} {item.status}
+                {renderIcon(item.status)} {formatStatus(item.status)}
               </span>
 
               <button
                 onClick={() =>
-                  navigate(`/marketplace/seller/messages/${item.id}`, {
+                  navigate(`/marketplace/seller/messages/${item._id}`, {
                     state: item,
                   })
                 }
@@ -290,11 +287,11 @@ const SellerMessages = () => {
 
               <div
                 onClick={() =>
-                  setOpenCard(openCard === item.id ? null : item.id)
+                  setOpenCard(openCard === item._id ? null : item._id)
                 }
                 style={{ cursor: "pointer" }}
               >
-                {openCard === item.id ? (
+                {openCard === item._id ? (
                   <ChevronUp size={18} />
                 ) : (
                   <ChevronDown size={18} />
@@ -304,7 +301,7 @@ const SellerMessages = () => {
           </div>
 
           {/* DROPDOWN DETAILS */}
-          {openCard === item.id && (
+          {openCard === item._id && (
             <div
               style={{
                 marginTop: "14px",
@@ -321,7 +318,7 @@ const SellerMessages = () => {
                   margin: 0,
                 }}
               >
-                Last Message: "{item.message}"
+                Last Message: "{item.lastMessage}"
               </p>
             </div>
           )}
