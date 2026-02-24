@@ -19,7 +19,7 @@ export const sendMessage = async(req, res) =>{
 
     return res.status(201).json({
       message: "Message sent successfully",
-      message
+      data: message
     })
   } catch (error) {
     console.log(error);
@@ -35,7 +35,7 @@ export const getMessages = async(req, res) =>{
     const { conversationId } = req.params;
     
     const messages = await Message.find({ conversationId })
-    .populate("senderId", "name")
+    .populate("senderId", "_id name")
     .sort({createdAt: 1})
 
     return res.status(200).json({

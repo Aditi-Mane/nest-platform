@@ -20,8 +20,8 @@ const SellerMessages = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const themeColor = "#c05621";
-  const softBorder = "#c8a97e";
+  const themeColor = "var(--color-primary)";
+  const softBorder = "var(--color-border)";
 
   const activeNegotiations = 1;
   const reservedProducts = 1;

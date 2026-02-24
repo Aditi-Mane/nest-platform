@@ -34,7 +34,7 @@ function Marketplace() {
         <Route path="sales-prediction" element={<SellerPrediction />} />
         <Route path="sentiment" element={<SellerSentiment />} />
         <Route path="messages" element={<SellerMessages />} />
-        <Route path="messages/:id" element={<SellerChatDetails />} />
+        <Route path="messages/:conversationId" element={<SellerChatDetails />} />
         <Route path="payments" element={<SellerPayments />} />
         <Route path="settings" element={<SellerSettings />} />
       </Route>
