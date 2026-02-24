@@ -97,7 +97,7 @@ export const createProduct = async (req, res) => {
       category,
       price: Number(price),
       images: imageUrls,
-      condition: condition || "Good",
+      condition: condition,
       stock: stock ? Number(stock) : 1,
       location: user.storeLocation || "",
       createdBy: user._id,
@@ -133,15 +133,151 @@ export const getMyProducts = async (req, res) =>{
       createdBy: sellerId,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       products,
       total,
       totalPages: Math.ceil(total / limit),
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       message: "Server error while fetching seller products",
     });
   }
 }
+
+//edit product info
+export const editProduct = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const productId = req.params.id;
+
+    const {
+      name,
+      description,
+      category,
+      price,
+      stock,
+      condition,
+      existingImages
+    } = req.body;
+
+    //find product
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found"
+      });
+    }
+
+    //ownership check
+    if (product.createdBy.toString() !== sellerId.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to edit this product"
+      });
+    }
+
+    //prevent editing sold products
+    if (product.status === "sold") {
+      return res.status(400).json({
+        message: "Cannot edit a sold product"
+      });
+    }
+
+    //update basic fields
+    if (name) product.name = name.trim();
+    if (description) product.description = description.trim();
+    if (category) product.category = category;
+    if (price && Number(price) > 0)
+      product.price = Number(price);
+    if (stock !== undefined && Number(stock) >= 0)
+      product.stock = Number(stock);
+    if (condition) product.condition = condition;
+
+    //image Handling
+
+    let updatedImages = [];
+
+    //handle existing images (remaining ones)
+    if (existingImages) {
+      let parsedExisting = existingImages;
+
+      if (!Array.isArray(parsedExisting)) {
+        parsedExisting = [parsedExisting];
+      }
+
+      updatedImages = parsedExisting.map((url) => ({ url }));
+    }
+
+    //handle newly uploaded images
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map((file) => ({
+        url: `${req.protocol}://${req.get("host")}/${file.path.replace(/\\/g, "/")}`
+      }));
+
+      updatedImages = [...updatedImages, ...newImages];
+    }
+
+    //if no image changes sent → keep old images
+    if (!existingImages && (!req.files || req.files.length === 0)) {
+      updatedImages = product.images;
+    }
+
+    //ensure at least one image remains
+    if (!updatedImages || updatedImages.length === 0) {
+      return res.status(400).json({
+        message: "At least one product image is required"
+      });
+    }
+
+    product.images = updatedImages;
+
+    await product.save();
+
+    return res.status(200).json({
+      message: "Product updated successfully",
+      product
+    });
+
+  } catch (error) {
+    console.error("EDIT PRODUCT ERROR:", error);
+    return res.status(500).json({
+      message: "Server error while updating product"
+    });
+  }
+};
+
+// DELETE PRODUCT
+export const deleteProduct = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    //ensure seller owns this product
+    if (product.createdBy.toString() !== sellerId.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to delete this product",
+      });
+    }
+
+    await product.deleteOne();
+
+    return res.status(200).json({
+      message: "Product deleted successfully",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error while deleting product",
+    });
+  }
+};

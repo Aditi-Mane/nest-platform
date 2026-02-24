@@ -1,12 +1,16 @@
 
 import { useState, useRef, useEffect } from "react";
 import api from "../../../api/axios.js";
-
+import { TfiPencilAlt } from "react-icons/tfi";
+import { RiDeleteBin6Line } from "react-icons/ri";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
   const [products, setProducts] = useState([]);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [existingImages, setExistingImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -17,12 +21,12 @@ const SellerProducts = () => {
   const categories = [
     "Study Material",
     "Electronics",
-    "Hostel Essentials",
     "Fashion",
+    "Hostel Essentials",
     "Handmade",
+    "Sports",
     "Services",
-    "Startup Resources",
-    "Sports"
+    "Other"
   ];
 
   const [formData, setFormData] = useState({
@@ -62,6 +66,27 @@ const SellerProducts = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/seller/delete/${id}`);
+
+      //remove from UI instantly
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+        "Failed to delete product"
+      );
+    }
+  };
+
   // IMAGE UPLOAD (fixed properly)
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -86,6 +111,27 @@ const SellerProducts = () => {
     setFormData({ ...formData, images: updated });
   };
 
+  const handleRemoveExistingImage = (index) => {
+    const updated = existingImages.filter((_, i) => i !== index);
+    setExistingImages(updated);
+  };
+
+  const handleEdit = (product) => {
+    setError("");
+    setEditingProduct(product);
+    setExistingImages(product.images || []);
+    setFormData({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      description: product.description,
+      condition: product.condition || "",
+      stock: product.stock || "",
+      images: [],
+    });
+    setShowEditModal(true);
+  };
+
   // CLEAN MEMORY
   useEffect(() => {
     return () => {
@@ -99,23 +145,27 @@ const SellerProducts = () => {
     e.preventDefault();
     setError("");
 
-    if (
-      !formData.name ||
-      !formData.description ||
-      !formData.category ||
-      !formData.price
-    ) {
+    if (!formData.name || !formData.description || !formData.category || !formData.price) {
       setError("Please fill all required fields.");
-      return;
-    }
-
-    if (formData.images.length === 0) {
-      setError("At least one product image is required.");
       return;
     }
 
     if (Number(formData.price) <= 0) {
       setError("Price must be greater than 0.");
+      return;
+    }
+
+    if (!editingProduct && formData.images.length === 0) {
+      setError("At least one product image is required.");
+      return;
+    }
+
+    if (
+      editingProduct &&
+      existingImages.length === 0 &&
+      formData.images.length === 0
+    ) {
+      setError("At least one product image is required.");
       return;
     }
 
@@ -128,29 +178,54 @@ const SellerProducts = () => {
       form.append("description", formData.description.trim());
       form.append("category", formData.category);
       form.append("price", Number(formData.price));
+      form.append("stock", formData.stock ? Number(formData.stock) : 1);
 
       if (formData.condition) {
         form.append("condition", formData.condition);
       }
 
-      form.append("stock", formData.stock ? Number(formData.stock) : 1);
+      if (editingProduct) {
+        existingImages.forEach((img) => {
+          form.append("existingImages", img.url);
+        });
+      }
 
       formData.images.forEach((img) => {
         form.append("images", img.file);
       });
 
-      const { data } = await api.post(
-        "/seller/create",
-        form,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      let response;
 
-      setProducts((prev) => [data.product, ...prev]);
+      if (editingProduct) {
+        response = await api.put(
+          `/seller/edit/${editingProduct._id}`,
+          form,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+      } else {
+        response = await api.post(
+          "/seller/create",
+          form,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+      }
+
+      const updatedProduct = response.data.product;
+
+      if (editingProduct) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p._id === updatedProduct._id ? updatedProduct : p
+          )
+        );
+      } else {
+        setProducts((prev) => [updatedProduct, ...prev]);
+      }
+
+      setEditingProduct(null);
+      setExistingImages([]);
       setShowModal(false);
+      setShowEditModal(false);
 
       setFormData({
         name: "",
@@ -165,13 +240,12 @@ const SellerProducts = () => {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        "Something went wrong while creating product."
+        "Something went wrong while saving product."
       );
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="p-6 text-text">
 
@@ -197,7 +271,21 @@ const SellerProducts = () => {
         </div>
 
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingProduct(null);
+            setExistingImages([]);
+            setFormData({
+              name: "",
+              category: "",
+              price: "",
+              description: "",
+              images: [],
+              condition: "",
+              stock: "",
+            });
+            setError("");
+            setShowModal(true);
+          }}
           className="bg-primary text-white px-5 py-2 rounded-lg shadow"
         >
           + Add Product
@@ -232,20 +320,21 @@ const SellerProducts = () => {
 
           return (
             <div
-              key={p.id}
+              key={p._id}
               className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition"
             >
               {/* IMAGE */}
              
-                <div className="h-44 bg-[#efe6d6] overflow-hidden rounded-t-2xl group cursor-pointer">
-                  {p.images?.length > 0 ? (
+                {/* IMAGE */}
+                <div className="h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
+                  {p.images && p.images.length > 0 ? (
                     <img
                       src={p.images[0].url}
                       alt={p.name}
-                      className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-sm text-muted">No Image</span>
+                    <span className="text-muted">No Image</span>
                   )}
                 </div>
 
@@ -312,16 +401,20 @@ const SellerProducts = () => {
                 {/* ACTIONS */}
                 <div className="flex items-center justify-between mt-5">
 
-                  <button className="flex-1 border border-border rounded-xl py-2 hover:bg-[#f1e7d5] transition">
-                    Edit
+                  <button onClick={() => handleEdit(p)} className="flex-1 border border-border rounded-xl py-2 hover:bg-[#f1e7d5] transition">
+                    <span className="flex gap-2 justify-center items-center text-muted"><TfiPencilAlt size={20}/>Edit</span>
                   </button>
 
                   <button
-                    onClick={() => handleDelete(p.id)}
-                    className="ml-3 text-red-500 hover:text-red-700"
-                  >
-                    🗑
-                  </button>
+                    onClick={() => handleDelete(p._id)}
+                    className="ml-3 flex items-center justify-center 
+                      w-10 h-10 rounded-xl
+                      border border-border
+                    
+                      text-muted
+                      hover:text-red-700
+                      transition duration-200"
+                  ><RiDeleteBin6Line size={20}/></button>
 
                 </div>
 
@@ -390,7 +483,7 @@ const SellerProducts = () => {
               Add New Product
             </h2>
 
-            <p className="text-sm text-muted mt-2 mb-8">
+            <p className="text-sm text-muted mt-2 mb-4">
               Fill in the details below to add a new product to your store.
               All fields marked with <span className="text-primary">*</span> are required.
             </p>
@@ -538,7 +631,7 @@ const SellerProducts = () => {
                   </select>
 
                   <p className="text-xs text-muted mt-2">
-                    Only applicable for physical products
+                    Choose New/Used condition or leave empty
                   </p>
                 </div>
 
@@ -602,6 +695,250 @@ const SellerProducts = () => {
                   className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Adding Product..." : "Add Product"}
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+          <div className="bg-card w-162.5 rounded-2xl p-8 max-h-[90vh] overflow-y-auto shadow-xl">
+
+            <h2 className="text-2xl font-bold text-text mb-4">
+              Edit product details
+            </h2>
+
+            {error && (
+              <div className="bg-red-100 text-red-700 border border-red-300 rounded-xl px-4 py-3 mb-6 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* IMAGE UPLOAD */}
+              <div>
+                <label className="block font-medium text-text mb-2">
+                  Product Images <span className="text-primary">*</span>
+                </label>
+
+                <div
+                  onClick={() => fileInputRef.current.click()}
+                  className="border-2 border-dashed border-border rounded-2xl p-8 text-center cursor-pointer hover:bg-background transition"
+                >
+                  <p className="text-text font-medium">
+                    Click to upload images
+                  </p>
+                  <p className="text-sm text-muted mt-1">
+                    You can select multiple images (PNG, JPG, up to 5MB each)
+                  </p>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/png, image/jpeg"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
+
+                {existingImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-4 mt-4">
+
+                  {/* Existing Images */}
+                  {existingImages.map((img, index) => (
+                    <div key={img.url} className="relative">
+                      <img
+                        src={img.url}
+                        alt="existing"
+                        className="w-full h-24 object-cover rounded-xl border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingImage(index)}
+                        className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Newly Uploaded Images */}
+                  {formData.images.map((img, index) => (
+                    <div key={img.preview} className="relative">
+                      <img
+                        src={img.preview}
+                        alt="new"
+                        className="w-full h-24 object-cover rounded-xl border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                </div>
+                )}
+              </div>
+
+              {/* PRODUCT NAME */}
+              <div>
+                <label className="block font-medium text-text mb-2">
+                  Product Name <span className="text-primary">*</span>
+                </label>
+
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="e.g., Handmade Ceramic Mug"
+                  value={formData.name}
+                  onChange={handleChange}
+                  maxLength={120}
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                />
+
+                <div className="flex justify-between text-xs mt-2 text-muted">
+                  <span>Choose a clear, descriptive name</span>
+                  <span>{formData.name.length}/120</span>
+                </div>
+              </div>
+
+              {/* CATEGORY + PRICE */}
+              <div className="grid grid-cols-2 gap-4">
+
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Category <span className="text-primary">*</span>
+                  </label>
+
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                  >
+                    <option value="">Select Category *</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Price (₹) <span className="text-primary">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 text-muted">₹</span>
+                    <input
+                      type="number"
+                      name="price"
+                      placeholder="0.00"
+                      value={formData.price}
+                      onChange={handleChange}
+                      className="w-full border border-border bg-background rounded-xl pl-8 pr-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              {/* CONDITION + STOCK (Optional) */}
+              <div className="grid grid-cols-2 gap-4">
+
+                {/* CONDITION */}
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Condition
+                  </label>
+
+                  <select
+                    name="condition"
+                    value={formData.condition || ""}
+                    onChange={handleChange}
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                  >
+                    <option value="">Select Condition</option>
+                    <option value="New">New</option>
+                    <option value="Used">Used</option>
+                  </select>
+
+                  <p className="text-xs text-muted mt-2">
+                    Choose New/Used condition or leave empty
+                  </p>
+                </div>
+
+                {/* STOCK */}
+                <div>
+                  <label className="block font-medium text-text mb-2">
+                    Stock Quantity
+                  </label>
+
+                  <input
+                    type="number"
+                    name="stock"
+                    placeholder="Default: 1"
+                    value={formData.stock || ""}
+                    onChange={handleChange}
+                    min="1"
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text"
+                  />
+
+                  <p className="text-xs text-muted mt-2">
+                    Leave empty to set default stock (1)
+                  </p>
+                </div>
+
+              </div>
+
+              {/* DESCRIPTION */}
+              <div>
+                <label className="block font-medium text-text mb-2">
+                  Description <span className="text-primary">*</span>
+                </label>
+
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="5"
+                  placeholder="Describe your product in detail. Include materials, dimensions, care instructions, etc."
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text resize-none"
+                />
+              </div>
+
+              {/* FOOTER BUTTONS */}
+              <div className="border-t border-border pt-6 flex gap-4">
+
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Editing Product..." : "Edit Product"}
                 </button>
 
               </div>

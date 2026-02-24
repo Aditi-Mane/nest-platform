@@ -280,9 +280,24 @@ import { GoPeople } from "react-icons/go";
 import { MdReplay } from "react-icons/md";
 import { SiGoogleanalytics } from "react-icons/si";
 
+import { useEffect } from "react";
+import api from "../api/axios.js";
 
 const SellerSidebar = () => {
   const [openAI, setOpenAI] = useState(true);
+  const [user, setUser] = useState({});
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data } = await api.get("/users/me");
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const baseLink =
     "flex items-center gap-3 px-4 py-2 rounded-xl text-[15px] font-medium transition-all duration-200";
@@ -446,12 +461,12 @@ const SellerSidebar = () => {
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl">
           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
-            S
+            {user?.name?.[0]}
           </div>
           <div>
-            <p className="font-medium text-sm">Seller Name</p>
+            <p className="font-medium text-sm">{user.name}</p>
             <p className="text-xs text-muted">
-              seller@example.com
+              {user.email}
             </p>
           </div>
         </div>

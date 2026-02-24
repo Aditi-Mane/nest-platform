@@ -20,12 +20,12 @@ const productSchema = new mongoose.Schema(
       enum: [
         "Study Material",
         "Electronics",
-        "Hostel Essentials",
         "Fashion",
+        "Hostel Essentials",
         "Handmade",
+        "Sports",
         "Services",
-        "Startup Resources",
-        "Sports"
+        "Other"
       ],
       required: true,
       trim: true,
