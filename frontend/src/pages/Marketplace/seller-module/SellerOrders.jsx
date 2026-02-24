@@ -1,201 +1,147 @@
-import React, { useState } from "react";
-import {
-  FiFilter,
-  FiDownload,
-  FiSearch,
-  FiUser,
-  FiCalendar,
-  FiBox,
-} from "react-icons/fi";
+import React from "react";
+import { FiCheckCircle, FiClock, FiEye } from "react-icons/fi";
 
 const orders = [
   {
-    id: "#ORD-2024-001",
-    product: "Handmade Ceramic Mug",
-    customer: "Emma Wilson",
-    date: "Feb 10, 2026 at 2:30 PM",
-    price: 24.99,
-    payment: "Credit Card",
-    status: "delivered",
-  },
-  {
-    id: "#ORD-2024-002",
-    product: "Organic Cotton Tote Bag",
-    customer: "James Chen",
-    date: "Feb 11, 2026 at 10:15 AM",
-    price: 18.5,
-    payment: "PayPal",
-    status: "pending",
-  },
-  {
-    id: "#ORD-2024-003",
-    product: "Vintage Notebook Set",
-    customer: "Sarah Miller",
-    date: "Feb 12, 2026 at 4:45 PM",
-    price: 32,
-    payment: "Credit Card",
-    status: "shipped",
-  },
-  {
-    id: "#ORD-2024-004",
+    id: 1,
     product: "Artisan Candle Collection",
     customer: "Michael Brown",
-    date: "Feb 09, 2026 at 11:20 AM",
-    price: 45.99,
-    payment: "Apple Pay",
-    status: "delivered",
+    date: "Feb 10, 2026",
+    amount: 45.99,
+    status: "completed",
+    image: "🕯",
   },
   {
-    id: "#ORD-2024-005",
-    product: "Hand-knit Scarf",
-    customer: "Lisa Anderson",
-    date: "Feb 08, 2026 at 3:00 PM",
-    price: 28,
-    payment: "Credit Card",
-    status: "cancelled",
+    id: 2,
+    product: "Vintage Journal",
+    customer: "Sophia Lee",
+    date: "Feb 8, 2026",
+    amount: 28.0,
+    status: "completed",
+    image: "📔",
+  },
+  {
+    id: 3,
+    product: "Organic Cotton Tote Bag",
+    customer: "James Chen",
+    date: "Feb 12, 2026",
+    amount: 18.5,
+    status: "otp",
+    image: "👜",
   },
 ];
 
-const SellerOrders = () => {
-
-  // ✅ ORIGINAL LOGIC (UNCHANGED)
+const SellerOrderHistory = () => {
   const total = orders.length;
-  const pending = orders.filter(o => o.status === "pending").length;
-  const shipped = orders.filter(o => o.status === "shipped").length;
-  const delivered = orders.filter(o => o.status === "delivered").length;
-  const cancelled = orders.filter(o => o.status === "cancelled").length;
-
-  const revenue = orders
-    .filter(o => o.status !== "cancelled")
-    .reduce((sum, o) => sum + o.price, 0);
-
-  // ✅ FILTER + SEARCH STATE
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // ✅ FILTERED DATA
-  const filteredOrders = orders
-    .filter(order =>
-      activeFilter === "all" ? true : order.status === activeFilter
-    )
-    .filter(order =>
-      [order.id, order.customer, order.product]
-        .join(" ")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    );
-
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "delivered":
-        return "bg-green-100 text-green-700";
-      case "pending":
-        return "bg-orange-100 text-orange-600";
-      case "shipped":
-        return "bg-blue-100 text-blue-600";
-      case "cancelled":
-        return "bg-red-100 text-red-600";
-      default:
-        return "";
-    }
-  };
+  const completed = orders.filter(o => o.status === "completed").length;
+  const pending = orders.filter(o => o.status !== "completed").length;
 
   return (
-    <div className="p-8 text-[var(--color-text)]">
+    <div className="bg-[#e6dcc8] min-h-screen px-8 py-5">
 
       {/* HEADER */}
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
-          <p className="text-[var(--color-muted)] mt-1">
-            Manage and track all your customer orders
+      <div className="mb-8">
+        <h1 className="text-[36px] font-semibold text-[#1f1f1f]">
+          Order History
+        </h1>
+        <p className="text-[#5f6b57] mt-2 text-[16px]">
+          View all your completed and ongoing orders
+        </p>
+      </div>
+
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-3 gap-2 mb-8">
+
+        <div className="bg-[#f2eadf] rounded-[18px] p-4 border-l-[6px] border-[#4f6f2f] shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
+          <p className="text-[13px] tracking-wide text-[#4f6f2f] font-medium">
+            TOTAL ORDERS
           </p>
-          <p className="text-sm mt-2 text-[var(--color-muted)]">
-            {total} total orders • {pending} pending • Updated 1 min ago
+          <h2 className="text-[38px] font-semibold mt-2 text-[#1f1f1f]">
+            {total}
+          </h2>
+        </div>
+
+        <div className="bg-[#f2eadf] rounded-[18px] p-4 border-l-[6px] border-[#4f6f2f] shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
+          <p className="text-[13px] tracking-wide text-[#4f6f2f] font-medium">
+            COMPLETED
           </p>
+          <h2 className="text-[38px] font-semibold mt-2 text-[#4f6f2f]">
+            {completed}
+          </h2>
         </div>
 
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 border border-[var(--color-border)] px-5 py-2 rounded-xl hover:bg-[#f1e7d5] transition">
-            <FiFilter size={16} />
-            Filter
-          </button>
-          <button className="flex items-center gap-2 border border-[var(--color-border)] px-5 py-2 rounded-xl hover:bg-[#f1e7d5] transition">
-            <FiDownload size={16} />
-            Export
-          </button>
+        <div className="bg-[#f2eadf] rounded-[18px] p-4 border-l-[6px] border-[#e0a100] shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
+          <p className="text-[13px] tracking-wide text-[#e0a100] font-medium">
+            PENDING DELIVERY
+          </p>
+          <h2 className="text-[38px] font-semibold mt-2 text-[#e0a100]">
+            {pending}
+          </h2>
         </div>
-      </div>
-
-      {/* STATS CARDS WITH COLORED SHADOW */}
-      <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6 mb-6">
-
-        <StatCard title="TOTAL ORDERS" value={total} border="#c96b2c" />
-        <StatCard title="PENDING" value={pending} border="#f59e0b" />
-        <StatCard title="SHIPPED" value={shipped} border="#3b82f6" />
-        <StatCard title="DELIVERED" value={delivered} border="#4d7c0f" />
-        <StatCard title="CANCELLED" value={cancelled} border="#dc2626" />
-        <StatCard title="REVENUE" value={`$${revenue.toFixed(2)}`} border="#166534" green />
 
       </div>
 
-      {/* SEARCH BAR */}
-      <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl p-4 mb-6">
-        <div className="flex items-center gap-3">
-          <FiSearch className="text-[var(--color-muted)]" />
-          <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by order ID, customer name, or product..."
-            className="w-full bg-transparent outline-none text-sm"
-          />
-        </div>
-      </div>
-
-      {/* FILTER BUTTONS */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <FilterButton label="All" value="all" count={total} active={activeFilter} setActive={setActiveFilter} />
-        <FilterButton label="Pending" value="pending" count={pending} active={activeFilter} setActive={setActiveFilter} />
-        <FilterButton label="Shipped" value="shipped" count={shipped} active={activeFilter} setActive={setActiveFilter} />
-        <FilterButton label="Delivered" value="delivered" count={delivered} active={activeFilter} setActive={setActiveFilter} />
-        <FilterButton label="Cancelled" value="cancelled" count={cancelled} active={activeFilter} setActive={setActiveFilter} />
-      </div>
-
-      {/* ORDER LIST */}
+      {/* ORDER CARDS */}
       <div className="space-y-5">
-        {filteredOrders.map((order, index) => (
+        {orders.map(order => (
           <div
-            key={index}
-            className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl p-6 flex justify-between items-center shadow-sm"
+            key={order.id}
+            className="bg-[#f2eadf] rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="font-semibold text-lg">{order.id}</h2>
-                <span className={`text-xs px-3 py-1 rounded-full ${getStatusStyle(order.status)}`}>
-                  {order.status}
-                </span>
+
+            {/* LEFT SIDE */}
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-lg bg-[#e3d7c6] flex items-center justify-center text-xl">
+                {order.image}
               </div>
 
-              <div className="flex items-center gap-6 mt-3 text-sm text-[var(--color-muted)]">
-                <span className="flex items-center gap-2">
-                  <FiBox /> {order.product}
-                </span>
-                <span className="flex items-center gap-2">
-                  <FiUser /> {order.customer}
-                </span>
-                <span className="flex items-center gap-2">
-                  <FiCalendar /> {order.date}
-                </span>
+              <div>
+                <h2 className="text-[18px] font-semibold text-[#1f1f1f]">
+                  {order.product}
+                </h2>
+
+                <p className="mt-1 text-[#6b755f] text-[13px]">
+                  {order.customer} • {order.date}
+                </p>
               </div>
             </div>
 
-            <div className="text-right">
-              <h2 className="text-2xl font-bold text-[var(--color-primary)]">
-                ${order.price.toFixed(2)}
-              </h2>
-              <p className="text-sm text-[var(--color-muted)]">
-                {order.payment}
-              </p>
+            {/* RIGHT SIDE */}
+            <div className="flex items-start gap-8">
+
+              {/* COLUMN 1 - Amount */}
+              <div className="flex flex-col">
+                <p className="text-[#6b755f] text-[18px] font-semibold">
+                  Amount
+                </p>
+
+                <h2 className="text-[22px] font-semibold text-[#c96b2c] mt-1">
+                  ${order.amount.toFixed(2)}
+                </h2>
+              </div>
+
+              {/* COLUMN 2 - Status + Button */}
+              <div className="flex flex-col items-end">
+
+                {order.status === "completed" ? (
+                  <span className="flex items-center gap-1 bg-[#e6efdd] text-[#4f6f2f] px-2.5 py-0.5 rounded-full text-[15px] font-medium">
+                    <FiCheckCircle size={12} />
+                    Completed
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 bg-[#fff3d6] text-[#e0a100] px-2.5 py-0.5 rounded-full text-[15px] font-medium">
+                    <FiClock size={12} />
+                    OTP Generated
+                  </span>
+                )}
+
+                <button className="flex items-center gap-1 border border-[#c96b2c] px-3 py-1 rounded-md text-[15px] text-[#1f1f1f] font-medium hover:bg-[#c96b2c] hover:text-white transition mt-2">
+                  <FiEye size={12} />
+                  View Details
+                </button>
+
+              </div>
+
             </div>
           </div>
         ))}
@@ -205,49 +151,4 @@ const SellerOrders = () => {
   );
 };
 
-const StatCard = ({ title, value, border, green }) => (
-  <div
-    className="bg-[var(--color-card)] rounded-2xl p-5"
-    style={{
-      border: `1px solid ${border}`,
-      boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
-    }}
-  >
-    <p className="text-xs text-[var(--color-muted)] tracking-wide">
-      {title}
-    </p>
-    <h2 className={`text-2xl font-bold mt-2 ${green ? "text-green-600" : ""}`}>
-      {value}
-    </h2>
-  </div>
-);
-
-const FilterButton = ({ label, value, count, active, setActive }) => {
-  const isActive = active === value;
-
-  return (
-    <button
-      onClick={() => setActive(value)}
-      className={`px-6 py-2 rounded-xl flex items-center gap-2 transition
-        ${
-          isActive
-            ? "bg-[var(--color-primary)] text-white shadow"
-            : "border border-[var(--color-border)] hover:bg-[#f1e7d5]"
-        }`}
-    >
-      {label}
-      <span
-        className={`px-2 py-0.5 rounded-full text-xs
-          ${
-            isActive
-              ? "bg-white/20 text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-      >
-        {count}
-      </span>
-    </button>
-  );
-};
-
-export default SellerOrders;
+export default SellerOrderHistory;

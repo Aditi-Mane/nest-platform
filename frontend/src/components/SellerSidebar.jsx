@@ -276,6 +276,10 @@ import { FaRegSmile } from "react-icons/fa";
 import { LuMessageSquare } from "react-icons/lu";
 import { MdOutlinePayment } from "react-icons/md";
 import { IoSettingsSharp } from "react-icons/io5";
+import { GoPeople } from "react-icons/go";
+import { MdReplay } from "react-icons/md";
+import { SiGoogleanalytics } from "react-icons/si";
+
 
 const SellerSidebar = () => {
   const [openAI, setOpenAI] = useState(true);
@@ -321,13 +325,23 @@ const SellerSidebar = () => {
           </NavLink>
 
           <NavLink
+            to="/marketplace/seller/messages"
+            className={({ isActive }) =>
+              `${baseLink} ${isActive ? activeLink : normalLink}`
+            }
+          >
+            <GoPeople size={20}/>
+            Buyer Requests
+          </NavLink>
+
+          <NavLink
             to="/marketplace/seller/products"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <TbPackage size={20} />
-            Products
+            <TbPackage size={20}/>
+            My Products
           </NavLink>
 
           <NavLink
@@ -336,8 +350,8 @@ const SellerSidebar = () => {
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <LuClipboardList size={20} />
-            Orders
+            <MdReplay size={20}/>
+            Order History
           </NavLink>
 
           <NavLink
@@ -346,7 +360,7 @@ const SellerSidebar = () => {
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <DiGoogleAnalytics size={20} />
+            <SiGoogleanalytics size={20}/>
             Analytics
           </NavLink>
 
@@ -395,7 +409,7 @@ const SellerSidebar = () => {
             )}
           </div>
 
-          <NavLink
+          {/* <NavLink
             to="/marketplace/seller/messages"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
@@ -403,7 +417,7 @@ const SellerSidebar = () => {
           >
             <LuMessageSquare size={20} />
             Messages
-          </NavLink>
+          </NavLink> */}
 
           <NavLink
             to="/marketplace/seller/payments"
