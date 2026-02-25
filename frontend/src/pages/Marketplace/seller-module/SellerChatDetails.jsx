@@ -137,10 +137,28 @@ return (
           </div>
         </div>
 
-        <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-secondary/20 text-secondary capitalize">
-          {conversationInfo?.status?.replace("_", " ")}
-        </span>
+        <div className="flex items-center gap-3">
+
+          {/* Status Badge */}
+          <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-secondary/20 text-secondary capitalize">
+            {conversationInfo?.status?.replace("_", " ")}
+          </span>
+
+          {/* Actions */}
+          {conversationInfo && (
+            <>
+              <button className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition">
+                Confirm Deal
+              </button>
+
+              <button className="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-background transition">
+                Cancel Deal
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-background/50">
 
