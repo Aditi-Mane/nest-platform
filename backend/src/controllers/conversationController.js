@@ -66,3 +66,23 @@ export const getSellerConversations = async(req, res) =>{
     })
   }
 }
+
+//get info wrt a conversation
+export const getConversationInfo = async(req, res) =>{
+  try {
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId)
+    .populate("buyerId", "avatar name")
+    .populate("productId", "name price")
+
+    return res.status(200).json({
+      message: "Conversation info achieved",
+      conversation
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error whilst getting conversation info"
+    })
+  }
+}

@@ -1,24 +1,24 @@
 
 import { Routes, Route, Navigate } from "react-router-dom";
-import ProductDetailPage from "./Marketplace/buyer-module/ProductDetailPage.jsx";
+import ProductDetailPage from "./marketplace/buyer-module/ProductDetailPage.jsx";
 import SellerPanel from "./marketplace/seller-module/SellerPanel.jsx";
 import SellerDashboard from "./marketplace/seller-module/SellerDashboard.jsx";
 import SellerProducts from "./marketplace/seller-module/SellerProducts.jsx";
-import SellerOrders from "./Marketplace/seller-module/SellerOrders.jsx";
+import SellerOrders from "./marketplace/seller-module/SellerOrders.jsx";
 import SellerAnalytics from "./marketplace/seller-module/SellerAnalytics.jsx";
-import SellerMessages from "./Marketplace/seller-module/SellerMessages.jsx";
+import SellerMessages from "./marketplace/seller-module/SellerMessages.jsx";
 import SellerPayments from "./marketplace/seller-module/SellerPayments.jsx";
 import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx";
 
-import BuyerMarketPlace from "./Marketplace/buyer-module/BuyerMarketPlace.jsx";
-import CartPage from "./Marketplace/buyer-module/CartPage.jsx";
-import BuyerLayout from "./Marketplace/buyer-module/BuyerLayout.jsx"
-import Wishlist from "./Marketplace/buyer-module/Wishlist.jsx";
-import { ProfilePage } from "./Marketplace/buyer-module/ProfilePage.jsx";
+import BuyerMarketPlace from "./marketplace/buyer-module/BuyerMarketPlace.jsx";
+import CartPage from "./marketplace/buyer-module/CartPage.jsx";
+import BuyerLayout from "./marketplace/buyer-module/BuyerLayout.jsx"
+import Wishlist from "./marketplace/buyer-module/Wishlist.jsx";
+import { ProfilePage } from "./marketplace/buyer-module/ProfilePage.jsx";
 import SellerSentiment from "./marketplace/seller-module/SellerSentiment.jsx";
 import SellerPrediction from "./marketplace/seller-module/SellerPrediction.jsx";
 import SellerSettings from "./marketplace/seller-module/SellerSettings.jsx";
-import SellerChatDetails from "./Marketplace/seller-module/SellerChatDetails.jsx";
+import SellerChatDetails from "./marketplace/seller-module/SellerChatDetails.jsx";
 
 function Marketplace() {
   return (

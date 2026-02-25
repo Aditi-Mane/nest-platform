@@ -30,7 +30,23 @@ const SellerChatDetails = () => {
   const [currentUser, setCurrentUser] = useState(null);
 
   const [newMessage, setNewMessage] = useState("");
+  const [conversationInfo, setConversationInfo] = useState(null);
 
+  useEffect(() => {
+    const fetchConversationInfo = async () => {
+      try {
+        const res = await api.get(`/conversations/${conversationId}`);
+        setConversationInfo(res.data.conversation);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (conversationId) {
+      fetchConversationInfo();
+    }
+  }, [conversationId]);
+  
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -80,215 +96,125 @@ const SellerChatDetails = () => {
     }
   };
 
-  return (
-    <div className="bg-background min-h-screen p-6">
-      {/* Back */}
-      <div className="text-muted"
+return (
+  <div className="bg-background flex items-center justify-center h-full px-6 py-6">
+    <div className="w-full max-w-2xl bg-card border border-border rounded-3xl flex flex-col h-[90vh] shadow-sm">
+      {/* BACK */}
+      <div
         onClick={() => navigate(-1)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          cursor: "pointer",
-          marginBottom: "20px",
-          fontWeight: 500,
-        }}
+        className="px-5 py-3 text-muted cursor-pointer border-b border-border bg-background rounded-t-3xl text-sm flex items-center gap-2"
       >
-        <ArrowLeft size={18} /> Back to Requests
+        <ArrowLeft size={16} />
+        Back
       </div>
 
-      {/* Product Info */}
-      <div className="bg-card"
-        style={{
-          borderRadius: "18px",
-          padding: "25px",
-          borderLeft: `5px solid ${themeColor}`,
-          marginBottom: "25px",
-        }}
-      >
-        <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-          <div className="bg-background"
-            style={{
-              width: "90px",
-              height: "90px",
-              borderRadius: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "30px",
-              fontWeight: "bold",
-            }}
-          >
-            {data.product?.[0]}
+      {/* HEADER */}
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-card/60 backdrop-blur-sm">
+
+        <div className="flex items-center gap-3">
+
+          <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-sm font-semibold">
+            {conversationInfo?.buyerId?.avatar ? (
+              <img
+                src={conversationInfo.buyerId.avatar}
+                alt="avatar"
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              conversationInfo?.buyerId?.name?.[0]
+            )}
           </div>
 
-          <div>
-            <h2 style={{ margin: 0 }}>{data.product}</h2>
-            <p className="text-muted" style={{ marginTop: "8px" }}>
-              {data.buyer}
+          <div className="leading-tight">
+            <h2 className="text-sm font-semibold text-text">
+              {conversationInfo?.buyerId?.name}
+            </h2>
+
+            <p className="text-[11px] text-muted">
+              {conversationInfo?.productId?.name} • ₹
+              {conversationInfo?.productId?.price}
             </p>
-            <h1 style={{ color: themeColor, marginTop: "10px" }}>
-              {data.price}
-            </h1>
-          </div>
-
-          <div style={{ marginLeft: "auto" }}>
-            <span
-              style={{
-                background: "#e6f7ed",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "13px",
-                color: "#15803d",
-              }}
-            >
-              Available
-            </span>
           </div>
         </div>
+
+        <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-secondary/20 text-secondary capitalize">
+          {conversationInfo?.status?.replace("_", " ")}
+        </span>
+      </div>
+      {/* MESSAGES */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-background/50">
+
+        {messages.map((msg) => {
+          const senderId =
+            typeof msg.senderId === "object"
+              ? msg.senderId._id
+              : msg.senderId;
+
+          const isMe =
+            String(senderId) === String(currentUser?._id);
+
+          const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          return (
+            <div
+              key={msg._id}
+              className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+            >
+              <div className="flex flex-col max-w-[70%]">
+
+                {/* Bubble */}
+                <div
+                  className={`px-4 py-2 rounded-2xl text-sm ${
+                    isMe
+                      ? "bg-primary text-white rounded-br-md"
+                      : "bg-background border border-border text-text rounded-bl-md"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+
+                {/* Time */}
+                <span
+                  className={`text-[10px] mt-1 text-muted ${
+                    isMe ? "text-right" : "text-left"
+                  }`}
+                >
+                  {formattedTime}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Conversation */}
-      <div className="bg-card"
-        style={{
-          borderRadius: "18px",
-          padding: "25px",
-          marginBottom: "25px",
-        }}
-      >
-        <h3 style={{ marginBottom: "20px" }}>Conversation</h3>
+      {/* INPUT */}
+      <div className="border-t border-border px-4 py-3">
+        <div className="flex items-center gap-3 bg-background border border-border rounded-xl px-4 py-2">
 
-        {/* ✅ Dynamic Messages */}
-        <div className="flex flex-col gap-3">
-          {messages.map((msg) => {
-            const senderId =
-              typeof msg.senderId === "object"
-                ? msg.senderId._id
-                : msg.senderId;
-
-            const isMe =
-              String(senderId) === String(currentUser?._id);
-
-            const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-
-            return (
-              <div
-                key={msg._id}
-                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-              >
-                <div className="flex flex-col max-w-xs">
-                  {/* Bubble */}
-                  <div
-                    className={`px-4 py-3 rounded-2xl ${
-                      isMe
-                        ? "bg-primary text-white rounded-br-md"
-                        : "bg-card border border-border text-text rounded-bl-md"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-
-                  {/* Time */}
-                  <span
-                    className={`text-xs mt-1 text-muted ${
-                      isMe ? "text-right" : "text-left"
-                    }`}
-                  >
-                    {formattedTime}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Message Input */}
-        <div
-          style={{
-            display: "flex",
-            marginTop: "20px",
-            gap: "10px",
-          }}
-        >
           <input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Type your message..."
-            style={{
-              flex: 1,
-              padding: "14px",
-              borderRadius: "14px",
-              border: "1px solid #ccc",
-              outline: "none",
-            }}
+            placeholder="Type a message..."
+            className="flex-1 bg-transparent outline-none text-sm"
           />
+
           <button
             onClick={handleSend}
-            style={{
-              background: themeColor,
-              border: "none",
-              padding: "16px",
-              borderRadius: "14px",
-              cursor: "pointer",
-              color: "white",
-            }}
+            className="bg-primary text-white p-2 rounded-lg hover:opacity-90 transition"
           >
-            <Send size={18} />
+            <Send size={16} />
           </button>
+
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="bg-card"
-        style={{
-          borderRadius: "18px",
-          padding: "25px",
-        }}
-      >
-        <h3 style={{ marginBottom: "20px" }}>Actions</h3>
-
-        <div style={{ display: "flex", gap: "20px" }}>
-          <button
-            style={{
-              flex: 1,
-              background: themeColor,
-              color: "white",
-              padding: "12px",
-              borderRadius: "14px",
-              border: "none",
-              fontSize: "16px",
-              cursor: "pointer",
-
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-            }}
-          >
-            <CheckCircle size={18} style={{ marginRight: "8px" }} />
-            Confirm Deal
-          </button>
-
-          <button className="border border-border"
-            style={{
-              flex: 1,
-              background: "transparent",             
-              padding: "12px",
-              borderRadius: "14px",
-              fontSize: "16px",
-              cursor: "pointer",
-            }}
-          >
-            Cancel Deal
-          </button>
-        </div>
-      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default SellerChatDetails;
