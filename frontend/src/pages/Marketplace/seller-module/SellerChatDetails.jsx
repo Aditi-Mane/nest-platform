@@ -33,6 +33,13 @@ const SellerChatDetails = () => {
   const [conversationInfo, setConversationInfo] = useState(null);
 
   const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "auto",
+    });
+  }, [messages]);
 
   useEffect(() => {
     socketRef.current = io("http://localhost:5000", {
@@ -302,6 +309,8 @@ return (
             </div>
           );
         })}
+
+        <div ref={bottomRef}></div>
       </div>
 
       {/* INPUT */}
