@@ -1,46 +1,35 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FiCheckCircle, FiClock, FiEye } from "react-icons/fi";
-
-const orders = [
-  {
-    id: 1,
-    product: "Artisan Candle Collection",
-    customer: "Michael Brown",
-    date: "Feb 10, 2026",
-    amount: 45.99,
-    status: "completed",
-    image: "🕯",
-  },
-  {
-    id: 2,
-    product: "Vintage Journal",
-    customer: "Sophia Lee",
-    date: "Feb 8, 2026",
-    amount: 28.0,
-    status: "completed",
-    image: "📔",
-  },
-  {
-    id: 3,
-    product: "Organic Cotton Tote Bag",
-    customer: "James Chen",
-    date: "Feb 12, 2026",
-    amount: 18.5,
-    status: "otp",
-    image: "👜",
-  },
-];
+import api from "../../../api/axios";
 
 const SellerOrderHistory = () => {
+
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const total = orders.length;
   const completed = orders.filter(o => o.status === "completed").length;
   const pending = orders.filter(o => o.status !== "completed").length;
 
+  useEffect(() => {
+    const fetchSellerOrders = async () =>{
+      try {
+        const res = await api.get("/seller/orders");
+        setOrders(res.data.orders);
+      } catch (error) {
+        console.log(error)
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSellerOrders();
+  }, [])
+  
   return (
     <div className="bg-background min-h-screen p-6">
 
       {/* HEADER */}
-      <div mb-6>
+      <div className="mb-6">
         <h1 className="text-3xl font-bold">Order History</h1>
           <p className="text-muted">
             View all your completed and ongoing orders
@@ -67,25 +56,32 @@ const SellerOrderHistory = () => {
 
       {/* ORDER CARDS */}
       <div className="space-y-5">
-        {orders.map(order => (
+        {loading ? (
+          <p>Loading...</p>
+        ) : orders.length === 0 ? (
+          <p>No orders yet</p>
+        ) : (
+        orders.map(order => (
           <div
-            key={order.id}
+            key={order._id}
             className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
 
             {/* LEFT SIDE */}
             <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-lg bg-[#e3d7c6] flex items-center justify-center text-xl">
-                {order.image}
+              <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center text-xl">
+                {order.productId?.name?.[0]}
               </div>
 
               <div>
                 <h2 className="text-[18px] font-semibold text-[#1f1f1f]">
-                  {order.product}
+                  {order.productId?.name}
                 </h2>
 
-                <p className="mt-1 text-[#6b755f] text-[13px]">
-                  {order.customer} • {order.date}
+                <p className="mt-1 text-muted text-[13px]">
+                  {order.buyerId?.name} • 
+                  {"\n" + new Date(order.createdAt).toLocaleDateString("en-US", 
+                    {month: "short", day: "numeric", year: "numeric"})}
                 </p>
               </div>
             </div>
@@ -100,7 +96,7 @@ const SellerOrderHistory = () => {
                 </p>
 
                 <h2 className="text-[22px] font-semibold text-[#c96b2c] mt-1">
-                  ${order.amount.toFixed(2)}
+                  ₹{order.totalPrice?.toFixed(2)}
                 </h2>
               </div>
 
@@ -108,27 +104,26 @@ const SellerOrderHistory = () => {
               <div className="flex flex-col items-end">
 
                 {order.status === "completed" ? (
-                  <span className="flex items-center gap-1 bg-[#e6efdd] text-[#4f6f2f] px-2.5 py-0.5 rounded-full text-[15px] font-medium">
+                  <span className="flex items-center gap-1 bg-[#e6efdd] text-muted px-2.5 py-0.5 rounded-full text-[15px] font-medium">
                     <FiCheckCircle size={12} />
                     Completed
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 bg-[#fff3d6] text-[#e0a100] px-2.5 py-0.5 rounded-full text-[15px] font-medium">
+                  <span className="flex items-center gap-1 bg-background text-primary px-2.5 py-0.5 rounded-full text-[15px] font-medium">
                     <FiClock size={12} />
-                    OTP Generated
+                    Pending
                   </span>
                 )}
 
-                <button className="flex items-center gap-1 border border-[#c96b2c] px-3 py-1 rounded-md text-[15px] text-[#1f1f1f] font-medium hover:bg-[#c96b2c] hover:text-white transition mt-2">
-                  <FiEye size={12} />
-                  View Details
+                <button className="flex items-center gap-1 border border-primary px-3 py-1 rounded-md text-[15px] text-[#1f1f1f] font-medium hover:bg-primary hover:text-white transition mt-2">
+                  Generate OTP
                 </button>
 
               </div>
 
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
     </div>

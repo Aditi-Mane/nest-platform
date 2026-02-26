@@ -130,7 +130,15 @@ const SellerChatDetails = () => {
   //confirm deal handler
   const handleConfirmDeal = async () =>{
     try {
-      
+      if (conversationInfo?.status === "deal_confirmed") return;
+
+      await api.put(`/seller/confirm/${conversationId}`);
+
+      setConversationInfo(prev => ({
+        ...prev,
+        status: "deal_confirmed"
+      }));
+
     } catch (error) {
       console.error(error.response?.data || error.message);
     }
@@ -139,7 +147,15 @@ const SellerChatDetails = () => {
   //cancel deal handler
   const handleCancelDeal = async () =>{
     try {
-      
+      if (conversationInfo?.status === "cancelled") return;
+
+      await api.put(`/seller/cancel/${conversationId}`);
+
+      //update local state
+      setConversationInfo(prev => ({
+        ...prev,
+        status: "cancelled"
+      }));
     } catch (error) {
       console.error(error.response?.data || error.message);
     }
@@ -194,17 +210,48 @@ return (
           </span>
 
           {/* Actions */}
-          {conversationInfo && (
-            <>
-              <button onClick={() => {handleConfirmDeal}} className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition">
-                Confirm Deal
-              </button>
+          <div className="flex items-center gap-2">
 
-              <button onClick={() => {handleCancelDeal}} className="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-background transition">
+            {/* Negotiating → Show both */}
+            {conversationInfo?.status === "negotiating" && (
+              <>
+                <button
+                  onClick={handleConfirmDeal}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
+                >
+                  Confirm Deal
+                </button>
+
+                <button
+                  onClick={handleCancelDeal}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
+                >
+                  Cancel Deal
+                </button>
+              </>
+            )}
+
+            {/* Deal Confirmed → Only Cancel */}
+            {conversationInfo?.status === "deal_confirmed" && (
+              <button
+                onClick={handleCancelDeal}
+                className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
+              >
                 Cancel Deal
               </button>
-            </>
-          )}
+            )}
+
+            {/* Cancelled → Only Confirm */}
+            {conversationInfo?.status === "cancelled" && (
+              <button
+                onClick={handleConfirmDeal}
+                className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
+              >
+                Confirm Deal
+              </button>
+            )}
+
+          </div>
         </div>
       </div>
 

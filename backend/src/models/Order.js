@@ -45,8 +45,8 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["otp_generated", "completed"],
-      default: "otp_generated",
+      enum: ["pending","otp_generated", "otp_verified"],
+      default: "pending",
     },
 
     otp: {
