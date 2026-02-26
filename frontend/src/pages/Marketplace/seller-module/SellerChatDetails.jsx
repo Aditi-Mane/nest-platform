@@ -45,13 +45,28 @@ const SellerChatDetails = () => {
   }, []);
 
   useEffect(() => {
-    if (!socketRef.current) return;
-    if (!conversationId) return;
+    if (!socketRef.current || !conversationId) return;
 
-    socketRef.current.on("connect", () => {
+    if (socketRef.current.connected) {
       socketRef.current.emit("join_conversation", conversationId);
-    });
+    } else {
+      socketRef.current.once("connect", () => {
+        socketRef.current.emit("join_conversation", conversationId);
+      });
+    }
   }, [conversationId]);
+
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    socketRef.current.on("receive_message", (message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      socketRef.current.off("receive_message");
+    };
+  }, []);
 
   useEffect(() => {
     const fetchConversationInfo = async () => {
@@ -98,19 +113,14 @@ const SellerChatDetails = () => {
 
   // ✅ Send function
   const handleSend = async () => {
-    if (!newMessage.trim()) return;
-
     try {
-    
-      const res = await api.post("/messages/send", {
+      if (!newMessage.trim()) return;
+
+      await api.post("/messages/send", {
         conversationId,
         text: newMessage,
       });
 
-      console.log("conversationId:", conversationId);
-      console.log("text:", newMessage);
-
-      setMessages((prev) => [...prev, res.data.data]);
       setNewMessage("");
     } catch (error) {
       console.error(error.response?.data || error.message);
