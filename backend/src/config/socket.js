@@ -11,6 +11,11 @@ export const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
+    socket.on("join_conversation", (conversationId) => {
+      console.log("JOIN EVENT RECEIVED:", conversationId);
+      socket.join(conversationId);
+    });
+
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
     });

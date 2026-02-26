@@ -35,13 +35,23 @@ const SellerChatDetails = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    //holds the entire socket connection object
-    socketRef.current = io("http://localhost:5000");
+    socketRef.current = io("http://localhost:5000", {
+      transports: ["websocket"],
+    });
 
     return () => {
       socketRef.current.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (!socketRef.current) return;
+    if (!conversationId) return;
+
+    socketRef.current.on("connect", () => {
+      socketRef.current.emit("join_conversation", conversationId);
+    });
+  }, [conversationId]);
 
   useEffect(() => {
     const fetchConversationInfo = async () => {
