@@ -127,6 +127,24 @@ const SellerChatDetails = () => {
     }
   };
 
+  //confirm deal handler
+  const handleConfirmDeal = async () =>{
+    try {
+      
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+    }
+  }
+
+  //cancel deal handler
+  const handleCancelDeal = async () =>{
+    try {
+      
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+    }
+  }
+
 return (
   <div className="bg-background flex items-center justify-center h-full px-6 py-6">
     <div className="w-full max-w-2xl bg-card border border-border rounded-3xl flex flex-col h-[90vh] shadow-sm">
@@ -178,11 +196,11 @@ return (
           {/* Actions */}
           {conversationInfo && (
             <>
-              <button className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition">
+              <button onClick={() => {handleConfirmDeal}} className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition">
                 Confirm Deal
               </button>
 
-              <button className="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-background transition">
+              <button onClick={() => {handleCancelDeal}} className="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-background transition">
                 Cancel Deal
               </button>
             </>

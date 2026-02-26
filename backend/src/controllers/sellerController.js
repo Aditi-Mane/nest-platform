@@ -281,3 +281,27 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
+
+export const confirmDeal = async (req, res) =>{
+  try {
+    return res.status(200).json({
+      message: "Deal confirmed and added to order",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error while deleting product",
+    });
+  }
+}
+
+export const cancelDeal = async (req, res) =>{
+  try {
+    return res.status(200).json({
+      message: "Deal confirmed and added to order",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error while deleting product",
+    });
+  }
+}
