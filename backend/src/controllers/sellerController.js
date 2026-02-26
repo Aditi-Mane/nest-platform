@@ -1,3 +1,5 @@
+import Conversation from "../models/Conversation.js";
+import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 
@@ -284,12 +286,47 @@ export const deleteProduct = async (req, res) => {
 
 export const confirmDeal = async (req, res) =>{
   try {
-    return res.status(200).json({
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findById(conversationId);
+
+    if(!conversation) {
+      return res.status(404).json({
+        message: "Conversation not found",
+      });
+    }
+
+    if(conversation.status === "deal_confirmed") {
+      return res.status(400).json({
+        message: "Deal already confirmed",
+      });
+    }
+
+    const product = await Product.findById(conversation.productId);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    conversation.status = "deal_confirmed"
+
+    await conversation.save();
+
+    const order = await Order.create({
+      productId: conversation.productId,
+      buyerId: conversation.buyerId,
+      sellerId: conversation.sellerId,
+      totalPrice: product.price,
+    })
+
+    return res.status(201).json({
       message: "Deal confirmed and added to order",
+      order
     });
   } catch (error) {
     return res.status(500).json({
-      message: "Server error while deleting product",
+      message: "Server error",
     });
   }
 }
@@ -297,11 +334,11 @@ export const confirmDeal = async (req, res) =>{
 export const cancelDeal = async (req, res) =>{
   try {
     return res.status(200).json({
-      message: "Deal confirmed and added to order",
+      message: "Deal cancelled",
     });
   } catch (error) {
     return res.status(500).json({
-      message: "Server error while deleting product",
+      message: "Server error",
     });
   }
 }
