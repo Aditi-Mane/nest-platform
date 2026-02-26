@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import {
   useLocation,
   useNavigate,
@@ -10,7 +11,6 @@ import api from "../../../api/axios.js";
 const SellerChatDetails = () => {
   const { state } = useLocation();
   const { conversationId } = useParams();
-  console.log("Conversation ID from URL:", conversationId);
   const navigate = useNavigate();
 
   const themeColor = "var(--color-primary)";
@@ -31,6 +31,17 @@ const SellerChatDetails = () => {
 
   const [newMessage, setNewMessage] = useState("");
   const [conversationInfo, setConversationInfo] = useState(null);
+
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    //holds the entire socket connection object
+    socketRef.current = io("http://localhost:5000");
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchConversationInfo = async () => {
