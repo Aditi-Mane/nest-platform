@@ -23,10 +23,6 @@ const SellerMessages = () => {
   const themeColor = "var(--color-primary)";
   const softBorder = "var(--color-border)";
 
-  const activeNegotiations = 1;
-  const reservedProducts = 1;
-  const completedSales = 1;
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -112,27 +108,6 @@ const SellerMessages = () => {
           <p className="text-muted">
             Complete list of all conversations and negotiations with potential buyers
           </p>
-      </div>
-
-      {/* STATS CARDS */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 mt-6">
-        <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Active Negotiations</p>
-          <h2 className="text-2xl font-bold">{activeNegotiations}</h2>
-          <p className="text-sm text-muted">Ongoing conversations</p>
-        </div>
-
-        <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Reserved Products</p>
-          <h2 className="text-2xl font-bold">{reservedProducts}</h2>
-          <p className="text-sm text-muted">Awaiting delivery</p>
-        </div>
-
-        <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Completed Sales</p>
-          <h2 className="text-2xl font-bold">{completedSales}</h2>
-          <p className="text-sm text-muted">Successfully delivered</p>
-        </div>
       </div>
 
       {/* SEARCH + STATUS (UNCHANGED) */}

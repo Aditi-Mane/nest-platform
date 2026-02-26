@@ -1,3 +1,5 @@
+import Conversation from "../models/Conversation.js";
+import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 
@@ -281,3 +283,133 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
+
+export const confirmDeal = async (req, res) =>{
+  try {
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findById(conversationId);
+
+    if(!conversation) {
+      return res.status(404).json({
+        message: "Conversation not found",
+      });
+    }
+
+    if(conversation.status === "deal_confirmed") {
+      return res.status(400).json({
+        message: "Deal already confirmed",
+      });
+    }
+
+    const product = await Product.findById(conversation.productId);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    //check if order already exists
+    const existingOrder = await Order.findOne({
+      productId: conversation.productId,
+      buyerId: conversation.buyerId,
+      sellerId: conversation.sellerId,
+    });
+
+    if (existingOrder) {
+      return res.status(400).json({
+        message: "Order already exists for this deal",
+      });
+    }
+
+    conversation.status = "deal_confirmed"
+
+    await conversation.save();
+
+    const order = await Order.create({
+      productId: conversation.productId,
+      buyerId: conversation.buyerId,
+      sellerId: conversation.sellerId,
+      totalPrice: product.price,
+    })
+
+    return res.status(201).json({
+      message: "Deal confirmed and added to order",
+      order
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+}
+
+export const cancelDeal = async (req, res) =>{
+  try {
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if(!conversation) {
+      return res.status(404).json({
+        message: "Conversation not found",
+      });
+    }
+
+    if(conversation.status === "cancelled") {
+      return res.status(400).json({
+        message: "Deal already cancelled",
+      });
+    }
+
+    //delete existing order
+    const existingOrder = await Order.findOne({
+      productId: conversation.productId,
+      buyerId: conversation.buyerId,
+      sellerId: conversation.sellerId,
+    });
+
+    if (existingOrder) {
+      await Order.deleteOne({ _id: existingOrder._id });
+    }
+
+    //update conversation status
+    conversation.status = "cancelled";
+    await conversation.save();
+
+    //make product available again
+    await Product.findByIdAndUpdate(conversation.productId, {
+      status: "available",
+    });
+
+    return res.status(200).json({
+      message: "Deal cancelled",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+}
+
+export const getSellerOrders = async (req, res) =>{
+  try {
+    const sellerId = req.user._id;
+    const orders = await Order.find({sellerId})
+    .populate("productId", "name price images")
+    .populate("buyerId", "name")
+    .sort({createdAt: -1})
+
+    return res.status(200).json({
+      message: "Orders successfully fetched",
+      orders
+    });
+
+  } catch (error) {
+    console.log(error);
+    
+    return res.status(500).json({
+      message: "Server error in fetching orders",
+    });
+  }
+}

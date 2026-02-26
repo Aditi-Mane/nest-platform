@@ -1,3 +1,4 @@
+import { getIO } from "../config/socket.js";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 
@@ -16,6 +17,9 @@ export const sendMessage = async(req, res) =>{
       lastMessage: text,
       updatedAt: new Date(),
     });
+
+    const io = getIO();
+    io.to(conversationId).emit("receive_message", message);
 
     return res.status(201).json({
       message: "Message sent successfully",

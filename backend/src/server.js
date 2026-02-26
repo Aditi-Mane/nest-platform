@@ -16,6 +16,7 @@ import cartRoutes from "./routes/cartRoutes.js"
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import { initSocket } from "./config/socket.js"
 
 connectDB()
 
@@ -47,6 +48,9 @@ app.get("/",(req, res)=>{
 })
 
 const PORT = process.env.PORT
-app.listen(PORT,()=>{
+const server = app.listen(PORT,()=>{
   console.log(`Server is running on ${PORT}`);
 })
+
+initSocket(server);
+

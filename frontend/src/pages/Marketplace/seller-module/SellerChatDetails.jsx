@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import {
   useLocation,
   useNavigate,
@@ -10,7 +11,6 @@ import api from "../../../api/axios.js";
 const SellerChatDetails = () => {
   const { state } = useLocation();
   const { conversationId } = useParams();
-  console.log("Conversation ID from URL:", conversationId);
   const navigate = useNavigate();
 
   const themeColor = "var(--color-primary)";
@@ -31,6 +31,49 @@ const SellerChatDetails = () => {
 
   const [newMessage, setNewMessage] = useState("");
   const [conversationInfo, setConversationInfo] = useState(null);
+
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "auto",
+    });
+  }, [messages]);
+
+  useEffect(() => {
+    socketRef.current = io("http://localhost:5000", {
+      transports: ["websocket"],
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!socketRef.current || !conversationId) return;
+
+    if (socketRef.current.connected) {
+      socketRef.current.emit("join_conversation", conversationId);
+    } else {
+      socketRef.current.once("connect", () => {
+        socketRef.current.emit("join_conversation", conversationId);
+      });
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    socketRef.current.on("receive_message", (message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      socketRef.current.off("receive_message");
+    };
+  }, []);
 
   useEffect(() => {
     const fetchConversationInfo = async () => {
@@ -77,24 +120,53 @@ const SellerChatDetails = () => {
 
   // ✅ Send function
   const handleSend = async () => {
-    if (!newMessage.trim()) return;
-
     try {
-    
-      const res = await api.post("/messages/send", {
+      if (!newMessage.trim()) return;
+
+      await api.post("/messages/send", {
         conversationId,
         text: newMessage,
       });
 
-      console.log("conversationId:", conversationId);
-      console.log("text:", newMessage);
-
-      setMessages((prev) => [...prev, res.data.data]);
       setNewMessage("");
     } catch (error) {
       console.error(error.response?.data || error.message);
     }
   };
+
+  //confirm deal handler
+  const handleConfirmDeal = async () =>{
+    try {
+      if (conversationInfo?.status === "deal_confirmed") return;
+
+      await api.put(`/seller/confirm/${conversationId}`);
+
+      setConversationInfo(prev => ({
+        ...prev,
+        status: "deal_confirmed"
+      }));
+
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+    }
+  }
+
+  //cancel deal handler
+  const handleCancelDeal = async () =>{
+    try {
+      if (conversationInfo?.status === "cancelled") return;
+
+      await api.put(`/seller/cancel/${conversationId}`);
+
+      //update local state
+      setConversationInfo(prev => ({
+        ...prev,
+        status: "cancelled"
+      }));
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+    }
+  }
 
 return (
   <div className="bg-background flex items-center justify-center h-full px-6 py-6">
@@ -137,10 +209,59 @@ return (
           </div>
         </div>
 
-        <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-secondary/20 text-secondary capitalize">
-          {conversationInfo?.status?.replace("_", " ")}
-        </span>
+        <div className="flex items-center gap-3">
+
+          {/* Status Badge */}
+          <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-secondary/20 text-secondary capitalize">
+            {conversationInfo?.status?.replace("_", " ")}
+          </span>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+
+            {/* Negotiating → Show both */}
+            {conversationInfo?.status === "negotiating" && (
+              <>
+                <button
+                  onClick={handleConfirmDeal}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
+                >
+                  Confirm Deal
+                </button>
+
+                <button
+                  onClick={handleCancelDeal}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
+                >
+                  Cancel Deal
+                </button>
+              </>
+            )}
+
+            {/* Deal Confirmed → Only Cancel */}
+            {conversationInfo?.status === "deal_confirmed" && (
+              <button
+                onClick={handleCancelDeal}
+                className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
+              >
+                Cancel Deal
+              </button>
+            )}
+
+            {/* Cancelled → Only Confirm */}
+            {conversationInfo?.status === "cancelled" && (
+              <button
+                onClick={handleConfirmDeal}
+                className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
+              >
+                Confirm Deal
+              </button>
+            )}
+
+          </div>
+        </div>
       </div>
+
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-background/50">
 
@@ -188,6 +309,8 @@ return (
             </div>
           );
         })}
+
+        <div ref={bottomRef}></div>
       </div>
 
       {/* INPUT */}

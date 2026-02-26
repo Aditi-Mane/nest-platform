@@ -1,5 +1,5 @@
 import express from "express"
-import { createProduct, deleteProduct, editProduct, getMyProducts, setupSeller } from "../controllers/sellerController.js";
+import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, getMyProducts, getSellerOrders, setupSeller } from "../controllers/sellerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { checkSeller } from "../middleware/sellerMiddleware.js";
@@ -11,5 +11,8 @@ router.post("/create", protect, checkSeller, upload.array("images", 5), createPr
 router.put("/edit/:id", protect, checkSeller, upload.array("images", 5), editProduct);
 router.delete("/delete/:id", protect, checkSeller, deleteProduct)
 router.get("/my-products", protect, checkSeller, getMyProducts);
+router.put("/confirm/:conversationId", protect, checkSeller, confirmDeal);
+router.put("/cancel/:conversationId", protect, checkSeller, cancelDeal);
+router.get("/orders", protect, checkSeller, getSellerOrders);
 
 export default router;
