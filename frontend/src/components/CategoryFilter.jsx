@@ -1,26 +1,27 @@
 import { Badge } from "./ui/badge";
 import {
-  Book,
-  FileText,
-  Palette,
-  Shirt,
-  Pencil,
-  Laptop,
   Sparkles,
-  MoreHorizontal
+  BookOpen,
+  Laptop,
+  Shirt,
+  Home,
+  Palette,
+  Dumbbell,
+  Briefcase,
+  MoreHorizontal,
 } from "lucide-react";
 
 export function CategoryFilter({ selectedCategory, onSelectCategory }) {
   const categories = [
-    { id: "all", label: "All", icon: Sparkles },
-    { id: "books", label: "Books", icon: Book },
-    { id: "notes", label: "Study Notes", icon: FileText },
-    { id: "handcrafts", label: "Handcrafts", icon: Palette },
-    { id: "art", label: "Art & Design", icon: Palette },
-    { id: "apparel", label: "Apparel", icon: Shirt },
-    { id: "stationery", label: "Stationery", icon: Pencil },
-    { id: "electronics", label: "Electronics", icon: Laptop },
-    { id: "other", label: "Other", icon: MoreHorizontal }
+    { id: "all",                label: "All",               icon: Sparkles       },
+    { id: "Study Material",     label: "Study Material",    icon: BookOpen       },
+    { id: "Electronics",        label: "Electronics",       icon: Laptop         },
+    { id: "Fashion",            label: "Fashion",           icon: Shirt          },
+    { id: "Hostel Essentials",  label: "Hostel Essentials", icon: Home           },
+    { id: "Handmade",           label: "Handmade",          icon: Palette        },
+    { id: "Sports",             label: "Sports",            icon: Dumbbell       },
+    { id: "Services",           label: "Services",          icon: Briefcase      },
+    { id: "Other",              label: "Other",             icon: MoreHorizontal },
   ];
 
   return (

@@ -13,12 +13,21 @@ import productRoutes from "./routes/productRoutes.js"
 import sellerRoutes from "./routes/sellerRoutes.js"
 import reviewRoutes from "./routes/reviewRoutes.js"
 import cartRoutes from "./routes/cartRoutes.js"
+import wishlistRoutes from "./routes/wishlistRoutes.js";
+import conversationRoutes from "./routes/conversationRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
+import { initSocket } from "./config/socket.js"
 
 connectDB()
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -29,6 +38,9 @@ app.use("/api/products", productRoutes);
 app.use("/api/seller", sellerRoutes)
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/conversations", conversationRoutes);
+app.use("/api/messages", messageRoutes)
 
 
 app.get("/",(req, res)=>{
@@ -36,6 +48,9 @@ app.get("/",(req, res)=>{
 })
 
 const PORT = process.env.PORT
-app.listen(PORT,()=>{
+const server = app.listen(PORT,()=>{
   console.log(`Server is running on ${PORT}`);
 })
+
+initSocket(server);
+
