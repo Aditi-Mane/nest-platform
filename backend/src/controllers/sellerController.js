@@ -2,6 +2,8 @@ import Conversation from "../models/Conversation.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
+import { getTransporter } from "../utils/mailer.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -413,3 +415,137 @@ export const getSellerOrders = async (req, res) =>{
     });
   }
 }
+
+export const generateOrderOtp = async (req, res) => {
+  try {
+    const transporter = getTransporter();
+    const { orderId } = req.body;
+
+    const order = await Order.findById(orderId).populate("buyerId", "email");
+
+    if(!order) {
+      return res.status(404).json({
+        message: "Order doesn't exist",
+      });
+    }
+
+    //authorize seller
+    if (order.sellerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    //prevent regenerating active OTP
+    if(order.otp && new Date(order.otpExpiry).getTime() > Date.now()) {
+      return res.status(400).json({
+        message: "OTP already active",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpiry = new Date(Date.now() + 2 * 60 * 1000);
+
+    const hashedOtp = await bcrypt.hash(otp.toString(), 10);
+
+    order.otp = hashedOtp;
+    order.otpExpiry = otpExpiry;
+    order.status = "otp_generated";
+
+    await order.save();
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: order.buyerId.email,
+      subject: "Order Delivery Confirmation OTP - NEST",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Order Delivery Confirmation</h2>
+          <p>Your OTP is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 2 minutes.</p>
+          <p>If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({
+      message: "OTP sent to buyer email",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Server error in generating OTP",
+    });
+  }
+};
+
+export const verifyOrderOtp = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({
+        message: "OTP is required",
+      });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order doesn't exist",
+      });
+    }
+
+    //authorize seller
+    if (order.sellerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Not authorized to verify this order",
+      });
+    }
+
+    //check expiry
+    if (!order.otp || !order.otpExpiry) {
+      return res.status(400).json({
+        message: "No OTP generated for this order",
+      });
+    }
+
+    if (new Date(order.otpExpiry).getTime() < Date.now()) {
+      return res.status(400).json({
+        message: "OTP expired",
+      });
+    }
+
+    //compare OTP
+    const isValid = await bcrypt.compare(otp, order.otp);
+
+    if (!isValid) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    //update order after successful verification
+    order.status = "otp_verified";
+    order.otp = undefined;
+    order.otpExpiry = undefined;
+
+    await order.save();
+
+    return res.status(200).json({
+      message: "OTP verified successfully. Order completed.",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Server error in verifying OTP",
+    });
+  }
+};
