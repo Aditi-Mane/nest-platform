@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   ShoppingCart,
   Trash2,
@@ -7,6 +8,11 @@ import {
   ArrowRight,
   ShoppingBag,
   Sparkles,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 
 import { useState } from "react";
@@ -19,24 +25,159 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import api from '../../../api/axios.js'
+
+//Temporary Static data
+
+
+
+
+
+
+
+
+
 
 export default function CartPage() {
   const navigate = useNavigate();
   const { cartItems, loading, updateQuantity, removeFromCart } = useCart();
 
   const [promoCode, setPromoCode] = useState("");
+  const [conversations, setConversations] = useState([]);
 
   // Format items to match your existing UI structure
-  const formattedItems = cartItems.map((item) => ({
+ const formattedItems = cartItems.map((item) => {
+  const conversation = conversations.find(
+    (c) => c.productId._id === item.product._id
+  );
+
+  return {
     id: item.product._id,
     name: item.product.name,
     price: item.product.price,
     image: item.product.images?.[0]?.url,
     category: item.product.category,
+    description: item.product.description,
     quantity: item.quantity,
     seller: item.product.createdBy,
-    description: item.product.description,
-  }));
+    productStatus: item.product.status,
+
+    
+    conversationId: conversation?._id,
+    status: conversation?.status || null,
+  };
+});
+
+//handleContactSeller
+const handleContactSeller = async (item) => {
+  try {
+    let conversationId = item.conversationId;
+
+    //If no conversation → create one
+    if (!conversationId) {
+      const res = await api.post(
+        "/conversations/create",
+        { productId: item.id },
+      );
+
+      conversationId = res.data.conversation._id;
+    }
+
+    // Navigate to chat
+    navigate(`/marketplace/buyer/messages/${conversationId}`);
+
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Something went wrong");
+  }
+};
+const getStatusBadge = (status) => {
+  if (!status) return null;
+
+  switch (status) {
+    case "initiated":
+      return <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" /> Initiated</Badge>;
+    case "negotiating":
+      return <Badge className="text-xs bg-yellow-500 text-white"><MessageSquare className="h-3 w-3 mr-1" /> Negotiating</Badge>;
+    case "deal_confirmed":
+      return <Badge className="text-xs bg-green-500 text-white"><CheckCircle className="h-3 w-3 mr-1" /> Deal Confirmed</Badge>;
+    case "cancelled":
+      return <Badge className="text-xs bg-red-500 text-white"><XCircle className="h-3 w-3 mr-1" /> Cancelled</Badge>;
+    default:
+      return null;
+  }
+};
+const getContactButtonText = (status, productStatus) => {
+
+  if (productStatus === "sold") return "Sold Out";
+  if (productStatus === "reserved") return "Currently Reserved";
+
+  
+  if (!status) return "Contact Seller";
+
+  switch (status) {
+    case "initiated":
+      return "Contact Seller";
+    case "negotiating":
+      return "Continue Negotiation";
+    case "deal_confirmed":
+      return "Deal Confirmed";
+    case "cancelled":
+      return "Retry Contact";
+    default:
+      return "Contact Seller";
+  }
+};
+const getContactButtonVariant = (status) => {
+  if (!status) return "outline";
+
+  switch (status) {
+    case "deal_confirmed":
+      return "secondary";
+    default:
+      return "outline";
+  }
+};
+
+//Button Style
+        const getButtonStyle = (status, productStatus) => {
+          if (productStatus === "sold") {
+            return "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+          }
+
+          if (productStatus === "reserved") {
+            return "bg-orange-50 text-orange-600 border-orange-100";
+          }
+
+          switch (status) {
+            case "deal_confirmed":
+              return "bg-green-100 text-green-700 border-green-200";
+            case "negotiating":
+              return "bg-yellow-50 text-yellow-600 border-yellow-100";
+            case "cancelled":
+              return "bg-red-50 text-red-600 border-red-100";
+            default:
+              return "bg-green-50 text-green-600 border-green-100";
+          }
+        };
+
+
+  const isContactButtonDisabled = (status, productStatus) => {
+    return (
+    status === "deal_confirmed" ||
+    productStatus === "sold" ||
+    productStatus === "reserved"
+    );
+  };
+
+  // Calculate analytics
+const totalItems = cartItems.length;
+const initiatedCount = formattedItems.filter(i => i.status === 'initiated').length;
+const negotiatingCount = formattedItems.filter(i => i.status === 'negotiating').length;
+const confirmedCount = formattedItems.filter(i => i.status === 'deal_confirmed').length;
+const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').length;
+ 
+
 
   // Price Calculations (UNCHANGED)
   const subtotal = formattedItems.reduce(
@@ -98,7 +239,7 @@ export default function CartPage() {
                         <div>
                           <h3
                             className="text-lg font-semibold cursor-pointer hover:text-primary"
-                            onClick={() => navigate(`/product/${item.id}`)}
+                            onClick={() => navigate(`/marketplace/buyer/product/${item.id}`)}
                           >
                             {item.name}
                           </h3>
@@ -136,7 +277,7 @@ export default function CartPage() {
                       </div>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 mb-4">
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
@@ -149,7 +290,7 @@ export default function CartPage() {
                             }
                             disabled={item.quantity <= 1}
                           >
-                            <Minus className="h-4 w-4" />
+                            <Minus className="h-2 w-3" />
                           </Button>
 
                           <span className="w-10 text-center">
@@ -183,6 +324,20 @@ export default function CartPage() {
                           Remove
                         </Button>
                       </div>
+                      {/* Contact Seller Button */}
+                     <Button
+                      size="sm"
+                      className={`w-full rounded-xl border ${getButtonStyle(
+                        item.status,
+                        item.productStatus
+                      )} hover:!bg-green-100 hover:!text-green-700
+  !shadow-none`}
+                      onClick={() => handleContactSeller(item)}
+                      disabled={isContactButtonDisabled(item.status, item.productStatus)}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      {getContactButtonText(item.status, item.productStatus)}
+                    </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -200,76 +355,123 @@ export default function CartPage() {
             </div>
 
             {/* RIGHT SIDE SUMMARY */}
-            <div>
-              <Card className="rounded-2xl sticky top-24 bg-card border border-border">
+                <div className="lg:col-span-1 space-y-6">
+              {/* Cart Analytics */}
+              <Card className="rounded-2xl border-border shadow-sm">
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-6">
-                    Order Summary
-                  </h3>
+                  <div className="flex items-center gap-2 mb-6">
+                    <TrendingUp className="h-5 w-5 text-[#2563EB]" />
+                    <h3 className="text-xl">Cart Analytics</h3>
+                  </div>
 
-                  <div className="mb-6">
-                    <label className="text-sm block mb-2">
-                      Promo Code
-                    </label>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    {/* Total Items */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-[#2563EB]/10 to-[#2563EB]/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ShoppingCart className="h-4 w-4 text-[#2563EB]" />
+                        <span className="text-xs text-muted-foreground">Total Items</span>
+                      </div>
+                      <div className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                        {totalItems}
+                      </div>
+                    </div>
 
-                    <div className="flex gap-2">
-                      <Input
-                        value={promoCode}
-                        onChange={(e) =>
-                          setPromoCode(e.target.value)
-                        }
-                        placeholder="Enter code"
-                        className="rounded-xl"
-                      />
-                      <Button variant="outline">
-                        <Tag className="h-4 w-4" />
-                      </Button>
+                    {/* Conversations Initiated */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-blue-500" />
+                        <span className="text-xs text-muted-foreground">Initiated</span>
+                      </div>
+                      <div className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                        {initiatedCount}
+                      </div>
+                    </div>
+
+                    {/* Negotiating */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare className="h-4 w-4 text-yellow-500" />
+                        <span className="text-xs text-muted-foreground">Negotiating</span>
+                      </div>
+                      <div className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                        {negotiatingCount}
+                      </div>
+                    </div>
+
+                    {/* Confirmed */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-[#10B981]/10 to-[#10B981]/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-4 w-4 text-[#10B981]" />
+                        <span className="text-xs text-muted-foreground">Confirmed</span>
+                      </div>
+                      <div className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                        {confirmedCount}
+                      </div>
                     </div>
                   </div>
 
-                  <Separator className="mb-6" />
+                  <Separator className="mb-4" />
 
-                  <div className="space-y-3 mb-6 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>₹{subtotal.toFixed(2)}</span>
+                  {/* Cancelled Items */}
+                  {cancelledCount > 0 && (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          <span className="text-sm text-red-700">Cancelled Items</span>
+                        </div>
+                        <span className="text-lg font-semibold text-red-600">{cancelledCount}</span>
+                      </div>
+                      <p className="text-xs text-red-600 mt-2">
+                        Consider retrying or removing these items
+                      </p>
                     </div>
+                  )}
 
-                    <div className="flex justify-between">
-                      <span>Platform Fee (5%)</span>
-                      <span>₹{platformFee.toFixed(2)}</span>
-                    </div>
-
-                    <Separator />
-
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-primary">
-                        ₹{total.toFixed(2)}
-                      </span>
+                  {/* Order Summary - Compact Version */}
+                  <div className="mt-6 pt-6 border-t">
+                    <h4 className="text-sm font-medium mb-4">Quick Summary</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Cart Total</span>
+                        <span className="text-lg  text-primary" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                         ₹{subtotal.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-
-                  <Button
-                    className="w-full rounded-xl bg-primary hover:opacity-90"
-                    onClick={() => navigate("/checkout")}
-                  >
-                    Proceed to Checkout
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl mt-6 bg-card border border-border">
+              {/* Recommended Items */}
+              <Card className="rounded-2xl border-border shadow-sm">
                 <CardContent className="p-6">
-                  <h4 className="flex items-center gap-2 font-semibold mb-4">
-                    <Sparkles className="h-5 w-5 text-secondary" />
+                  <h4 className="mb-4 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-[#10B981]" />
                     You might also like
                   </h4>
-
-                  <p className="text-sm text-muted">
-                    Recommendations coming soon...
-                  </p>
+                  <div className="space-y-3">
+                    <div className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
+                      <div 
+                        className="w-16 h-16 rounded-lg bg-cover bg-center flex-shrink-0"
+                        style={{ backgroundImage: "url(https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=200)" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm line-clamp-2 mb-1">Watercolor Cards Set</p>
+                        <p className="text-sm text-[#2563EB]">$18</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
+                      <div 
+                        className="w-16 h-16 rounded-lg bg-cover bg-center flex-shrink-0"
+                        style={{ backgroundImage: "url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200)" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm line-clamp-2 mb-1">Calculus Study Guide</p>
+                        <p className="text-sm text-[#2563EB]">$22</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
