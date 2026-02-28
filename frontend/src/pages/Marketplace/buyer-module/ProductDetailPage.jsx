@@ -560,14 +560,7 @@ if (!product) {
                     </div>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-xl gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary transition-all duration-300"
-                    onClick={() => navigate("/messages")}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Message Seller
-                  </Button>
+        
                 </CardContent>
               </Card>
             )}

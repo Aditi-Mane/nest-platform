@@ -361,7 +361,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-6">
                     <TrendingUp className="h-5 w-5 text-[#2563EB]" />
-                    <h3 className="text-xl">Cart Analytics</h3>
+                    <h3 className="text-xl font-semibold">Cart Analytics</h3>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-6">
@@ -410,7 +410,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                     </div>
                   </div>
 
-                  <Separator className="mb-4" />
+                  
 
                   {/* Cancelled Items */}
                   {cancelledCount > 0 && (
@@ -430,7 +430,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
 
                   {/* Order Summary - Compact Version */}
                   <div className="mt-6 pt-6 border-t">
-                    <h4 className="text-sm font-medium mb-4">Quick Summary</h4>
+                   
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Cart Total</span>
