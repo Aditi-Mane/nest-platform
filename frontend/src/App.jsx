@@ -9,12 +9,39 @@ import AuthResolver from "./pages/AuthResolver.jsx"
 import { Navigate } from "react-router-dom"
 import { CartProvider } from "./context/CartContext.jsx";
 
-import { Toaster } from "sonner";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <>
-    <Toaster position="top-right" richColors />
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 3500,
+        style: {
+          background: "var(--color-card)",
+          color: "var(--color-text)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "14px",
+          padding: "14px 16px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+          fontWeight: "500",
+        },
+        success: {
+          iconTheme: {
+            primary: "var(--color-secondary)", // earthy green
+            secondary: "var(--color-card)",
+          },
+        },
+        error: {
+          iconTheme: {
+            primary: "var(--color-primary)", // pumpkin orange
+            secondary: "var(--color-card)",
+          },
+        },
+      }}
+    />
+
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/auth/*" element={<AuthPage />} />

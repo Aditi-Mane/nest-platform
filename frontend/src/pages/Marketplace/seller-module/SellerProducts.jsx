@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import api from "../../../api/axios.js";
 import { TfiPencilAlt } from "react-icons/tfi";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import toast from "react-hot-toast";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
@@ -218,8 +219,12 @@ const SellerProducts = () => {
             p._id === updatedProduct._id ? updatedProduct : p
           )
         );
+
+        toast.success("Product edited successfully");
       } else {
         setProducts((prev) => [updatedProduct, ...prev]);
+
+        toast.success("Product added successfully");
       }
 
       setEditingProduct(null);
@@ -238,10 +243,12 @@ const SellerProducts = () => {
       });
 
     } catch (err) {
-      setError(
+      const message =
         err.response?.data?.message ||
-        "Something went wrong while saving product."
-      );
+        "Something went wrong while saving product.";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

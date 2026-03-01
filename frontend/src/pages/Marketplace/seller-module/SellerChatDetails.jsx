@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { ArrowLeft, Send, CheckCircle } from "lucide-react";
 import api from "../../../api/axios.js";
+import toast from "react-hot-toast";
 
 const SellerChatDetails = () => {
   const { state } = useLocation();
@@ -146,6 +147,8 @@ const SellerChatDetails = () => {
         status: "deal_confirmed"
       }));
 
+      toast.success("Deal confirmed");
+
     } catch (error) {
       console.error(error.response?.data || error.message);
     }
@@ -163,6 +166,8 @@ const SellerChatDetails = () => {
         ...prev,
         status: "cancelled"
       }));
+
+      toast.success("Deal cancelled");
     } catch (error) {
       console.error(error.response?.data || error.message);
     }

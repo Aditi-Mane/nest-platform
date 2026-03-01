@@ -19,6 +19,7 @@ import SellerSentiment from "./marketplace/seller-module/SellerSentiment.jsx";
 import SellerPrediction from "./marketplace/seller-module/SellerPrediction.jsx";
 import SellerSettings from "./marketplace/seller-module/SellerSettings.jsx";
 import SellerChatDetails from "./marketplace/seller-module/SellerChatDetails.jsx";
+import SellerVerifyOtp from "./marketplace/seller-module/SellerVerifyOtp.jsx";
 
 function Marketplace() {
   return (
@@ -30,6 +31,7 @@ function Marketplace() {
         <Route path="dashboard" element={<SellerDashboard />} />
         <Route path="products" element={<SellerProducts />} />
         <Route path="orders" element={<SellerOrders />} />
+        <Route path="orders/:orderId" element={<SellerVerifyOtp />} />
         <Route path="analytics" element={<SellerAnalytics />} />
         <Route path="sales-prediction" element={<SellerPrediction />} />
         <Route path="sentiment" element={<SellerSentiment />} />
