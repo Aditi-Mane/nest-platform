@@ -14,7 +14,7 @@ export const createConversation =async (req,res)=>{
     }
 
     //2. Check product available
-    if(product.status !== "available"){
+    if(product.stock <= 0 || product.status !== "available"){
       return res.status(400).json({ message: "Product not available" });
     }
 
@@ -46,6 +46,29 @@ export const createConversation =async (req,res)=>{
 
 };
 
+export const getBuyerConversations = async (req, res) => {
+  try {
+    const buyerId = req.user._id;
+
+    const conversations = await Conversation.find({ buyerId })
+      .populate("productId", "name images price status") // ✅ fixed
+      .populate("sellerId", "name avatar")
+      .sort({ updatedAt: -1 }); 
+
+    return res.status(200).json({
+      message: "Fetched buyer conversations",
+      conversations,
+    });
+
+  } catch (error) {
+    console.error(error); 
+    return res.status(500).json({
+      message: "Error fetching buyer conversations",
+      error: error.message, 
+    });
+  }
+};
+
 //to get all seller conversations
 export const getSellerConversations = async(req, res) =>{
   try {
@@ -71,10 +94,24 @@ export const getSellerConversations = async(req, res) =>{
 export const getConversationInfo = async(req, res) =>{
   try {
     const { conversationId } = req.params;
+    const userId =req.user._id
 
     const conversation = await Conversation.findById(conversationId)
     .populate("buyerId", "avatar name")
+    .populate("sellerId", "avatar name")
     .populate("productId", "name price")
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // ✅ SECURITY CHECK
+    if (
+      conversation.buyerId._id.toString() !== userId.toString() &&
+      conversation.sellerId._id.toString() !== userId.toString()
+    ) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
 
     return res.status(200).json({
       message: "Conversation info achieved",

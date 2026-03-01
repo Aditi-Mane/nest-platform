@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "socketio": "^1.0.0",
     "sooner": "^1.1.4"
   }

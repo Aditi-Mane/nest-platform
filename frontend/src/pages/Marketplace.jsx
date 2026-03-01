@@ -21,6 +21,7 @@ import SellerSettings from "./marketplace/seller-module/SellerSettings.jsx";
 import SellerChatDetails from "./marketplace/seller-module/SellerChatDetails.jsx";
 import SellerVerifyOtp from "./marketplace/seller-module/SellerVerifyOtp.jsx";
 
+import BuyerChatDetails from "./marketplace/buyer-module/BuyerChatDetails.jsx";
 function Marketplace() {
   return (
     <Routes>
@@ -47,7 +48,7 @@ function Marketplace() {
         <Route path="cart" element={<CartPage />} />
         <Route path="wishlist" element={<Wishlist />} />
         <Route path="ProfilePage" element={<ProfilePage/>} />
-        <Route path="messages/:conversationId" element={<SellerChatDetails />} />
+        <Route path="messages/:conversationId" element={<BuyerChatDetails />} />
       </Route>
     </Routes>
   )

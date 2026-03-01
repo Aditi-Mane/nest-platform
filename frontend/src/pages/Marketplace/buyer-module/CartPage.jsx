@@ -15,7 +15,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext"; 
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallBack.jsx";
@@ -44,6 +44,19 @@ export default function CartPage() {
 
   const [promoCode, setPromoCode] = useState("");
   const [conversations, setConversations] = useState([]);
+
+  useEffect(() => {
+  const fetchConversations = async () => {
+    try {
+      const res = await api.get("conversations/buyer");
+      setConversations(res.data.conversations);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchConversations();
+}, []);
 
   // Format items to match your existing UI structure
  const formattedItems = cartItems.map((item) => {
@@ -79,6 +92,9 @@ const handleContactSeller = async (item) => {
         "/conversations/create",
         { productId: item.id },
       );
+      const newConversation = res.data.conversation;
+
+      setConversations((prev) => [...prev, newConversation]);
 
       conversationId = res.data.conversation._id;
     }
@@ -195,6 +211,8 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
       </div>
     );
   }
+
+
 
   return (
     <div className="min-h-screen bg-white text-text">
