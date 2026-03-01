@@ -33,6 +33,14 @@ const SellerChatDetails = () => {
   const [newMessage, setNewMessage] = useState("");
   const [conversationInfo, setConversationInfo] = useState(null);
 
+  const isSeller =
+    String(conversationInfo?.sellerId?._id || conversationInfo?.sellerId) ===
+    String(currentUser?._id);
+
+  const isBuyer =
+    String(conversationInfo?.buyerId?._id || conversationInfo?.buyerId) ===
+    String(currentUser?._id);
+
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
@@ -225,7 +233,7 @@ return (
           <div className="flex items-center gap-2">
 
             {/* Negotiating → Show both */}
-            {conversationInfo?.status === "negotiating" && (
+            {isSeller && ["initiated", "negotiating"].includes(conversationInfo?.status) && (
               <>
                 <button
                   onClick={handleConfirmDeal}
@@ -244,7 +252,7 @@ return (
             )}
 
             {/* Deal Confirmed → Only Cancel */}
-            {conversationInfo?.status === "deal_confirmed" && (
+            {isSeller && conversationInfo?.status === "deal_confirmed" && (
               <button
                 onClick={handleCancelDeal}
                 className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
@@ -254,7 +262,7 @@ return (
             )}
 
             {/* Cancelled → Only Confirm */}
-            {conversationInfo?.status === "cancelled" && (
+            {isSeller && conversationInfo?.status === "cancelled" && (
               <button
                 onClick={handleConfirmDeal}
                 className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
