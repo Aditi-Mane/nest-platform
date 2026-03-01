@@ -45,6 +45,7 @@ function Marketplace() {
         <Route path="cart" element={<CartPage />} />
         <Route path="wishlist" element={<Wishlist />} />
         <Route path="ProfilePage" element={<ProfilePage/>} />
+        <Route path="messages/:conversationId" element={<SellerChatDetails />} />
       </Route>
     </Routes>
   )
