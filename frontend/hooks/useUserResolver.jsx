@@ -16,6 +16,28 @@ const useUserResolver = () => {
 
       const user = res.data;
 
+      if (user.verificationStatus === "pending_email") {
+        setDestination("/auth/verify-email-otp");
+        return;
+      }
+
+      if (user.verificationStatus === "email_verified") {
+        setDestination("/auth/verify-account");
+        return;
+      }
+
+      if (user.verificationStatus === "under_review") {
+        setDestination("/auth/verification-status");
+        return;
+      }
+
+      if (user.verificationStatus === "rejected") {
+        setDestination("/auth/verification-status");
+        return;
+      }
+
+      // Only approved users continue
+
       if(user.verificationStatus !== "approved"){
         setDestination("/auth/verification-status");
         return;

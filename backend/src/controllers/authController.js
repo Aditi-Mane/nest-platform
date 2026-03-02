@@ -52,10 +52,9 @@ export const signup = async (req, res) => {
       email: normalizedEmail,
       password: hashedPassword,
 
-      verificationStatus: "pending",
+      verificationStatus: "pending_email",
       availableRoles: [],
       activeRole: null,
-      isVerified: false
     })
 
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -99,17 +98,10 @@ export const signup = async (req, res) => {
   }
 };
 
-import mongoose from "mongoose";
 export const verifyAccount = async (req, res) =>{
   try {
-    const {userId, collegeId} = req.body;
+    const {collegeId} = req.body;
     const file = req.file;
-
-    if(!userId){
-      return res.status(400).json({
-        message: "User Id is required"
-      })
-    }
 
     if(!collegeId){
       return res.status(400).json({
@@ -139,23 +131,17 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
-    if (!userId || userId === "undefined") {
-      return res.status(400).json({
-        message: "Invalid user id"
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        message: "Invalid user id format"
-      });
-    }
-
-    const user = await User.findById(userId);
+    const user = req.user;
 
     if(!user) {
       return res.status(404).json({
         message: "User not found",
+      });
+    }
+
+    if (user.verificationStatus !== "email_verified") {
+      return res.status(400).json({
+        message: "Complete email verification first",
       });
     }
 
@@ -233,9 +219,11 @@ export const verifyEmailOTP = async (req, res) => {
 
     await user.save();
 
+    const token = generateToken(user._id);
+
     return res.status(200).json({
       message: "OTP verified",
-      userId: user._id.toString()
+      token
     });
 
   } catch (error) {

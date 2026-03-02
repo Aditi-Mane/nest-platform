@@ -82,8 +82,8 @@ const userSchema = new mongoose.Schema(
     //verification Lifecycle
     verificationStatus: {
       type: String,
-      enum: ["email_verified","pending", "under_review", "approved", "rejected"],
-      default: "pending"
+      enum: ["pending_email", "email_verified", "under_review", "approved", "rejected"],
+      default: "pending_email"
     },
 
     //roles user has access to

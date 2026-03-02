@@ -10,13 +10,16 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 const VerifyEmailOtp = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const email = location.state?.email || localStorage.getItem("signupEmail");
+  const location = useLocation();
+
+  const email =
+    location.state?.email ||
+    localStorage.getItem("signupEmail");
 
   const handleVerifyEmailOtp = async () =>{
     try {
@@ -31,22 +34,21 @@ const VerifyEmailOtp = () => {
         }
       )
 
-      if (!res?.data?.userId) {
+      const token = res?.data?.token;
+
+      if (!token) {
         setError("Verification failed");
         return;
       }
       localStorage.removeItem("signupEmail");
+      //store normal JWT
+      localStorage.setItem("token", token);
 
-      localStorage.setItem("tempUserId", res.data.userId);
-
-      navigate("/auth/verify-account", {
-        state: {userId: res?.data?.userId}
-      });
+      //go to resolver
+      navigate("/resolve", { replace: true });
 
     } catch (error) {
-      console.log("FULL ERROR:", error);
-  console.log("BACKEND RESPONSE:", error?.response);
-  console.log("BACKEND DATA:", error?.response?.data);
+
       setError(error?.response?.data?.message || "OTP verification failed")
     } finally {
       setLoading(false);
