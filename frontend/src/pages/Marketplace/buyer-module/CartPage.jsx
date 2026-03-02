@@ -186,6 +186,24 @@ const getContactButtonVariant = (status) => {
     );
   };
 
+  const getHoverStyle = (status, productStatus) => {
+  if (productStatus === "sold") return "";
+  if (productStatus === "reserved") {
+    return "hover:!bg-orange-100 hover:!text-orange-700";
+  }
+
+  switch (status) {
+    case "deal_confirmed":
+      return "hover:!bg-green-200 hover:!text-green-800";
+    case "negotiating":
+      return "hover:!bg-yellow-100 hover:!text-yellow-700";
+    case "cancelled":
+      return "hover:!bg-red-100 hover:!text-red-700";
+    default:
+      return "hover:!bg-green-100 hover:!text-green-700";
+  }
+};
+
   // Calculate analytics
 const totalItems = cartItems.length;
 const initiatedCount = formattedItems.filter(i => i.status === 'initiated').length;
@@ -345,11 +363,10 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                       {/* Contact Seller Button */}
                      <Button
                       size="sm"
-                      className={`w-full rounded-xl border ${getButtonStyle(
-                        item.status,
-                        item.productStatus
-                      )} hover:!bg-green-100 hover:!text-green-700
-  !shadow-none`}
+                      className={`w-full rounded-xl border 
+                        ${getButtonStyle(item.status, item.productStatus)}
+                        ${getHoverStyle(item.status, item.productStatus)}
+                        !shadow-none transition-all`}
                       onClick={() => handleContactSeller(item)}
                       disabled={isContactButtonDisabled(item.status, item.productStatus)}
                     >

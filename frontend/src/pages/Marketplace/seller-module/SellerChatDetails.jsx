@@ -60,6 +60,8 @@ const SellerChatDetails = () => {
     };
   }, []);
 
+  
+
   useEffect(() => {
     if (!socketRef.current || !conversationId) return;
 

@@ -15,6 +15,7 @@ const BuyerChatDetails = () => {
   const [conversationInfo, setConversationInfo] = useState(null);
 
   const socketRef = useRef(null);
+  const bottomRef = useRef(null);
 
   //  SOCKET CONNECT
  useEffect(() => {
@@ -29,12 +30,24 @@ const BuyerChatDetails = () => {
   };
 }, []);
 
+ useEffect(() => {
+      bottomRef.current?.scrollIntoView({
+        behavior: "auto",
+      });
+    }, [messages]);
+
   //  JOIN ROOM
   useEffect(() => {
-    if (!socketRef.current || !conversationId) return;
+  if (!socketRef.current || !conversationId) return;
 
+  if (socketRef.current.connected) {
     socketRef.current.emit("join_conversation", conversationId);
-  }, [conversationId]);
+  } else {
+    socketRef.current.once("connect", () => {
+      socketRef.current.emit("join_conversation", conversationId);
+    });
+  }
+}, [conversationId]);
 
   //  RECEIVE MESSAGE
   useEffect(() => {
@@ -78,6 +91,17 @@ const BuyerChatDetails = () => {
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
+    const tempMessage = {
+    _id: Date.now(),
+    text: newMessage,
+    senderId: currentUser._id,
+    createdAt: new Date(),
+    };
+
+  
+    setMessages((prev) => [...prev, tempMessage]);
+
+
     await api.post("/messages/send", {
       conversationId,
       text: newMessage,
@@ -87,17 +111,10 @@ const BuyerChatDetails = () => {
   };
 
   return (
-    <div className="bg-white flex items-center justify-center h-full px-6 py-6">
-      <div className="w-full max-w-2xl bg-card border border-border rounded-3xl flex flex-col h-[90vh] shadow-sm">
+    <div className="h-full flex flex-col bg-card">
+      <div className="w-full h-full bg-card  flex flex-col h-[90vh] shadow-sm">
 
-        {/*BACK */}
-        <div
-          onClick={() => navigate(-1)}
-          className="px-5 py-3 text-muted cursor-pointer border-b border-border text-sm flex items-center gap-2"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </div>
+        
 
         {/* HEADER (SELLER INFO) */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
@@ -167,10 +184,11 @@ const BuyerChatDetails = () => {
               </div>
             );
           })}
+           <div ref={bottomRef}></div>
         </div>
 
         {/* INPUT */}
-        <div className="border-t px-4 py-3">
+        <div className="px-4 py-3">
           <div className="flex gap-3 border rounded-xl px-3 py-2">
 
             <input

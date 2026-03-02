@@ -5,7 +5,7 @@ import {
   ShoppingCart,
   Heart,
 } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -19,6 +19,21 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   ];
   const { cartItems } = useCart();
   const cartCount = cartItems.length;
+  const navigate = useNavigate();
+
+  const handleNavClick = (id) => {
+  if (id === "messages") {
+    navigate("/marketplace/buyer/messages");
+
+  }
+  if (id === "marketplace") {
+    navigate("/marketplace/buyer/");
+  }
+
+  if (id === "ventures") {
+    navigate("/marketplace/buyer/ventures");
+  }
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-[var(--color-background)]">
@@ -49,7 +64,7 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
                 <Button
                   key={item.id}
                   variant="ghost"
-                  onClick={() => onNavigate(item.id)}
+                  onClick={() => handleNavClick(item.id)}
                   className={`gap-4 rounded-xl px-4 transition-all
                     ${
                       isActive
