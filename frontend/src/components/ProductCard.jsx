@@ -138,7 +138,7 @@ import { Badge } from "./ui/badge";
         className={`flex-1 rounded-xl gap-2
           ${
             isUnavailable
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-70 pointer-events-none"
               : "bg-primary text-white hover:bg-primary/90"
           }
         `}
@@ -151,11 +151,11 @@ import { Badge } from "./ui/badge";
       >
         <ShoppingCart className="h-4 w-4" />
         {product.status === "sold"
-          ? "Sold"
+          ? "Sold Out"
           : product.status === "reserved"
           ? "Reserved"
-          : "Add"}
-      </Button> 
+          : "Add to Cart"}
+      </Button>
       </CardFooter>
     </Card>
   );

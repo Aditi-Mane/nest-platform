@@ -33,6 +33,7 @@ import {
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { Separator } from "@/components/ui/separator";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {useEffect, useState} from "react";
 import axios from "axios";
 import api from "../../../api/axios.js";
@@ -45,23 +46,24 @@ export default function ProductDetailPage() {
   const[product, setProduct]=useState(null);
   const isUnavailable = product?.status !== "available";
   const seller = product?.createdBy;
-  console.log(seller);
+
 
   const [reviews, setReviews] =useState([]);
   const [loadingReviews, setLoadingReviews] =useState(true);
   const [conversation, setConversation] = useState(null);
+  const location = useLocation();
+
 
   //selected photo
   const [selectedImage, setSelectedImage] = useState(null);
 
-
-const getContactButtonText = (productStatus, conversationStatus) => {
-  // product level override (highest priority)
-  if (productStatus === "sold") return "Unavailable";
+const getContactButtonText = (status, productStatus) => {
+  if (productStatus === "sold") return "Sold Out";
   if (productStatus === "reserved") return "Currently Reserved";
 
-  // conversation level
-  switch (conversationStatus) {
+  if (!status) return "Contact Seller";
+
+  switch (status) {
     case "initiated":
       return "Contact Seller";
     case "negotiating":
@@ -74,13 +76,55 @@ const getContactButtonText = (productStatus, conversationStatus) => {
       return "Contact Seller";
   }
 };
+//for contact button
+const getButtonStyle = (status, productStatus) => {
+  if (productStatus === "sold") {
+    return "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+  }
 
-const isContactDisabled = (productStatus, conversationStatus) => {
-  if (productStatus === "sold") return true;
-  if (conversationStatus === "deal_confirmed") return true;
+  if (productStatus === "reserved") {
+    return "bg-orange-50 text-orange-600 border-orange-100";
+  }
 
-  return false;
+  switch (status) {
+    case "deal_confirmed":
+      return "bg-green-100 text-green-700 border-green-200";
+    case "negotiating":
+      return "bg-yellow-50 text-yellow-600 border-yellow-100";
+    case "cancelled":
+      return "bg-red-50 text-red-600 border-red-100";
+    default:
+      return "bg-green-50 text-green-600 border-green-100";
+  }
 };
+
+const getHoverStyle = (status, productStatus) => {
+  if (productStatus === "sold") return "";
+
+  if (productStatus === "reserved") {
+    return "hover:!bg-orange-100 hover:!text-orange-700";
+  }
+
+  switch (status) {
+    case "deal_confirmed":
+      return "hover:!bg-green-200 hover:!text-green-800";
+    case "negotiating":
+      return "hover:!bg-yellow-100 hover:!text-yellow-700";
+    case "cancelled":
+      return "hover:!bg-red-100 hover:!text-red-700";
+    default:
+      return "hover:!bg-green-100 hover:!text-green-700";
+  }
+};
+
+const isContactButtonDisabled = (status, productStatus) => {
+  return (
+    status === "deal_confirmed" ||
+    productStatus === "sold" ||
+    productStatus === "reserved"
+  );
+};
+
 
 const getSoftButtonStyle = (productStatus, conversationStatus, type = "contact") => {
   if (productStatus === "sold") {
@@ -119,6 +163,17 @@ const getSoftHover = (productStatus, conversationStatus, type = "contact") => {
       return "hover:!bg-green-100 hover:!text-green-700";
   }
 };
+
+
+const fetchConversation = async () => {
+        try {
+          const res = await api.get(`/conversations/product/${id}`);
+          setConversation(res.data.conversation);
+        } catch (err) {
+          // no conversation exists → fine
+        }
+};
+
   //fetch product details from backend
   useEffect(()=>{
     async function fetchProduct(){
@@ -149,21 +204,16 @@ const getSoftHover = (productStatus, conversationStatus, type = "contact") => {
            setLoadingReviews(false);
         }
       }
-      const fetchConversation = async () => {
-        try {
-          const res = await api.get(`/conversations/product/${id}`);
-          setConversation(res.data.conversation);
-        } catch (err) {
-          // no conversation exists → fine
-        }
-      };
-
+      
     fetchConversation();
     fetchProduct();
     fetchReviews();
     
 
   },[id]);
+
+
+console.log("UPDATED STATUS:", conversation?.status);
 
   //format createdAt(Posted)
   const postedDate=product?.createdAt?
@@ -466,36 +516,40 @@ if (!product) {
                 </Button>
 
           <Button
-          size="lg"
-          className={`w-full rounded-xl border transition-all duration-200
-            ${getSoftButtonStyle(product?.status, conversation?.status)}
-            ${getSoftHover(product?.status, conversation?.status)}
-            !shadow-none
-          `}
-          disabled={isContactDisabled(product?.status, conversation?.status)}
-          onClick={async () => {
-            try {
-              let conversationId = conversation?._id;
+                  size="lg"
+                  className={`w-full rounded-xl border 
+                    ${getButtonStyle(conversation?.status, product?.status)}
+                    ${getHoverStyle(conversation?.status, product?.status)}
+                    !shadow-none transition-all`}
+                  disabled={isContactButtonDisabled(conversation?.status, product?.status)}
+                  onClick={async () => {
+                    try {
+                      
+                      await addToCart(product._id);
 
-              // create if not exists
-              if (!conversationId) {
-                const res = await api.post("/conversations/create", {
-                  productId: product._id,
-                });
+                      let conversationId = conversation?._id;
 
-                conversationId = res.data.conversation._id;
-              }
+                      
+                      if (!conversationId) {
+                        const res = await api.post("/conversations/create", {
+                          productId: product._id,
+                        });
 
-              navigate(`/marketplace/buyer/messages/${conversationId}`);
-            } catch (error) {
-              console.error(error);
-              alert("Something went wrong");
-            }
-          }}
-        >
-          <MessageSquare className="h-5 w-5 mr-2" />
-          {getContactButtonText(product?.status, conversation?.status)}
-       </Button>
+                        conversationId = res.data.conversation._id;
+                        setConversation(res.data.conversation);
+                      }
+
+                      
+                      navigate(`/marketplace/buyer/messages/${conversationId}`);
+                    } catch (error) {
+                      console.error(error);
+                      alert("Something went wrong");
+                    }
+                  }}
+                >
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  {getContactButtonText(conversation?.status, product?.status)}
+                </Button>
 
                 <div className="text-center text-sm text-muted-foreground">
                   <Shield className="h-5 w-5 mx-auto mb-2" />

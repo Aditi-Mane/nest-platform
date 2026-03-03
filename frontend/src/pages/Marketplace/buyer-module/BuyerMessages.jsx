@@ -25,9 +25,7 @@ const BuyerMessages = () => {
 
   const navigate = useNavigate();
 
-  //FETCH BUYER CONVERSATIONS
-  useEffect(() => {
-    const fetchBuyerConversations = async () => {
+  const fetchBuyerConversations = async () => {
       try {
         const res = await api.get("/conversations/buyer");
         setRequests(res.data.conversations);
@@ -36,10 +34,22 @@ const BuyerMessages = () => {
       } finally {
         setLoading(false);
       }
-    };
-
+  };
+  //FETCH BUYER CONVERSATIONS
+  useEffect(() => {
     fetchBuyerConversations();
   }, []);
+  useEffect(() => {
+  const handleFocus = () => {
+    fetchBuyerConversations();
+  };
+
+  window.addEventListener("focus", handleFocus);
+
+  return () => {
+    window.removeEventListener("focus", handleFocus);
+  };
+}, []);
 
   //STATUS STYLE
   const statusStyle = (status) => {
@@ -135,7 +145,7 @@ const BuyerMessages = () => {
           onClick={() =>
             navigate(`/marketplace/buyer/messages/${item._id}`)
           }
-          className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-muted transition"
+          className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-muted transition-all duration-200 group"
         >
           {/* Avatar */}
          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden">
@@ -153,18 +163,16 @@ const BuyerMessages = () => {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-800 truncate">
                 {item.sellerId?.name}
               </p>
-
-              
             </div>
 
-            <p className="text-xs text-primary truncate">
+            <p className="text-xs text-primary group-hover:opacity-80 font-medium truncate mt-0.5">
               {item.productId?.name}
             </p>
 
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate mt-1 leading-relaxed">
               {item.lastMessage || "Start conversation"}
             </p>
           </div>

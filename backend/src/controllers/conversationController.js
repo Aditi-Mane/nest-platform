@@ -68,6 +68,34 @@ export const getBuyerConversations = async (req, res) => {
     });
   }
 };
+//get conversations by product
+export const getConversationByProduct = async (req, res) => {
+  try {
+    const buyerId = req.user._id;
+    const { productId } = req.params;
+
+    const conversation = await Conversation.findOne({
+      productId,
+      buyerId,
+    });
+
+   
+    if (!conversation) {
+      return res.status(200).json({ conversation: null });
+    }
+
+    return res.status(200).json({
+      message: "Conversation fetched",
+      conversation,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error fetching conversation",
+      error: error.message,
+    });
+  }
+};
 
 //to get all seller conversations
 export const getSellerConversations = async(req, res) =>{

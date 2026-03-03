@@ -155,7 +155,7 @@ const getContactButtonVariant = (status) => {
   }
 };
 
-//Button Style
+// Contact Button Style
         const getButtonStyle = (status, productStatus) => {
           if (productStatus === "sold") {
             return "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
@@ -185,7 +185,7 @@ const getContactButtonVariant = (status) => {
     productStatus === "reserved"
     );
   };
-
+  //for contact button
   const getHoverStyle = (status, productStatus) => {
   if (productStatus === "sold") return "";
   if (productStatus === "reserved") {
@@ -310,6 +310,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                         <p className="text-sm text-muted">
                           {item.seller?.name} 
                         </p>
+                         {getStatusBadge(item.status)}
                       </div>
 
                       {/* Quantity Controls */}
