@@ -39,6 +39,10 @@ const conversationSchema =new mongoose.Schema(
   },
   { timestamps: true }
 );
-
+conversationSchema.index(
+  { productId: 1, buyerId: 1 },
+  { unique: true }
+);
 const Conversation =mongoose.model("Conversation", conversationSchema);
+
 export default Conversation;
