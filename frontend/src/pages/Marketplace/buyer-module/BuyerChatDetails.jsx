@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-console.log("SOCKET IO =", io);
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import api from "../../../api/axios.js";
@@ -17,106 +16,122 @@ const BuyerChatDetails = () => {
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
-  //  SOCKET CONNECT
- useEffect(() => {
-  if (!socketRef.current) {
+  // ✅ SOCKET CONNECT (ONLY ONCE)
+  useEffect(() => {
     socketRef.current = io("http://localhost:5000", {
       transports: ["websocket"],
     });
-  }
-
-  return () => {
-    socketRef.current?.disconnect();
-  };
-}, []);
-
- useEffect(() => {
-      bottomRef.current?.scrollIntoView({
-        behavior: "auto",
-      });
-    }, [messages]);
-
-  //  JOIN ROOM
-  useEffect(() => {
-  if (!socketRef.current || !conversationId) return;
-
-  if (socketRef.current.connected) {
-    socketRef.current.emit("join_conversation", conversationId);
-  } else {
-    socketRef.current.once("connect", () => {
-      socketRef.current.emit("join_conversation", conversationId);
-    });
-  }
-}, [conversationId]);
-
-  //  RECEIVE MESSAGE
-  useEffect(() => {
-    socketRef.current?.on("receive_message", (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    });
 
     return () => {
-      socketRef.current?.off("receive_message");
+      // ❌ DO NOT disconnect on every re-render
+      socketRef.current.disconnect();
     };
   }, []);
 
-  // CURRENT USER
+  // ✅ AUTO SCROLL
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
+
+  // ✅ JOIN ROOM
+  useEffect(() => {
+    if (!socketRef.current || !conversationId) return;
+
+    if (socketRef.current.connected) {
+      socketRef.current.emit("join_conversation", conversationId);
+    } else {
+      socketRef.current.once("connect", () => {
+        socketRef.current.emit("join_conversation", conversationId);
+      });
+    }
+  }, [conversationId]);
+
+  // ✅ RECEIVE MESSAGE (REAL-TIME FIX)
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    const handleReceive = (msg) => {
+      // only messages of this conversation
+      if (msg.conversationId === conversationId) {
+        setMessages((prev) => {
+          // جلوگیری duplicate
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+      }
+    };
+
+    socketRef.current.on("receive_message", handleReceive);
+
+    return () => {
+      socketRef.current.off("receive_message", handleReceive);
+    };
+  }, [conversationId]);
+
+  // ✅ CURRENT USER
   useEffect(() => {
     const fetchUser = async () => {
-      const res = await api.get("/users/me");
-      setCurrentUser(res.data);
+      try {
+        const res = await api.get("/users/me");
+        setCurrentUser(res.data);
+      } catch (err) {
+        console.error(err);
+      }
     };
     fetchUser();
   }, []);
 
-  // FETCH MESSAGES
+  // ✅ FETCH MESSAGES
   useEffect(() => {
     const fetchMessages = async () => {
-      const res = await api.get(`/messages/${conversationId}`);
-      setMessages(res.data.messages);
+      try {
+        const res = await api.get(`/messages/${conversationId}`);
+        setMessages(res.data.messages);
+      } catch (err) {
+        console.error(err);
+      }
     };
-    fetchMessages();
+
+    if (conversationId) fetchMessages();
   }, [conversationId]);
 
-  // FETCH CONVERSATION INFO (SELLER INFO)
+  // ✅ FETCH CONVERSATION INFO
   useEffect(() => {
     const fetchInfo = async () => {
-      const res = await api.get(`/conversations/${conversationId}`);
-      setConversationInfo(res.data.conversation);
+      try {
+        const res = await api.get(`/conversations/${conversationId}`);
+        setConversationInfo(res.data.conversation);
+      } catch (err) {
+        console.error(err);
+      }
     };
-    fetchInfo();
+
+    if (conversationId) fetchInfo();
   }, [conversationId]);
 
-  // SEND MESSAGE
+  // ✅ SEND MESSAGE (NO OPTIMISTIC UPDATE)
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
-    const tempMessage = {
-    _id: Date.now(),
-    text: newMessage,
-    senderId: currentUser._id,
-    createdAt: new Date(),
-    };
+    try {
+      await api.post("/messages/send", {
+        conversationId,
+        text: newMessage,
+      });
 
-  
-    setMessages((prev) => [...prev, tempMessage]);
-
-
-    await api.post("/messages/send", {
-      conversationId,
-      text: newMessage,
-    });
-
-    setNewMessage("");
+      setNewMessage("");
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+    }
   };
 
   return (
     <div className="h-full flex flex-col bg-card">
-      <div className="w-full h-full bg-card  flex flex-col h-[90vh] shadow-sm">
+      <div className="w-full h-full flex flex-col h-[90vh] shadow-sm">
 
-        
-
-        {/* HEADER (SELLER INFO) */}
+        {/* HEADER */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
 
           <div className="flex items-center gap-3">
@@ -137,16 +152,15 @@ const BuyerChatDetails = () => {
               </h2>
 
               <p className="text-xs text-muted">
-                {conversationInfo?.productId?.name}   
+                {conversationInfo?.productId?.name}
               </p>
+
               <p className="text-sm text-primary">
-                 ₹
-                {conversationInfo?.productId?.price}
+                ₹{conversationInfo?.productId?.price}
               </p>
             </div>
           </div>
 
-          {/* STATUS */}
           <span className="px-3 py-1 text-xs rounded-full bg-secondary/20 text-secondary capitalize">
             {conversationInfo?.status?.replace("_", " ")}
           </span>
@@ -170,7 +184,6 @@ const BuyerChatDetails = () => {
                 className={`flex ${isMe ? "justify-end" : "justify-start"}`}
               >
                 <div className="max-w-[70%]">
-
                   <div
                     className={`px-4 py-2 rounded-2xl text-sm ${
                       isMe
@@ -184,7 +197,8 @@ const BuyerChatDetails = () => {
               </div>
             );
           })}
-           <div ref={bottomRef}></div>
+
+          <div ref={bottomRef}></div>
         </div>
 
         {/* INPUT */}
