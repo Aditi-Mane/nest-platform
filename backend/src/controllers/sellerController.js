@@ -182,11 +182,14 @@ export const editProduct = async (req, res) => {
       });
     }
 
-    //prevent editing sold products
-    if (product.status === "sold") {
-      return res.status(400).json({
-        message: "Cannot edit a sold product"
-      });
+    if (stock !== undefined && Number(stock) >= 0) {
+      product.stock = Number(stock);
+
+      if (product.stock === 0) {
+        product.status = "sold";
+      } else {
+        product.status = "available";
+      }
     }
 
     //update basic fields
@@ -291,6 +294,12 @@ export const confirmDeal = async (req, res) =>{
     const { conversationId } = req.params;
     const conversation = await Conversation.findById(conversationId);
 
+    if (conversation.sellerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Not authorized to perform this action",
+      });
+    }
+
     if(!conversation) {
       return res.status(404).json({
         message: "Conversation not found",
@@ -309,6 +318,11 @@ export const confirmDeal = async (req, res) =>{
       return res.status(404).json({
         message: "Product not found",
       });
+    }
+
+    if(product.stock === 1){
+      product.status = "reserved";
+      await product.save();
     }
 
     //check if order already exists
@@ -351,6 +365,12 @@ export const cancelDeal = async (req, res) =>{
     const { conversationId } = req.params;
 
     const conversation = await Conversation.findById(conversationId);
+
+    if (conversation.sellerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Not authorized to perform this action",
+      });
+    }
 
     if(!conversation) {
       return res.status(404).json({
@@ -528,6 +548,19 @@ export const verifyOrderOtp = async (req, res) => {
       return res.status(400).json({
         message: "Invalid OTP",
       });
+    }
+
+    const product = await Product.findById(order.productId);
+
+    if (product) {
+      product.stock = product.stock - 1;
+
+      if (product.stock <= 0) {
+        product.status = "sold";
+        product.stock = 0;
+      }
+
+      await product.save();
     }
 
     //update order after successful verification
