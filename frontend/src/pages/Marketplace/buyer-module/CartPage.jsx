@@ -58,27 +58,27 @@ export default function CartPage() {
   fetchConversations();
 }, []);
 
-  // Format items to match your existing UI structure
- const formattedItems = cartItems.map((item) => {
-  const conversation = conversations.find(
-    (c) => c.productId._id === item.product._id
-  );
+const formattedItems = cartItems
+  .filter((item) => item.product !== null)
+  .map((item) => {
+    const conversation = conversations.find(
+      (c) => c.productId?._id === item.product._id
+    );
 
-  return {
-    id: item.product._id,
-    name: item.product.name,
-    price: item.product.price,
-    image: item.product.images?.[0]?.url,
-    category: item.product.category,
-    description: item.product.description,
-    quantity: item.quantity,
-    seller: item.product.createdBy,
-    productStatus: item.product.status,
+    return {
+      id: item.product._id,
+      name: item.product.name,
+      price: item.product.price,
+      image: item.product.images?.[0]?.url,
+      category: item.product.category,
+      description: item.product.description,
+      quantity: item.quantity,
+      seller: item.product.createdBy,
+      productStatus: item.product.status,
 
-    
-    conversationId: conversation?._id,
-    status: conversation?.status || null,
-  };
+      conversationId: conversation?._id,
+      status: conversation?.status || null,
+    };
 });
 
 //handleContactSeller
