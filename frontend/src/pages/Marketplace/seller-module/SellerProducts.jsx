@@ -19,6 +19,8 @@ const SellerProducts = () => {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 6;
 
+  const [imageIndexes, setImageIndexes] = useState({});
+
   const categories = [
     "Study Material",
     "Electronics",
@@ -330,20 +332,56 @@ const SellerProducts = () => {
               key={p._id}
               className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition"
             >
-              {/* IMAGE */}
-             
-                {/* IMAGE */}
-                <div className="h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
-                  {p.images && p.images.length > 0 ? (
-                    <img
-                      src={p.images[0].url}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-muted">No Image</span>
+              <div className="relative h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
+
+                {/* STATUS BADGE */}
+                <span
+                  className={`absolute top-2 right-2 text-xs px-3 py-1 rounded-full font-medium shadow-sm
+                    ${
+                      p.status === "sold"
+                        ? "bg-red-100 text-red-700"
+                        : p.status === "available"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                >
+                  {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                </span>
+
+                {p.images && p.images.length > 0 ? (
+                <>
+                  <img
+                    src={p.images[imageIndexes[p._id] || 0].url}
+                    alt={p.name}
+                    className="w-full h-full object-contain"
+                  />
+
+                  {/* DOT INDICATOR */}
+                  {p.images.length > 1 && (
+                    <div className="absolute bottom-2 flex gap-1">
+                      {p.images.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            setImageIndexes((prev) => ({
+                              ...prev,
+                              [p._id]: index
+                            }))
+                          }
+                          className={`w-2 h-2 rounded-full ${
+                            (imageIndexes[p._id] || 0) === index
+                              ? "bg-white"
+                              : "bg-white/50"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   )}
-                </div>
+                </>
+              ) : (
+                <span className="text-muted">No Image</span>
+              )}
+              </div>
 
               <div className="p-6">
 
