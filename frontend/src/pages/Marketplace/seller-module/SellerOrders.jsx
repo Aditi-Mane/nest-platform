@@ -126,13 +126,19 @@ const SellerOrderHistory = () => {
             {/* LEFT SIDE */}
             <div className="flex items-center gap-5">
               <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center text-xl">
-                {order.productId?.name?.[0]}
+                {order.productId?.name?.[0].toUpperCase()}
               </div>
 
               <div>
-                <h2 className="text-[18px] font-semibold text-[#1f1f1f]">
-                  {order.productId?.name}
-                </h2>
+                <span className="flex items-center justify-start gap-2">
+                  <h2 className="text-md font-semibold text-[#1f1f1f]">
+                    {order.productId?.name}
+                  </h2>
+
+                  <p className="text-sm font-semibold text-primary">
+                    Quantity: {order.quantity}
+                  </p>
+                </span>
 
                 <p className="mt-1 text-muted text-[13px]">
                   {order.buyerId?.name} • 
@@ -147,11 +153,11 @@ const SellerOrderHistory = () => {
 
               {/* COLUMN 1 - Amount */}
               <div className="flex flex-col">
-                <p className="text-[#6b755f] text-[18px] font-semibold">
+                <p className="text-muted text-[18px] font-semibold">
                   Amount
                 </p>
 
-                <h2 className="text-[22px] font-semibold text-[#c96b2c] mt-1">
+                <h2 className="text-[22px] font-semibold text-primary mt-1">
                   ₹{order.totalPrice?.toFixed(2)}
                 </h2>
               </div>

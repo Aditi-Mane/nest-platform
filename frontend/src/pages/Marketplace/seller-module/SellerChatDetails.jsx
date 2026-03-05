@@ -14,8 +14,6 @@ const SellerChatDetails = () => {
   const { conversationId } = useParams();
   const navigate = useNavigate();
 
-  const themeColor = "var(--color-primary)";
-
   const fallbackData = {
     product: "Product",
     buyer: "Buyer",
@@ -32,6 +30,13 @@ const SellerChatDetails = () => {
 
   const [newMessage, setNewMessage] = useState("");
   const [conversationInfo, setConversationInfo] = useState(null);
+
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [pricePerItem, setPricePerItem] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("upi");
+
+  const [dealError, setDealError] = useState("");
 
   const isSeller =
     String(conversationInfo?.sellerId?._id || conversationInfo?.sellerId) ===
@@ -59,8 +64,6 @@ const SellerChatDetails = () => {
       socketRef.current.disconnect();
     };
   }, []);
-
-  
 
   useEffect(() => {
     if (!socketRef.current || !conversationId) return;
@@ -146,11 +149,25 @@ const SellerChatDetails = () => {
   };
 
   //confirm deal handler
-  const handleConfirmDeal = async () =>{
+  const handleConfirmDeal = async () => {
     try {
-      if (conversationInfo?.status === "deal_confirmed") return;
+      if (!pricePerItem || pricePerItem <= 0) {
+        setDealError("Please enter a valid price");
+        return;
+      }
 
-      await api.put(`/seller/confirm/${conversationId}`);
+      if (quantity <= 0) {
+        setDealError("Quantity must be at least 1");
+        return;
+      }
+
+      setDealError("");
+
+      await api.put(`/seller/confirm/${conversationId}`, {
+        quantity,
+        pricePerItem,
+        paymentMethod
+      });
 
       setConversationInfo(prev => ({
         ...prev,
@@ -159,10 +176,13 @@ const SellerChatDetails = () => {
 
       toast.success("Deal confirmed");
 
+      setShowDealModal(false);
+
     } catch (error) {
       console.error(error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Failed to confirm deal");
     }
-  }
+  };
 
   //cancel deal handler
   const handleCancelDeal = async () =>{
@@ -234,42 +254,23 @@ return (
           {/* Actions */}
           <div className="flex items-center gap-2">
 
-            {/* Negotiating → Show both */}
-            {isSeller && ["initiated", "negotiating"].includes(conversationInfo?.status) && (
-              <>
-                <button
-                  onClick={handleConfirmDeal}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
-                >
-                  Confirm Deal
-                </button>
-
-                <button
-                  onClick={handleCancelDeal}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
-                >
-                  Cancel Deal
-                </button>
-              </>
-            )}
-
-            {/* Deal Confirmed → Only Cancel */}
-            {isSeller && conversationInfo?.status === "deal_confirmed" && (
+            {/* Confirm Deal */}
+            {isSeller && ["initiated","negotiating","cancelled"].includes(conversationInfo?.status) && (
               <button
-                onClick={handleCancelDeal}
-                className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:opacity-90 transition"
+                onClick={() => setShowDealModal(true)}
+                className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white"
               >
-                Cancel Deal
+                Confirm Deal
               </button>
             )}
 
-            {/* Cancelled → Only Confirm */}
-            {isSeller && conversationInfo?.status === "cancelled" && (
+            {/* Cancel Deal */}
+            {isSeller && !["otp_verified"].includes(conversationInfo?.status) && (
               <button
-                onClick={handleConfirmDeal}
-                className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white hover:opacity-90 transition"
+                onClick={handleCancelDeal}
+                className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white"
               >
-                Confirm Deal
+                Cancel Deal
               </button>
             )}
 
@@ -349,6 +350,110 @@ return (
 
         </div>
       </div>
+
+      {showDealModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+          <div className="w-105 bg-card border border-border rounded-xl shadow-lg p-6">
+
+            <h2 className="text-lg font-semibold text-text mb-5">
+              Confirm Deal
+            </h2>
+
+            {/* Quantity */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted mb-1">
+                Quantity
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                placeholder="Enter quantity"
+                onChange={(e) => {
+                  setQuantity(e.target.value);
+                  setDealError("");
+                }}
+                className="w-full rounded-lg border border-border bg-background text-text p-2 text-sm"
+              />
+            </div>
+
+            {/* Price per item */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted mb-1">
+                Price per item (₹)
+              </label>
+
+              <input
+                type="number"
+                value={pricePerItem}
+                placeholder="Enter agreed price per item"
+                onChange={(e) => {
+                  setPricePerItem(e.target.value);
+                  setDealError("");
+                }}
+                className="w-full rounded-lg border border-border bg-background text-text p-2 text-sm focus:outline-none"
+              />
+            </div>
+
+            {/* Payment Method */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted mb-1">
+                Payment Method
+              </label>
+
+              <select
+                value={paymentMethod}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value);
+                  setDealError("");
+                }}
+                className="w-full rounded-lg border border-border bg-background text-text p-2 text-sm focus:outline-none"
+              >
+                <option value="upi">UPI</option>
+                <option value="card">Card</option>
+                <option value="cod">Cash</option>
+              </select>
+            </div>
+
+            {/* Total */}
+            <div className="mb-2 text-sm font-semibold text-secondary">
+              Total Amount: ₹{quantity * (pricePerItem || 0)}
+            </div>
+
+            {dealError && (
+              <div className="mb-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md p-2">
+                {dealError}
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => {
+                  setShowDealModal(false); 
+                  setDealError("");
+                }}
+                className="px-4 py-2 text-sm rounded-lg border border-border bg-background text-text hover:opacity-90"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmDeal}
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-white hover:opacity-90"
+              >
+                Confirm Sale
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   </div>

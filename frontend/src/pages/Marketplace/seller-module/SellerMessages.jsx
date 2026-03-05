@@ -223,6 +223,7 @@ const SellerMessages = () => {
                 <p className="text-sm font-semibold" style={{ color: themeColor }}>
                   Price: ₹{item.productId?.price}
                 </p>
+
               </div>
 
               {/* Buyer */}
