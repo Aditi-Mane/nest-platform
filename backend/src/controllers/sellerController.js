@@ -54,6 +54,7 @@ export const setupSeller = async (req, res) => {
 //create product
 export const createProduct = async (req, res) => {
   try {
+    
     const user = req.user;
 
     const {
@@ -63,6 +64,7 @@ export const createProduct = async (req, res) => {
       price,
       stock,
       condition,
+      whatsIncluded
     } = req.body;
 
     //basic validation
@@ -82,6 +84,21 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({
         message: "Stock cannot be negative",
       });
+    }
+
+    let includedItems = [];
+    if (whatsIncluded) {
+      try {
+        const parsed = JSON.parse(whatsIncluded);
+
+        if (Array.isArray(parsed)) {
+          includedItems = parsed.filter(
+            (item) => typeof item === "string" && item.trim() !== ""
+          );
+        }
+      } catch {
+        includedItems = [];
+      }
     }
 
     //handle uploaded images
@@ -106,6 +123,7 @@ export const createProduct = async (req, res) => {
       location: user.storeLocation || "",
       createdBy: user._id,
       status: stock === 0 ? "sold" : "available",
+      whatsIncluded: includedItems
     });
 
     return res.status(201).json({
@@ -163,7 +181,8 @@ export const editProduct = async (req, res) => {
       price,
       stock,
       condition,
-      existingImages
+      existingImages, 
+      whatsIncluded
     } = req.body;
 
     //find product
@@ -201,6 +220,23 @@ export const editProduct = async (req, res) => {
     if (stock !== undefined && Number(stock) >= 0)
       product.stock = Number(stock);
     if (condition) product.condition = condition;
+
+    if (whatsIncluded !== undefined) {
+      try {
+        const parsed =
+          typeof whatsIncluded === "string"
+            ? JSON.parse(whatsIncluded)
+            : whatsIncluded;
+
+        if (Array.isArray(parsed)) {
+          product.whatsIncluded = parsed
+            .map((item) => item?.toString().trim())
+            .filter((item) => item !== "");
+        }
+      } catch (err) {
+        console.error("Invalid whatsIncluded format:", err);
+      }
+    }
 
     //image Handling
 
@@ -289,17 +325,16 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-export const confirmDeal = async (req, res) =>{
+export const confirmDeal = async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const { quantity, pricePerItem, paymentMethod } = req.body;
+
+    const quantityNum = Number(quantity);
+    const priceNum = Number(pricePerItem);
+    const totalPrice = quantityNum * priceNum;
+
     const conversation = await Conversation.findById(conversationId);
-
-    if (conversation.sellerId.toString() !== req.user.id) {
-      return res.status(403).json({
-        message: "Not authorized to perform this action",
-      });
-    }
-
     if(!conversation) {
       return res.status(404).json({
         message: "Conversation not found",
@@ -314,23 +349,14 @@ export const confirmDeal = async (req, res) =>{
 
     const product = await Product.findById(conversation.productId);
 
-    if (!product) {
+    if(!product) {
       return res.status(404).json({
         message: "Product not found",
       });
     }
 
-    if(product.stock === 1){
-      product.status = "reserved";
-      await product.save();
-    }
-
     //check if order already exists
-    const existingOrder = await Order.findOne({
-      productId: conversation.productId,
-      buyerId: conversation.buyerId,
-      sellerId: conversation.sellerId,
-    });
+    const existingOrder = await Order.findOne({ conversationId });
 
     if (existingOrder) {
       return res.status(400).json({
@@ -338,39 +364,56 @@ export const confirmDeal = async (req, res) =>{
       });
     }
 
-    conversation.status = "deal_confirmed"
+    //check stock
+    if (product.stock < quantityNum) {
+      return res.status(400).json({
+        message: "Not enough stock available"
+      });
+    }
 
-    await conversation.save();
-
+    //create order
     const order = await Order.create({
+      conversationId: conversation._id,
       productId: conversation.productId,
       buyerId: conversation.buyerId,
       sellerId: conversation.sellerId,
-      totalPrice: product.price,
-    })
+      quantity: quantityNum,
+      pricePerItem: priceNum,
+      totalPrice,
+      paymentMethod
+    });
+
+    //reduce stock
+    product.stock -= quantityNum;
+
+    if (product.stock === 0) {
+      product.status = "reserved";
+    }
+
+    await product.save();
+
+    //update conversation
+    conversation.status = "deal_confirmed";
+    await conversation.save();
 
     return res.status(201).json({
-      message: "Deal confirmed and added to order",
+      message: "Deal confirmed and order created",
       order
     });
+
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Server error",
     });
   }
-}
+};
 
 export const cancelDeal = async (req, res) =>{
   try {
     const { conversationId } = req.params;
 
     const conversation = await Conversation.findById(conversationId);
-
-    if (conversation.sellerId.toString() !== req.user.id) {
-      return res.status(403).json({
-        message: "Not authorized to perform this action",
-      });
-    }
 
     if(!conversation) {
       return res.status(404).json({
@@ -385,24 +428,29 @@ export const cancelDeal = async (req, res) =>{
     }
 
     //delete existing order
-    const existingOrder = await Order.findOne({
-      productId: conversation.productId,
-      buyerId: conversation.buyerId,
-      sellerId: conversation.sellerId,
-    });
+    const existingOrder = await Order.findOne({ conversationId })
 
-    if (existingOrder) {
+    // restore stock if order exists
+    if(existingOrder) {
+      const product = await Product.findById(conversation.productId);
+
+      if(product) {
+        product.stock += existingOrder.quantity;
+
+        if(product.stock > 0) {
+          product.status = "available";
+        }
+
+        await product.save();
+      }
+
+      //delete order
       await Order.deleteOne({ _id: existingOrder._id });
     }
 
     //update conversation status
     conversation.status = "cancelled";
     await conversation.save();
-
-    //make product available again
-    await Product.findByIdAndUpdate(conversation.productId, {
-      status: "available",
-    });
 
     return res.status(200).json({
       message: "Deal cancelled",
