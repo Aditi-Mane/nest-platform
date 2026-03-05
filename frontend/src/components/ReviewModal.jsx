@@ -24,27 +24,32 @@ const ReviewModal = ({ productId, onClose }) => {
     fetchProduct();
   }, [productId]);
 
-  const handleSubmit = async () => {
-    if (!rating || !text.trim()) return;
+    const handleSubmit = async () => {
+      if (!rating || !text.trim()) return;
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-      await api.post("/reviews", {
-        productId,
-        starRating: rating,
-        text,
-      });
+        const res = await api.post("/reviews", {
+          productId,
+          starRating: rating,
+          text,
+        });
 
-      onClose();
+        console.log("Review saved:", res.data);
 
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setRating(0);
+        setText("");
+        setHover(0);
 
+        onClose();
+
+      } catch (error) {
+        console.error("Review failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
   const ratingMessages = {
     1: "😕 Not great...",
     2: "🙂 Could be better",

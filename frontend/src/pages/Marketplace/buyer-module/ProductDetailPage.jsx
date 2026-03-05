@@ -415,7 +415,7 @@ if (!product) {
       <span>Reviews</span>
 
       <span className="text-sm text-muted-foreground">
-        {reviews.length} Reviews
+        {reviews.length} Review(s)
       </span>
     </CardTitle>
   </CardHeader>

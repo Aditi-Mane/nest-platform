@@ -1,31 +1,38 @@
 import Order from  "../models/Order.js";
-
+import Review from "../models/Review.js"
 export const getMyPurchases =async(req,res)=>{
-  try{
+  try {
     const buyerId = req.user._id;
 
-    const orders= await Order.find({
+    const orders = await Order.find({
       buyerId,
-      status: "otp_verified",
+      status: "otp_verified"
     })
-    .populate({
-      path: "productId",
-      select: "name price images"
-    })
-    .populate({
-      path: "sellerId",
-      select: "name avatar"
-    })
-    .sort({ updatedAt: -1});
+      .populate("productId", "name images price")
+      .populate("sellerId", "name");
 
-    res.status(200).json({
-      message: "Purchases fetched",
-      orders,
+    const ordersWithReviewStatus = await Promise.all(
+      orders.map(async (order) => {
+
+        const review = await Review.findOne({
+          product: order.productId._id,
+          user: buyerId
+        });
+
+        return {
+          ...order.toObject(),
+          reviewed: !!review
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      orders: ordersWithReviewStatus
     });
-  }catch(error){
-    res.status(500).json({
-      message: "Error fetching purchases",
-      error: error.message,
-    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch purchases" });
   }
 };

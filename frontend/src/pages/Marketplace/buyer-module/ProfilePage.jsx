@@ -40,6 +40,15 @@ export function ProfilePage({ onNavigate }) {
     };
     
 
+     async function fetchPurchases(){
+          try{
+            const res= await api.get("/orders/purchases");
+            setPurchaseHistory(res.data.orders);
+          }catch (error) {
+              console.error(error);
+            }
+     }
+
     useEffect(() => {
         async function fetchProfile() {
             try {
@@ -49,15 +58,7 @@ export function ProfilePage({ onNavigate }) {
             console.error(error);
             }
         }
-        async function fetchPurchases(){
-          try{
-            const res= await api.get("/orders/purchases");
-            setPurchaseHistory(res.data.orders);
-          }catch (error) {
-              console.error(error);
-            }
-          }
-
+       
         fetchPurchases();
         fetchProfile();
     }, []);
