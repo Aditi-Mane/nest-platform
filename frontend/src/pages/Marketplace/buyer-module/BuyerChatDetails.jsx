@@ -128,7 +128,7 @@ const BuyerChatDetails = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="h-full flex flex-col bg-white">
       <div className="w-full h-full flex flex-col h-[90vh] shadow-sm">
 
         {/* HEADER */}
