@@ -4,6 +4,7 @@ import api from "../../../api/axios.js";
 import { TfiPencilAlt } from "react-icons/tfi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import toast from "react-hot-toast";
+import { ChevronDown } from "lucide-react";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
@@ -17,6 +18,41 @@ const SellerProducts = () => {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const [expandedCards, setExpandedCards] = useState({});
+    const [includedInput, setIncludedInput] = useState("");
+
+    const addIncludedItem = () => {
+    const item = includedInput.trim();
+    if (!item) return;
+
+    if (formData.whatsIncluded.length >= limit) {
+      toast.error(`You can only add up to ${limit} items`);
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      whatsIncluded: [...prev.whatsIncluded, item]
+    }));
+
+    setIncludedInput("");
+  };
+
+  const removeIncludedItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      whatsIncluded: prev.whatsIncluded.filter((_, i) => i !== index)
+    }));
+  };
+
+  const toggleIncluded = (id) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   const limit = 6;
 
   const [imageIndexes, setImageIndexes] = useState({});
@@ -38,6 +74,7 @@ const SellerProducts = () => {
     price: "",
     description: "",
     images: [],
+    whatsIncluded: [] 
   });
 
   const fileInputRef = useRef(null);
@@ -123,6 +160,7 @@ const SellerProducts = () => {
     setError("");
     setEditingProduct(product);
     setExistingImages(product.images || []);
+    setIncludedInput("");
     setFormData({
       name: product.name,
       category: product.category,
@@ -131,6 +169,7 @@ const SellerProducts = () => {
       condition: product.condition || "",
       stock: product.stock || "",
       images: [],
+      whatsIncluded: product.whatsIncluded || []
     });
     setShowEditModal(true);
   };
@@ -187,6 +226,11 @@ const SellerProducts = () => {
         form.append("condition", formData.condition);
       }
 
+      form.append(
+        "whatsIncluded",
+        JSON.stringify(formData.whatsIncluded || [])
+      );
+
       if (editingProduct) {
         existingImages.forEach((img) => {
           form.append("existingImages", img.url);
@@ -233,6 +277,7 @@ const SellerProducts = () => {
       setExistingImages([]);
       setShowModal(false);
       setShowEditModal(false);
+      setIncludedInput("");
 
       setFormData({
         name: "",
@@ -242,6 +287,7 @@ const SellerProducts = () => {
         images: [],
         condition: "",
         stock: "",
+        whatsIncluded: []
       });
 
     } catch (err) {
@@ -291,6 +337,7 @@ const SellerProducts = () => {
               images: [],
               condition: "",
               stock: "",
+              whatsIncluded: []
             });
             setError("");
             setShowModal(true);
@@ -393,9 +440,42 @@ const SellerProducts = () => {
                 </div>
 
                 {/* DESCRIPTION */}
-                <p className="text-sm text-muted mt-2">
-                  {p.description}
-                </p>
+                {/* DESCRIPTION + ARROW */}
+                <div className="mt-2">
+                  
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm text-muted flex-1">
+                      {p.description}
+                    </p>
+
+                    {p.whatsIncluded?.length > 0 && (
+                      <button
+                        onClick={() => toggleIncluded(p._id)}
+                        className="text-muted hover:text-primary transition"
+                      >
+                        <ChevronDown
+                          size={18}
+                          className={`transition-transform ${
+                            expandedCards[p._id] ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* COLLAPSIBLE LIST */}
+                  {expandedCards[p._id] && (
+                    <ul className="mt-2 text-sm text-muted space-y-1">
+                      <h2 className="text-text">What's included: </h2>
+                      {p.whatsIncluded.map((item, index) => (
+                        <li key={index} className="flex items-center gap-2">
+                          ✓ {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                </div>
 
                 {/* CATEGORY + RATING */}
                 <div className="flex items-center gap-3 mt-3">
@@ -717,10 +797,55 @@ const SellerProducts = () => {
                   placeholder="Describe your product in detail. Include materials, dimensions, care instructions, etc."
                   className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text resize-none"
                 />
+              </div>
 
-                <p className="text-xs text-muted mt-2">
-                  Detailed descriptions help customers make informed decisions
-                </p>
+              {/* WHAT'S INCLUDED */}
+              <div className="mt-0.5">
+
+                <label className="block text-sm font-medium mb-2">
+                  What's Included
+                </label>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={includedInput}
+                    onChange={(e) => setIncludedInput(e.target.value)}
+                    disabled={formData.whatsIncluded.length >= limit}
+                    placeholder="Example: Source files"
+                    className="flex-1 border border-border rounded-lg px-3 py-2 text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addIncludedItem}
+                    disabled={formData.whatsIncluded.length >= limit}
+                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* LIST */}
+                <div className="mt-3 space-y-2">
+                  {formData.whatsIncluded.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                    >
+                      <span>✓ {item}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeIncludedItem(index)}
+                        className="text-red-600 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
               </div>
 
               {/* FOOTER BUTTONS */}
@@ -965,6 +1090,53 @@ const SellerProducts = () => {
                   placeholder="Describe your product in detail. Include materials, dimensions, care instructions, etc."
                   className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text resize-none"
                 />
+              </div>
+
+              {/* WHAT'S INCLUDED */}
+              <div className="mt-0.5">
+
+                <label className="block text-sm font-medium mb-2">
+                  What's Included
+                </label>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={includedInput}
+                    onChange={(e) => setIncludedInput(e.target.value)}
+                    placeholder="Example: Source files"
+                    className="flex-1 border border-border rounded-lg px-3 py-2 text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addIncludedItem}
+                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* LIST */}
+                <div className="mt-3 space-y-2">
+                  {formData.whatsIncluded.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                    >
+                      <span>✓ {item}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeIncludedItem(index)}
+                        className="text-red-600 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
               </div>
 
               {/* FOOTER BUTTONS */}

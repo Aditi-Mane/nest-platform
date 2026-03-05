@@ -54,6 +54,7 @@ export const setupSeller = async (req, res) => {
 //create product
 export const createProduct = async (req, res) => {
   try {
+    
     const user = req.user;
 
     const {
@@ -63,6 +64,7 @@ export const createProduct = async (req, res) => {
       price,
       stock,
       condition,
+      whatsIncluded
     } = req.body;
 
     //basic validation
@@ -82,6 +84,21 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({
         message: "Stock cannot be negative",
       });
+    }
+
+    let includedItems = [];
+    if (whatsIncluded) {
+      try {
+        const parsed = JSON.parse(whatsIncluded);
+
+        if (Array.isArray(parsed)) {
+          includedItems = parsed.filter(
+            (item) => typeof item === "string" && item.trim() !== ""
+          );
+        }
+      } catch {
+        includedItems = [];
+      }
     }
 
     //handle uploaded images
@@ -106,6 +123,7 @@ export const createProduct = async (req, res) => {
       location: user.storeLocation || "",
       createdBy: user._id,
       status: stock === 0 ? "sold" : "available",
+      whatsIncluded: includedItems
     });
 
     return res.status(201).json({
@@ -163,7 +181,8 @@ export const editProduct = async (req, res) => {
       price,
       stock,
       condition,
-      existingImages
+      existingImages, 
+      whatsIncluded
     } = req.body;
 
     //find product
@@ -201,6 +220,23 @@ export const editProduct = async (req, res) => {
     if (stock !== undefined && Number(stock) >= 0)
       product.stock = Number(stock);
     if (condition) product.condition = condition;
+
+    if (whatsIncluded !== undefined) {
+      try {
+        const parsed =
+          typeof whatsIncluded === "string"
+            ? JSON.parse(whatsIncluded)
+            : whatsIncluded;
+
+        if (Array.isArray(parsed)) {
+          product.whatsIncluded = parsed
+            .map((item) => item?.toString().trim())
+            .filter((item) => item !== "");
+        }
+      } catch (err) {
+        console.error("Invalid whatsIncluded format:", err);
+      }
+    }
 
     //image Handling
 
