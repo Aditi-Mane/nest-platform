@@ -369,7 +369,7 @@ const SellerProducts = () => {
             <span>
               Avg rating:{" "}
               <span className="font-medium text-text">
-                4.4
+                {overallRating.toFixed(1)}
               </span>{" "}
               <span className="text-yellow-500">⭐</span>
             </span>
@@ -412,7 +412,7 @@ const SellerProducts = () => {
         </div>
 
         <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Avg Rating</p>
+          <p className="text-sm text-muted">Average Rating</p>
           <h2 className="text-2xl font-bold">⭐ {overallRating.toFixed(1)}</h2>
         </div>
       </div>

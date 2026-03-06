@@ -29,7 +29,7 @@ const TextArea = ({ label, ...props }) => (
     <label className="block text-sm mb-1 text-muted">{label}</label>
     <textarea
       {...props}
-      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition min-h-[100px]"
+      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition min-h-25"
     />
   </div>
 );
