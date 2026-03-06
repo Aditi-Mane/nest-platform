@@ -117,6 +117,14 @@ const userSchema = new mongoose.Schema(
     storeLogo: { type: String },
     storeLocation: { type: String, trim: true },
     payoutUPI: { type: String, trim: true },
+    
+    // 🔹 Added for settings page notifications (NEW FIELD)
+    notifications: {
+      newOrders: { type: Boolean, default: true },
+      lowStock: { type: Boolean, default: true },
+      marketing: { type: Boolean, default: false },
+      messages: { type: Boolean, default: true }
+    },
 
     verificationOtp: {
       type: String

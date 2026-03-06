@@ -1,6 +1,6 @@
 import express from "express"
-import { getCurrentUser, setUserRole } from "../controllers/userController.js";
-import { getMe } from "../controllers/userController.js";
+import { getCurrentUser, setUserRole,getMe, updateSellerSettings } from "../controllers/userController.js";
+// import { getMe,updateSellerSettings } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -10,5 +10,7 @@ router.get("/me", protect ,getCurrentUser)
 
 // GET current logged in user
 router.get("/me", protect, getMe);
+
+router.put("/update-settings", protect, updateSellerSettings);
 
 export default router;
