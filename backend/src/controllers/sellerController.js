@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import { getTransporter } from "../utils/mailer.js";
 import mongoose from "mongoose";
+import Review from "../models/Review.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -665,6 +666,48 @@ export const getSellerAnalytics = async (req, res) =>{
       }))
     })
 
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
+export const getAverageRating = async (req, res) =>{
+  try {
+    const ratings = await Review.aggregate([
+      {
+        $group: {
+          _id: "$product",
+          avgRating: { $avg: "$starRating"},
+          totalReviews: { $sum: 1 }
+        }
+      }
+    ])
+
+    const productRatings = ratings.map(item => ({
+      productId: item._id,
+      avgRating: Number(item.avgRating.toFixed(1)),
+      totalReviews: item.totalReviews
+    }))
+
+    const overall = await Review.aggregate([
+      {
+        $group: {
+          _id: null,
+          overallRating: { $avg: "$starRating" },
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      overallRating: overall[0]?.overallRating || 0,
+      products: productRatings
+    });
+
+    return res.status(200).json({
+      message: "Average rating successfully fetched"
+    })
   } catch (error) {
     return res.status(500).json({
       message: "Server error"

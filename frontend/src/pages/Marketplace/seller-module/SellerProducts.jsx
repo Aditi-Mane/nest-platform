@@ -24,6 +24,9 @@ const SellerProducts = () => {
 
   const [analytics, setAnalytics] = useState(null);
 
+  const [ratings, setRatings] = useState([]);
+  const [overallRating, setOverallRating] = useState(0);
+
   useEffect(() => {
 
     const fetchAnalytics = async () => {
@@ -46,6 +49,28 @@ const SellerProducts = () => {
     return analytics?.products.find(
       item => item.productId === productId
     );
+  };
+
+  useEffect(() => {
+
+    const fetchRatings = async () => {
+      try {
+        const res = await api.get("/seller/productRatings");
+
+        setRatings(res.data.products);
+        setOverallRating(res.data.overallRating);
+
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+      }
+    };
+
+    fetchRatings();
+
+  }, []);
+
+  const getProductRating = (productId) => {
+    return ratings.find(r => r.productId === productId);
   };
 
   const addIncludedItem = () => {
@@ -388,7 +413,7 @@ const SellerProducts = () => {
 
         <div className="bg-card border border-border p-4 rounded-xl">
           <p className="text-sm text-muted">Avg Rating</p>
-          <h2 className="text-2xl font-bold">⭐ 4.4</h2>
+          <h2 className="text-2xl font-bold">⭐ {overallRating.toFixed(1)}</h2>
         </div>
       </div>
 
@@ -510,7 +535,7 @@ const SellerProducts = () => {
                   </span>
 
                   <span className="text-sm text-primary">
-                    ⭐ 4.6 (3)
+                    ⭐ {getProductRating(p._id)?.avgRating || 0} ({getProductRating(p._id)?.totalReviews || 0})
                   </span>
                 </div>
 
