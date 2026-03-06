@@ -4,6 +4,7 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import { getTransporter } from "../utils/mailer.js";
+import mongoose from "mongoose";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -630,3 +631,43 @@ export const verifyOrderOtp = async (req, res) => {
     });
   }
 };
+
+export const getSellerAnalytics = async (req, res) =>{
+  try {
+    const analytics = await Order.aggregate([
+      {
+        $match: {
+          sellerId: new mongoose.Types.ObjectId(req.user.id),
+          status: "otp_verified"
+        }
+      },
+      {
+        $group: {
+          _id: "$productId",
+          revenue: { $sum: "$totalPrice"},
+          sales: { $sum: "$quantity"}
+        }
+      }
+    ])
+
+    const totalRevenue = analytics.reduce(
+      (sum, item) => sum + item.revenue,
+      0
+    );
+
+    return res.status(200).json({
+      message: "Seller Analytics fetched successfully",
+      totalRevenue,
+      products: analytics.map(item => ({
+        productId: item._id,
+        revenue: item.revenue,
+        sales: item.sales
+      }))
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}

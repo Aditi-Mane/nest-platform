@@ -20,9 +20,35 @@ const SellerProducts = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const [expandedCards, setExpandedCards] = useState({});
-    const [includedInput, setIncludedInput] = useState("");
+  const [includedInput, setIncludedInput] = useState("");
 
-    const addIncludedItem = () => {
+  const [analytics, setAnalytics] = useState(null);
+
+  useEffect(() => {
+
+    const fetchAnalytics = async () => {
+      try {
+        const res = await api.get("/seller/analytics");
+        setAnalytics(res.data);
+
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+
+  }, []);
+
+  const getProductAnalytics = (productId) => {
+    return analytics?.products.find(
+      item => item.productId === productId
+    );
+  };
+
+  const addIncludedItem = () => {
     const item = includedInput.trim();
     if (!item) return;
 
@@ -357,7 +383,7 @@ const SellerProducts = () => {
 
         <div className="bg-card border border-border p-4 rounded-xl">
           <p className="text-sm text-muted">Total Revenue</p>
-          <h2 className="text-2xl font-bold">₹ 0</h2>
+          <h2 className="text-2xl font-bold">₹ {analytics?.totalRevenue || 0}</h2>
         </div>
 
         <div className="bg-card border border-border p-4 rounded-xl">
@@ -493,13 +519,13 @@ const SellerProducts = () => {
 
                   <div>
                     <p className="text-muted">Sales</p>
-                    <p className="font-semibold">0</p>
+                    <p className="font-semibold">{getProductAnalytics(p._id)?.sales || 0}</p>
                   </div>
 
                   <div>
                     <p className="text-muted">Revenue</p>
                     <p className="font-semibold text-green-700">
-                      0
+                      ₹ {getProductAnalytics(p._id)?.revenue || 0}
                     </p>
                   </div>
 
