@@ -210,7 +210,7 @@ const SellerMessages = () => {
                   fontSize: "18px",
                 }}
               >
-                {item.productId?.name?.[0]}
+                {item.productId?.name?.[0].toUpperCase()}
               </div>
               
             <div className="flex flex-col gap-1">
