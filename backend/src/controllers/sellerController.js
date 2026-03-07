@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Order from "../models/Order.js";
+import Cart from "../models/Cart.js"
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
@@ -342,6 +343,11 @@ export const confirmDeal = async (req, res) => {
         message: "Conversation not found",
       });
     }
+    if (["cancelled", "completed"].includes(conversation.status)) {
+      return res.status(400).json({
+        message: "This conversation is no longer active"
+      });
+    }
 
     if(conversation.status === "deal_confirmed") {
       return res.status(400).json({
@@ -420,6 +426,11 @@ export const cancelDeal = async (req, res) =>{
     if(!conversation) {
       return res.status(404).json({
         message: "Conversation not found",
+      });
+    }
+    if (["cancelled", "completed"].includes(conversation.status)) {
+      return res.status(400).json({
+        message: "This conversation is no longer active"
       });
     }
 
@@ -558,67 +569,83 @@ export const verifyOrderOtp = async (req, res) => {
     const { otp } = req.body;
 
     if (!otp) {
-      return res.status(400).json({
-        message: "OTP is required",
-      });
+      return res.status(400).json({ message: "OTP is required" });
     }
 
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).json({
-        message: "Order doesn't exist",
-      });
+      return res.status(404).json({ message: "Order doesn't exist" });
     }
 
-    //authorize seller
     if (order.sellerId.toString() !== req.user.id) {
-      return res.status(403).json({
-        message: "Not authorized to verify this order",
-      });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
-    //check expiry
     if (!order.otp || !order.otpExpiry) {
-      return res.status(400).json({
-        message: "No OTP generated for this order",
-      });
+      return res.status(400).json({ message: "No OTP generated" });
     }
 
+    // OTP expired
     if (new Date(order.otpExpiry).getTime() < Date.now()) {
+
+      const conversation = await Conversation.findById(order.conversationId);
+      const product = await Product.findById(order.productId);
+
+      if (conversation) {
+        conversation.status = "negotiating";
+        await conversation.save();
+      }
+
+      if (product) {
+        product.stock += order.quantity;
+        product.status = "available";
+        await product.save();
+      }
+
+      await Order.deleteOne({ _id: order._id });
+
       return res.status(400).json({
-        message: "OTP expired",
+        message: "OTP expired. Deal reset.",
       });
     }
 
-    //compare OTP
     const isValid = await bcrypt.compare(otp, order.otp);
 
     if (!isValid) {
-      return res.status(400).json({
-        message: "Invalid OTP",
-      });
+      return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    const product = await Product.findById(order.productId);
-
-    if (product) {
-      product.stock = product.stock - 1;
-
-      if (product.stock <= 0) {
-        product.status = "sold";
-        product.stock = 0;
-      }
-
-      await product.save();
-    }
-
-    //update order after successful verification
+    // Complete order
     order.status = "otp_verified";
     order.otp = undefined;
     order.otpExpiry = undefined;
 
     await order.save();
+
+    const product = await Product.findById(order.productId);
+
+    if (product) {
+      if (product.stock === 0) {
+        product.status = "sold";
+      } else {
+        product.status = "available";
+      }
+
+      await product.save();
+    }
+
+    await Cart.updateOne(
+      { user: order.buyerId },
+      { $pull: { items: { product: order.productId } } }
+    );
+
+    const conversation = await Conversation.findById(order.conversationId);
+
+    if (conversation) {
+      conversation.status = "completed";
+      await conversation.save();
+    }
 
     return res.status(200).json({
       message: "OTP verified successfully. Order completed.",
@@ -632,7 +659,6 @@ export const verifyOrderOtp = async (req, res) => {
     });
   }
 };
-
 export const getSellerAnalytics = async (req, res) =>{
   try {
     const analytics = await Order.aggregate([
@@ -705,9 +731,7 @@ export const getAverageRating = async (req, res) =>{
       products: productRatings
     });
 
-    return res.status(200).json({
-      message: "Average rating successfully fetched"
-    })
+    
   } catch (error) {
     return res.status(500).json({
       message: "Server error"

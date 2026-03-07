@@ -16,27 +16,23 @@ export const createConversation = async (req, res) => {
       return res.status(400).json({ message: "Product not available" });
     }
 
-    //check existing (no status filter)
-    let conversation = await Conversation.findOne({
+    //check existing 
+    const existingConversation = await Conversation.findOne({
       productId,
       buyerId,
+      status: { $in: ["initiated", "negotiating", "deal_confirmed"] }
     });
 
     //If exists → reuse
-    if (conversation) {
-      if (conversation.status === "cancelled") {
-        conversation.status = "initiated";
-        await conversation.save();
-      }
-
+    if (existingConversation) {
       return res.status(200).json({
         message: "Conversation already exists",
-        conversation,
+        conversation: existingConversation,
       });
     }
 
     //Create new only if none exists
-    conversation = await Conversation.create({
+    const conversation = await Conversation.create({
       productId,
       buyerId,
       sellerId: product.createdBy,
@@ -140,7 +136,7 @@ export const getConversationInfo = async(req, res) =>{
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // ✅ SECURITY CHECK
+    //  SECURITY CHECK
     if (
       conversation.buyerId._id.toString() !== userId.toString() &&
       conversation.sellerId._id.toString() !== userId.toString()

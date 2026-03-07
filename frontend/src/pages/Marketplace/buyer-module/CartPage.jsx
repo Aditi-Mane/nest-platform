@@ -26,6 +26,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import api from '../../../api/axios.js'
+import { useLocation } from "react-router-dom";
+
+
 
 //Temporary Static data
 
@@ -44,6 +47,7 @@ export default function CartPage() {
 
   const [promoCode, setPromoCode] = useState("");
   const [conversations, setConversations] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
   const fetchConversations = async () => {
@@ -56,7 +60,8 @@ export default function CartPage() {
   };
 
   fetchConversations();
-}, []);
+  
+}, [location]);
 
 const formattedItems = cartItems
   .filter((item) => item.product !== null)
@@ -86,20 +91,23 @@ const handleContactSeller = async (item) => {
   try {
     let conversationId = item.conversationId;
 
-    //If no conversation → create one
-    if (!conversationId) {
-      const res = await api.post(
-        "/conversations/create",
-        { productId: item.id },
-      );
+    // Create NEW conversation if previous one ended
+    if (
+      !conversationId ||
+      item.status === "cancelled" ||
+      item.status === "completed"
+    ) {
+      const res = await api.post("/conversations/create", {
+        productId: item.id,
+      });
+
       const newConversation = res.data.conversation;
 
       setConversations((prev) => [...prev, newConversation]);
 
-      conversationId = res.data.conversation._id;
+      conversationId = newConversation._id;
     }
 
-    // Navigate to chat
     navigate(`/marketplace/buyer/messages/${conversationId}`);
 
   } catch (error) {

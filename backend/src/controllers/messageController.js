@@ -30,7 +30,11 @@ export const sendMessage = async (req, res) => {
     }
 
     // STATUS UPDATE → negotiating
-    if (conversation.status === "initiated") {
+    if (
+      conversation.status === "initiated" &&
+      senderId.toString() === conversation.sellerId.toString()
+    ) {
+      // Seller replied → move to negotiating
       conversation.status = "negotiating";
     }
 

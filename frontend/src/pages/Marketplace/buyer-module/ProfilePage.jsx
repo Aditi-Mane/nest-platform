@@ -111,7 +111,7 @@ export function ProfilePage({ onNavigate }) {
         <Tabs defaultValue="purchases">
           <TabsList>
             <TabsTrigger value="purchases">Purchases</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
+            
           </TabsList>
 
           <TabsContent value="purchases" className="space-y-6">

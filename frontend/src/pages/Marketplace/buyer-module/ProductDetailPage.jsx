@@ -210,7 +210,7 @@ const fetchConversation = async () => {
     fetchReviews();
     
 
-  },[id]);
+  },[id, location ]);
 
 
 console.log("UPDATED STATUS:", conversation?.status);
@@ -412,11 +412,21 @@ if (!product) {
 <Card className="rounded-2xl bg-card/80 backdrop-blur-sm border-border shadow-sm">
   <CardHeader>
     <CardTitle className="flex items-center justify-between">
-      <span>Reviews</span>
+      <p>Reviews</p>
 
-      <span className="text-sm text-muted-foreground">
-        {reviews.length} Review(s)
-      </span>
+      <div className="flex items-center gap-1 text-sm mb-2">
+          <Star className="h-4 w-4 fill-primary text-primary" />
+
+          {product.reviewCount > 0 ? (
+            <span className="text-muted-foreground">
+              {product.averageRating.toFixed(1)} ({product.reviewCount})
+            </span>
+          ) : (
+            <span className="text-muted-foreground opacity-70">
+              No reviews yet
+            </span>
+          )}
+        </div>
     </CardTitle>
   </CardHeader>
 
@@ -523,29 +533,36 @@ if (!product) {
                     !shadow-none transition-all`}
                   disabled={isContactButtonDisabled(conversation?.status, product?.status)}
                   onClick={async () => {
-                    try {
-                      
-                      await addToCart(product._id);
+                          try {
 
-                      let conversationId = conversation?._id;
+                            await addToCart(product._id);
 
-                      
-                      if (!conversationId) {
-                        const res = await api.post("/conversations/create", {
-                          productId: product._id,
-                        });
+                            let conversationId = conversation?._id;
 
-                        conversationId = res.data.conversation._id;
-                        setConversation(res.data.conversation);
-                      }
+                            // Create NEW conversation if previous one ended
+                            if (
+                              !conversationId ||
+                              conversation?.status === "cancelled" ||
+                              conversation?.status === "completed"
+                            ) {
+                              const res = await api.post("/conversations/create", {
+                                productId: product._id,
+                              });
 
-                      
-                      navigate(`/marketplace/buyer/messages/${conversationId}`);
-                    } catch (error) {
-                      console.error(error);
-                      alert("Something went wrong");
-                    }
-                  }}
+                              const newConversation = res.data.conversation;
+
+                              conversationId = newConversation._id;
+
+                              setConversation(newConversation);
+                            }
+
+                            navigate(`/marketplace/buyer/messages/${conversationId}`);
+
+                          } catch (error) {
+                            console.error(error);
+                            alert("Something went wrong");
+                          }
+                }}
                 >
                   <MessageSquare className="h-5 w-5 mr-2" />
                   {getContactButtonText(conversation?.status, product?.status)}
