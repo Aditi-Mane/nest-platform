@@ -19,6 +19,7 @@ import messageRoutes from "./routes/messageRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
 import { initSocket } from "./config/socket.js"
 
+
 connectDB()
 
 const app = express()
@@ -31,7 +32,9 @@ app.use(cors({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
 
+
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/users", userRoutes);
@@ -43,6 +46,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/orders", orderRoutes);
+
 
 
 app.get("/",(req, res)=>{
