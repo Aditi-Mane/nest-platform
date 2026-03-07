@@ -140,6 +140,9 @@ export const updateSellerSettings = async (req, res) => {
   }
 };
 
+// @desc   Update logged in user profile
+// @route  PUT /api/users/me
+// @access Private
 export const updateMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -168,6 +171,9 @@ export const updateMe = async (req, res) => {
   }
 };
 
+// @desc   Update avatar
+// @route  PUT /api/users/update-avatar
+// @access Private
 export const updateAvatar = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);

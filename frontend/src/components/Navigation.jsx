@@ -5,11 +5,13 @@ import {
   ShoppingCart,
   Heart,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
+
 
 import { useUser } from "@/context/UserContext";
 import { useEffect, useState } from "react";
-import api from "@/api/axios";
+import api from "../api/axios.js";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
