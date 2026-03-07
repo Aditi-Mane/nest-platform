@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function ProfilePage() {
-
   const [user, setUser] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -41,6 +40,7 @@ export function ProfilePage() {
   // ================= REVIEW HANDLER =================
   const handleReviewSubmitted = () => {
     setIsReviewModalOpen(false);
+    setSelectedProduct(null);
   };
 
   // ================= SAVE PROFILE =================
@@ -66,6 +66,7 @@ export function ProfilePage() {
       const res = await api.put("/users/update-avatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       setUser(res.data);
     } catch (error) {
       console.error("Image upload failed", error);
@@ -111,6 +112,21 @@ export function ProfilePage() {
                 </AvatarFallback>
               </Avatar>
 
+              {/* IMAGE UPLOAD */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="avatarUpload"
+              />
+
+              <label htmlFor="avatarUpload">
+                <Button variant="outline" size="sm">
+                  Upload Image
+                </Button>
+              </label>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -150,12 +166,12 @@ export function ProfilePage() {
         <Tabs defaultValue="purchases">
           <TabsList>
             <TabsTrigger value="purchases">
-              <ShoppingBag className="h-4 w-4 mr-2"/>
+              <ShoppingBag className="h-4 w-4 mr-2" />
               Purchases
             </TabsTrigger>
 
             <TabsTrigger value="orders">
-              <Package className="h-4 w-4 mr-2"/>
+              <Package className="h-4 w-4 mr-2" />
               Orders
             </TabsTrigger>
           </TabsList>
@@ -193,6 +209,7 @@ export function ProfilePage() {
                       variant="outline"
                       disabled={order.reviewed}
                       onClick={() => {
+                        if (!order.productId) return;
                         setSelectedProduct(order.productId._id);
                         setIsReviewModalOpen(true);
                       }}
@@ -207,6 +224,7 @@ export function ProfilePage() {
 
           </TabsContent>
         </Tabs>
+
       </div>
 
       {/* REVIEW MODAL */}
@@ -216,7 +234,6 @@ export function ProfilePage() {
           onClose={handleReviewSubmitted}
         />
       )}
-
     </div>
   );
 }

@@ -18,7 +18,6 @@ import conversationRoutes from "./routes/conversationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
 import { initSocket } from "./config/socket.js"
-import path from "path";
 
 connectDB()
 
