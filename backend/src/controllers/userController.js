@@ -73,31 +73,6 @@ export const getCurrentUser = async (req, res) =>{
   }
 } 
 
-// @desc   Get logged in user profile
-// @route  GET /api/users/me
-// @access Private
-export const getMe = async (req, res) => {
-  try {
-    // req.user is already attached by protect middleware
-    const user = await User.findById(req.user._id)
-      .select("-password -verificationOtp -verificationOtpExpiry");
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    res.status(200).json(user);
-
-  } catch (error) {
-    console.log("Get Profile Error:", error);
-    res.status(500).json({
-      message: "Server error"
-    });
-  }
-};
-
 export const updateSellerSettings = async (req, res) => {
   try {
 
