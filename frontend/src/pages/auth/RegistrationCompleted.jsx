@@ -10,7 +10,7 @@ const RegistrationCompleted = () => {
     <AuthLayout>
       <AuthCard>
         <AuthHeader title = "Registration Completed" subtitle = "Login to check your Verification Status."/>
-        <PrimaryButton type="button" onClick={() => navigate("/auth/login", {replace: true})}>Back to Login</PrimaryButton>
+        <PrimaryButton type="button" onClick={() => navigate("/auth/login", {replace: true})}>Check Status</PrimaryButton>
       </AuthCard>
     </AuthLayout>
   )
