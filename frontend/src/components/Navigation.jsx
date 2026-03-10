@@ -5,7 +5,14 @@ import {
   ShoppingCart,
   Heart,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
+
+
+import { useUser } from "@/context/UserContext";
+import { useEffect, useState } from "react";
+import api from "@/api/axios";
+
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -34,6 +41,8 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
     navigate("/marketplace/buyer/ventures");
   }
   };
+  const { user } = useUser();
+
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-[var(--color-background)]">
@@ -130,9 +139,16 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
               className="cursor-pointer border border-[var(--color-border)]"
               onClick={() => onNavigate("profile")}
             >
-              <AvatarImage src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=100" />
-              <AvatarFallback className="bg-[var(--color-card)] text-[var(--color-text)]">
-                JD
+              <AvatarImage
+                src={
+                  user?.avatar
+                    ? `http://localhost:5000${user.avatar}`
+                    : undefined
+                }
+              />
+
+              <AvatarFallback className="bg-[var(--color-card)] text-[var(--color-text)] font-bold">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
 

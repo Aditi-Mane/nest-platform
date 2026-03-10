@@ -265,7 +265,7 @@ return (
             )}
 
             {/* Cancel Deal */}
-            {isSeller && !["otp_verified"].includes(conversationInfo?.status) && (
+            {isSeller && !["completed"].includes(conversationInfo?.status) && (
               <button
                 onClick={handleCancelDeal}
                 className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white"

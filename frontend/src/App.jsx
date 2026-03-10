@@ -8,11 +8,13 @@ import ChooseRole from "./pages/ChooseRole.jsx"
 import AuthResolver from "./pages/AuthResolver.jsx"
 import { Navigate } from "react-router-dom"
 import { CartProvider } from "./context/CartContext.jsx";
+import { UserProvider } from "./context/UserContext.jsx";
 
 import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
+
     <>
     <Toaster
       position="top-right"
@@ -42,26 +44,32 @@ function App() {
       }}
     />
 
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth/*" element={<AuthPage />} />
-      <Route path="/resolve" element={<AuthResolver />} />
-      <Route path="/marketplace" element={<Navigate to="/resolve" replace />} />
+    <UserProvider>
+      
+        
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth/*" element={<AuthPage />} />
+          <Route path="/resolve" element={<AuthResolver />} />
+          <Route path="/marketplace" element={<Navigate to="/resolve" replace />} />
 
-      <Route
-        path="/marketplace/*"
-        element={
-          <ProtectedRoute>
-            <CartProvider>
-              <Marketplace />
-            </CartProvider>
-          </ProtectedRoute>
-        }
-      />
 
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/choose-role" element={<ChooseRole />} />
-    </Routes>
+          <Route
+            path="/marketplace/*"
+            element={
+              <ProtectedRoute>
+                <CartProvider>
+                  <Marketplace />
+                </CartProvider>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/choose-role" element={<ChooseRole />} />
+        </Routes>
+      
+    </UserProvider>
     </>
   );
 }
