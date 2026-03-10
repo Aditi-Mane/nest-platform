@@ -321,58 +321,13 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                          {getStatusBadge(item.status)}
                       </div>
 
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() =>
-                              updateQuantity(
-                                item.id,
-                                Math.max(1, item.quantity - 1)
-                              )
-                            }
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="h-2 w-3" />
-                          </Button>
-
-                          <span className="w-10 text-center">
-                            {item.quantity}
-                          </span>
-
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
-                            }
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-
-                        <p className="text-sm">
-                          Subtotal:{" "}
-                          <span className="font-semibold text-primary">
-                            ₹{item.price * item.quantity}
-                          </span>
-                        </p>
-
-                        <Button
-                          variant="ghost"
-                          className="ml-auto text-red-600"
-                          onClick={() => removeFromCart(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Remove
-                        </Button>
-                      </div>
+                     
+                      <div className="flex items-center gap-3 mb-4">
+                       
                       {/* Contact Seller Button */}
                      <Button
                       size="sm"
-                      className={`w-full rounded-xl border 
+                      className={`flex-1 rounded-xl border 
                         ${getButtonStyle(item.status, item.productStatus)}
                         ${getHoverStyle(item.status, item.productStatus)}
                         !shadow-none transition-all`}
@@ -382,6 +337,16 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                       <MessageSquare className="h-4 w-4 mr-2" />
                       {getContactButtonText(item.status, item.productStatus)}
                     </Button>
+                       <Button
+                          variant="ghost"
+                          className="ml-auto text-red-600"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                    </Button>
+                          
+                        </div>
+                      
                     </div>
                   </CardContent>
                 </Card>

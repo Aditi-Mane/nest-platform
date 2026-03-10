@@ -124,70 +124,87 @@ export function ProfilePage({ onNavigate }) {
           </div>
 
           <div className="space-y-4">
-            {purchaseHistory.map((order) => (
-              <Card key={order._id} className="rounded-2xl px-2">
-                <CardContent className="p-6">
+        {purchaseHistory.map((order) => (
+          <Card
+            key={order._id}
+            className="rounded-2xl px-2 transition-all hover:shadow-md"
+          >
+            <CardContent className="p-6">
 
-                  <div className="flex items-center gap-4">
+              <div className="flex items-center gap-5">
 
-                    {/* PRODUCT IMAGE */}
-                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                      <img
-                        src={order.productId?.images?.[0]?.url}
-                        alt={order.productId?.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                {/* PRODUCT IMAGE */}
+                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border">
+                  <img
+                    src={order.product?.images?.[0]?.url || "/placeholder.png"}
+                    alt={order.product?.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-                    {/* INFO */}
-                    <div className="flex-1">
-                      <h4 className="mb-1 font-semibold">
-                        {order.productId?.name}
-                      </h4>
+                {/* INFO */}
+                <div className="flex-1 space-y-1">
 
-                      <p className="text-sm text-muted mb-1">
-                         Seller: <span className="text-sm text-primary mb-1 ">{order.sellerId?.name}</span>
-                      </p>
+                  <h4 className="font-semibold text-base">
+                    {order.product?.name}
+                  </h4>
 
-                      <p className="text-sm text-muted">
-                       {formatDistanceToNow(new Date(order.updatedAt), { addSuffix: true })}
-                      </p>
+                  <p className="text-sm text-muted-foreground">
+                    Seller: {" "}
+                    <span className="text-primary font-medium">
+                      {order.seller?.name}
+                    </span>
+                  </p>
 
-                      <Badge className="bg-green-500 mt-2 text-white rounded-xl">
-                        Delivered
-                      </Badge>
-                    </div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Qty: {order.quantity}
+                  </p>
 
-                    {/* PRICE + REVIEW */}
-                    <div className="text-right">
+                  <div className="flex items-center gap-2.5 mt-2">
 
-                      <p className="text-xl text-primary font-semibold">
-                        ₹{order.totalPrice}
-                      </p>
+                    <Badge className="bg-green-500 text-white rounded-xl">
+                      Delivered
+                    </Badge>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-3"
-                        disabled={order.reviewed}
-                        onClick={
-                          ()=>{
-                            setSelectedProduct(order.productId._id);
-                            setIsReviewModalOpen(true);
-                          }
-                        }
-                      >
-                        {order.reviewed ?  "Reviewed" : " Leave a Review"}
-                      </Button>
-
-                    </div>
+                    <p className="text-xs text-muted">
+                      {order.createdAt
+                        ? formatDistanceToNow(new Date(order.createdAt), {
+                            addSuffix: true,
+                          })
+                        : "Recently"}
+                    </p>
 
                   </div>
 
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+
+                {/* PRICE + REVIEW */}
+                <div className="text-right flex flex-col items-end gap-2">
+
+                  <p className="text-xl font-semibold text-primary">
+                    ₹{order.totalPrice}
+                  </p>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={order.reviewed}
+                    onClick={() => {
+                      setSelectedProduct(order.product._id);
+                      setIsReviewModalOpen(true);
+                    }}
+                  >
+                    {order.reviewed ? "Reviewed" : "Leave a Review"}
+                  </Button>
+
+                </div>
+
+              </div>
+
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
         </TabsContent>
 

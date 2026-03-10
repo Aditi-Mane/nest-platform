@@ -22,9 +22,19 @@ export const getMyPurchases =async(req,res)=>{
           user: buyerId
         });
 
-        return {
-          ...order.toObject(),
-          reviewed: !!review
+       return {
+          _id: order._id,
+
+          product: order.productId,
+          seller: order.sellerId,
+
+          quantity: order.quantity,
+          totalPrice: order.totalPrice,
+          pricePerItem: order.pricePerItem,
+
+          reviewed: !!review,
+
+          createdAt: order.createdAt
         };
       })
     );

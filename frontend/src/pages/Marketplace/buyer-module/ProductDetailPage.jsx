@@ -51,6 +51,8 @@ export default function ProductDetailPage() {
   const [reviews, setReviews] =useState([]);
   const [loadingReviews, setLoadingReviews] =useState(true);
   const [conversation, setConversation] = useState(null);
+  const [sellerRating, setSellerRating] = useState(0.0);
+  const [reviewCount, setReviewCount] = useState(0);    
   const location = useLocation();
 
 
@@ -204,6 +206,7 @@ const fetchConversation = async () => {
            setLoadingReviews(false);
         }
       }
+
       
     fetchConversation();
     fetchProduct();
@@ -211,6 +214,17 @@ const fetchConversation = async () => {
     
 
   },[id, location ]);
+
+  useEffect(() => {
+  const fetchRating = async () => {
+    const res = await api.get(`/seller/seller-rating/${seller._id}`);
+
+    setSellerRating(res.data.avgRating);
+    setReviewCount(res.data.totalReviews);
+  };
+
+  if (seller?._id) fetchRating();
+}, [seller]);
 
 
 console.log("UPDATED STATUS:", conversation?.status);
@@ -597,7 +611,7 @@ if (!product) {
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         <span className="text-sm">
-                          {seller.rating ?? 0} ({seller.reviewCount ?? 0} reviews)
+                          {sellerRating} ({reviewCount} reviews)
                         </span>
                       </div>
                     </div>

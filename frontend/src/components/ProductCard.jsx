@@ -36,7 +36,7 @@ import { Star } from "lucide-react";
             onToggleFavourite();
           }}
           className="absolute top-3 right-3 transition-transform hover:scale-110"
-          disable={product.status !== "available"}
+          disabled={product.status !== "available"}
         >
           <Heart
             className={`h-6 w-6 transition-all duration-300 ${

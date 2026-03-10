@@ -1,5 +1,5 @@
 import express from "express"
-import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, generateOrderOtp, getAverageRating, getMyProducts, getSellerAnalytics, getSellerOrders, setupSeller, verifyOrderOtp} from "../controllers/sellerController.js";
+import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, generateOrderOtp, getAverageRating, getMyProducts, getSellerAnalytics, getSellerOrders, setupSeller, verifyOrderOtp, getSellerAverageRating} from "../controllers/sellerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { checkSeller } from "../middleware/sellerMiddleware.js";
@@ -18,5 +18,6 @@ router.post("/orders/:orderId", protect, checkSeller, verifyOrderOtp);
 router.put("/otp", protect, checkSeller, generateOrderOtp);
 router.get("/analytics", protect, checkSeller, getSellerAnalytics);
 router.get("/productRatings", protect, checkSeller, getAverageRating);
+router.get("/seller-rating/:sellerId", protect, getSellerAverageRating);
 
 export default router;
