@@ -130,19 +130,19 @@ export function SellerDashboard() {
     .sort((a, b) => (b.price * b.sales) - (a.price * a.sales))[0];
 
   return (
-    <div className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6">
       {/* WELCOME BANNER */}
       <div className="mb-8 bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold text-foreground mb-2">Welcome back, Seller! 👋</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl font-semibold text-text mb-2">Welcome back, Seller! 👋</h1>
+            <p className="text-muted">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
           <div className="flex gap-3">
-            <Link to="/products">
-              <Button variant="primary" className="flex items-center gap-2">
+            <Link to="/marketplace/seller/products">
+              <Button className="flex items-center bg-primary gap-2 text-card">
                 <Plus className="w-4 h-4" />
                 Add New Product
               </Button>
@@ -155,48 +155,43 @@ export function SellerDashboard() {
       <div className="mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Today's Earnings */}
-          <Card className="p-6 bg-linear-to-br from-primary/10 to-secondary/5 border-2 border-primary/30">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Today's Earnings</p>
-              <Badge variant={Number(earningsChange) >= 0 ? "success" : "destructive"} className="text-xs">
+          <Card className="p-6 border border-border border-l-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-text">Today's Earnings</p>
+              <Badge variant={Number(earningsChange) >= 0 ? "success" : "destructive"} className="text-xs text-muted">
                 {Number(earningsChange) >= 0 ? '+' : ''}{earningsChange}%
               </Badge>
             </div>
-            <p className="text-4xl font-bold text-foreground mb-1">${todayEarnings.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground">vs ${yesterdayEarnings} yesterday</p>
+            <p className="text-4xl font-bold text-text">₹{todayEarnings.toFixed(2)}</p>
+            <p className="text-xs text-muted">vs ₹{yesterdayEarnings} yesterday</p>
           </Card>
 
           {/* Pending Money */}
-          <Card className="p-6 border-l-4 border-l-yellow-500">
-            <p className="text-sm text-muted-foreground mb-2">Pending (Ship & Collect)</p>
-            <p className="text-4xl font-bold text-yellow-600 mb-1">${pendingMoney.toFixed(2)}</p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Card className="p-6 border border-border border-l-4 border-l-yellow-500">
+            <p className="text-sm text-text">Pending (Ship & Collect)</p>
+            <p className="text-4xl font-bold text-yellow-600">₹{pendingMoney.toFixed(2)}</p>
+            <div className="flex items-center gap-1 text-xs text-muted">
               <Clock className="w-3 h-3" />
               {awaitingDelivery.length} order{awaitingDelivery.length !== 1 ? 's' : ''} waiting
             </div>
           </Card>
 
           {/* In Negotiation */}
-          <Card className="p-6 border-l-4 border-l-blue-500">
-            <p className="text-sm text-muted-foreground mb-2">In Negotiation</p>
-            <p className="text-4xl font-bold text-blue-600 mb-1">${inNegotiationMoney.toFixed(2)}</p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Card className="p-6 border border-border border-l-4 border-l-blue-500">
+            <p className="text-sm text-text">In Negotiation</p>
+            <p className="text-4xl font-bold text-blue-600">₹{inNegotiationMoney.toFixed(2)}</p>
+            <div className="flex items-center gap-1 text-xs text-muted">
               <MessageSquare className="w-3 h-3" />
               Potential earnings
             </div>
           </Card>
 
           {/* Weekly Goal */}
-          <Card className="p-6 border-l-4 border-l-secondary">
-            <p className="text-sm text-muted-foreground mb-2">This Week's Total</p>
-            <p className="text-4xl font-bold text-secondary mb-1">${weeklyEarnings.toFixed(2)}</p>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2 mb-1">
-              <div 
-                className="bg-secondary h-2 rounded-full transition-all" 
-                style={{ width: `${goalProgress}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">{goalProgress}% of ${weeklyGoal} goal</p>
+          <Card className="p-6 border border-border border-l-4 border-l-secondary">
+            <p className="text-sm text-text">This Week's Total</p>
+            <p className="text-4xl font-bold text-secondary">₹{weeklyEarnings.toFixed(2)}</p>
+            
+            <p className="text-xs text-muted">vs ₹230 last week</p>
           </Card>
         </div>
       </div>
@@ -205,10 +200,80 @@ export function SellerDashboard() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-6 h-6 text-primary" />
-          <h2 className="text-2xl font-semibold text-foreground">Smart Insights & Trends</h2>
+          <h2 className="text-2xl font-semibold text-text">Smart Insights & Trends</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Daily Earnings Chart */}
+          <Card className="p-6 border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="font-semibold text-foreground">Daily Earnings</h3>
+                <p className="text-xs text-muted-foreground">Last 7 days</p>
+              </div>
+            </div>
+            <div className="flex items-end justify-between gap-2 h-48">
+              {dailyEarnings.map((day, index) => {
+                const maxAmount = Math.max(...dailyEarnings.map(d => d.amount));
+                const height = maxAmount > 0 ? (day.amount / maxAmount) * 100 : 0;
+                const isToday = index === dailyEarnings.length - 1;
+                
+                return (
+                  <div key={day.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                    <p className="text-xs font-semibold text-muted-foreground">${day.amount}</p>
+                    <div 
+                      className={`w-full rounded-t-lg transition-all ${
+                        isToday ? 'bg-primary' : 'bg-secondary/40'
+                      } hover:opacity-80 cursor-pointer`}
+                      style={{ height: `${height}%`, minHeight: day.amount > 0 ? '8px' : '0' }}
+                    />
+                    <p className={`text-xs ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}>
+                      {day.day}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* Top Earner This Week */}
+          <Card className="p-6 bg-linear-to-br border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">💰 Top Earner</h3>
+                <p className="text-xs text-muted-foreground">Best performer this week</p>
+              </div>
+            </div>
+            {topEarner ? (
+              <div className="p-4 bg-card rounded-lg border border-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-4xl">{topEarner.image}</span>
+                  <div>
+                    <p className="font-semibold text-foreground">{topEarner.name}</p>
+                    <p className="text-2xl font-bold text-secondary">${(topEarner.price * topEarner.sales).toFixed(2)}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 bg-accent/20 rounded">
+                    <p className="text-muted-foreground">Sales</p>
+                    <p className="font-semibold text-foreground">{topEarner.sales} units</p>
+                  </div>
+                  <div className="p-2 bg-accent/20 rounded">
+                    <p className="text-muted-foreground">Avg Price</p>
+                    <p className="font-semibold text-foreground">${topEarner.price.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No sales yet this week</p>
+            )}
+          </Card>
+
           {/* Price Too High? */}
           <Card className="p-6 bg-linear-to-br from-blue-50 to-purple-50 border-2 border-blue-500/30">
             <div className="flex items-center gap-2 mb-4">
@@ -244,74 +309,6 @@ export function SellerDashboard() {
             )}
           </Card>
 
-          {/* Top Earner This Week */}
-          <Card className="p-6 bg-linear-to-br from-secondary/10 to-primary/5 border-2 border-secondary/30">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-secondary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">💰 Top Earner</h3>
-                <p className="text-xs text-muted-foreground">Best performer this week</p>
-              </div>
-            </div>
-            {topEarner ? (
-              <div className="p-4 bg-card rounded-lg border border-border">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-4xl">{topEarner.image}</span>
-                  <div>
-                    <p className="font-semibold text-foreground">{topEarner.name}</p>
-                    <p className="text-2xl font-bold text-secondary">${(topEarner.price * topEarner.sales).toFixed(2)}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2 bg-accent/20 rounded">
-                    <p className="text-muted-foreground">Sales</p>
-                    <p className="font-semibold text-foreground">{topEarner.sales} units</p>
-                  </div>
-                  <div className="p-2 bg-accent/20 rounded">
-                    <p className="text-muted-foreground">Avg Price</p>
-                    <p className="font-semibold text-foreground">${topEarner.price.toFixed(2)}</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No sales yet this week</p>
-            )}
-          </Card>
-
-          {/* Daily Earnings Chart */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <div>
-                <h3 className="font-semibold text-foreground">Daily Earnings</h3>
-                <p className="text-xs text-muted-foreground">Last 7 days</p>
-              </div>
-            </div>
-            <div className="flex items-end justify-between gap-2 h-48">
-              {dailyEarnings.map((day, index) => {
-                const maxAmount = Math.max(...dailyEarnings.map(d => d.amount));
-                const height = maxAmount > 0 ? (day.amount / maxAmount) * 100 : 0;
-                const isToday = index === dailyEarnings.length - 1;
-                
-                return (
-                  <div key={day.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                    <p className="text-xs font-semibold text-muted-foreground">${day.amount}</p>
-                    <div 
-                      className={`w-full rounded-t-lg transition-all ${
-                        isToday ? 'bg-primary' : 'bg-secondary/40'
-                      } hover:opacity-80 cursor-pointer`}
-                      style={{ height: `${height}%`, minHeight: day.amount > 0 ? '8px' : '0' }}
-                    />
-                    <p className={`text-xs ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}>
-                      {day.day}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
         </div>
       </div>
 
