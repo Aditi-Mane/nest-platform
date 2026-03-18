@@ -8,12 +8,11 @@ export const getUserCart = async (req, res) => {
       .populate({
         path: "items.product",
         populate: {
-          path: "createdBy", // seller reference
+          path: "createdBy",
           select: "name avatar collegeName"
         }
       });
 
-    // If no cart yet
     if (!cart) {
       return res.status(200).json({
         success: true,
@@ -21,9 +20,18 @@ export const getUserCart = async (req, res) => {
       });
     }
 
+    // remove deleted products
+    const cleanedItems = cart.items.filter(item => item.product !== null);
+
+    // optional: permanently remove them from DB
+    if (cleanedItems.length !== cart.items.length) {
+      cart.items = cleanedItems;
+      await cart.save();
+    }
+
     res.status(200).json({
       success: true,
-      cartItems: cart.items
+      cartItems: cleanedItems
     });
 
   } catch (error) {

@@ -1,49 +1,103 @@
 import Conversation from "../models/Conversation.js";
 import Product from "../models/Product.js";
 
-export const createConversation =async (req,res)=>{
-  try{
-    const buyerId=req.user._id;
-    const {productId} =req.body;
+export const createConversation = async (req, res) => {
+  try {
+    const buyerId = req.user._id;
+    const { productId } = req.body;
 
-    //1. Check product exists
     const product = await Product.findById(productId);
 
-    if(!product) {
+    if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    //2. Check product available
-    if(product.status !== "available"){
+    if (product.stock <= 0 || product.status !== "available") {
       return res.status(400).json({ message: "Product not available" });
     }
 
-    //3. Check existing conversation
-    let conversation =await Conversation.findOne({
+    //check existing 
+    const existingConversation = await Conversation.findOne({
       productId,
       buyerId,
-      status :{ $in : ["initiated", "negotiating"]},
+      status: { $in: ["initiated", "negotiating", "deal_confirmed"] }
     });
 
-    //4.Create if not exists
-    if(!conversation){
-      conversation =await Conversation.create({
-        productId,
-        buyerId,
-        sellerId: product.createdBy,
-        status: "initiated",
-
+    //If exists → reuse
+    if (existingConversation) {
+      return res.status(200).json({
+        message: "Conversation already exists",
+        conversation: existingConversation,
       });
-
     }
-  res.status(200).json({
-      message: "Conversation ready",
+
+    //Create new only if none exists
+    const conversation = await Conversation.create({
+      productId,
+      buyerId,
+      sellerId: product.createdBy,
+      status: "initiated",
+    });
+
+    res.status(200).json({
+      message: "Conversation created",
       conversation,
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
 
+export const getBuyerConversations = async (req, res) => {
+  try {
+    const buyerId = req.user._id;
+
+    const conversations = await Conversation.find({ buyerId })
+      .populate("productId", "name images price status") // ✅ fixed
+      .populate("sellerId", "name avatar")
+      .sort({ updatedAt: -1 }); 
+
+    return res.status(200).json({
+      message: "Fetched buyer conversations",
+      conversations,
+    });
+
+  } catch (error) {
+    console.error(error); 
+    return res.status(500).json({
+      message: "Error fetching buyer conversations",
+      error: error.message, 
+    });
+  }
+};
+//get conversations by product
+export const getConversationByProduct = async (req, res) => {
+  try {
+    const buyerId = req.user._id;
+    const { productId } = req.params;
+
+    const conversation = await Conversation.findOne({
+      productId,
+      buyerId,
+    });
+
+   
+    if (!conversation) {
+      return res.status(200).json({ conversation: null });
+    }
+
+    return res.status(200).json({
+      message: "Conversation fetched",
+      conversation,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error fetching conversation",
+      error: error.message,
+    });
+  }
 };
 
 //to get all seller conversations
@@ -71,10 +125,24 @@ export const getSellerConversations = async(req, res) =>{
 export const getConversationInfo = async(req, res) =>{
   try {
     const { conversationId } = req.params;
+    const userId =req.user._id
 
     const conversation = await Conversation.findById(conversationId)
     .populate("buyerId", "avatar name")
+    .populate("sellerId", "avatar name")
     .populate("productId", "name price")
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    //  SECURITY CHECK
+    if (
+      conversation.buyerId._id.toString() !== userId.toString() &&
+      conversation.sellerId._id.toString() !== userId.toString()
+    ) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
 
     return res.status(200).json({
       message: "Conversation info achieved",

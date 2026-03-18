@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    //profile update 
+    university: { type: String },
+    major: { type: String },
+    year: { type: String },
+    bio: { type: String },
+    avatar: { type: String },
+
     // Cached average rating (updated via Review post-save hook after taking review)
     rating: {
       type: Number,
@@ -117,6 +124,14 @@ const userSchema = new mongoose.Schema(
     storeLogo: { type: String },
     storeLocation: { type: String, trim: true },
     payoutUPI: { type: String, trim: true },
+    
+    // 🔹 Added for settings page notifications (NEW FIELD)
+    notifications: {
+      newOrders: { type: Boolean, default: true },
+      lowStock: { type: Boolean, default: true },
+      marketing: { type: Boolean, default: false },
+      messages: { type: Boolean, default: true }
+    },
 
     verificationOtp: {
       type: String

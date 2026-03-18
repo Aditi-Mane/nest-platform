@@ -8,6 +8,7 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Trophy,
 } from "lucide-react";
 import api from "../../../api/axios.js";
 
@@ -59,6 +60,8 @@ const SellerMessages = () => {
         return { ...base, background: "#fff6db", color: "#a16207" };
       case "cancelled":
         return { ...base, background: "#fde8e8", color: "#b91c1c" };
+      case "completed":
+        return { ...base, background: "#ede9fe", color: "#7c3aed" };
       default:
         return base;
     }
@@ -82,6 +85,8 @@ const SellerMessages = () => {
         return <Clock size={14} />;
       case "cancelled":
         return <XCircle size={14} />;
+      case "completed":
+        return <Trophy size={14} />;
       default:
         return null;
     }
@@ -173,6 +178,7 @@ const SellerMessages = () => {
           <option value="negotiating">Negotiating</option>
           <option value="deal_confirmed">Deal Confirmed</option>
           <option value="cancelled">Cancelled</option>
+          <option value="completed">Completed</option>
         </select>
       </div>
 
@@ -210,7 +216,7 @@ const SellerMessages = () => {
                   fontSize: "18px",
                 }}
               >
-                {item.productId?.name?.[0]}
+                {item.productId?.name?.[0].toUpperCase()}
               </div>
               
             <div className="flex flex-col gap-1">
@@ -223,6 +229,7 @@ const SellerMessages = () => {
                 <p className="text-sm font-semibold" style={{ color: themeColor }}>
                   Price: ₹{item.productId?.price}
                 </p>
+
               </div>
 
               {/* Buyer */}

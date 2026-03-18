@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import api from "../../../api/axios.js";
 import { TfiPencilAlt } from "react-icons/tfi";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import toast from "react-hot-toast";
+import { ChevronDown } from "lucide-react";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
@@ -16,7 +18,95 @@ const SellerProducts = () => {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const [expandedCards, setExpandedCards] = useState({});
+  const [includedInput, setIncludedInput] = useState("");
+
+  const [analytics, setAnalytics] = useState(null);
+
+  const [ratings, setRatings] = useState([]);
+  const [overallRating, setOverallRating] = useState(0);
+
+  useEffect(() => {
+
+    const fetchAnalytics = async () => {
+      try {
+        const res = await api.get("/seller/analytics");
+        setAnalytics(res.data);
+
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+
+  }, []);
+
+  const getProductAnalytics = (productId) => {
+    return analytics?.products.find(
+      item => item.productId === productId
+    );
+  };
+
+  useEffect(() => {
+
+    const fetchRatings = async () => {
+      try {
+        const res = await api.get("/seller/productRatings");
+
+        setRatings(res.data.products);
+        setOverallRating(res.data.overallRating);
+
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+      }
+    };
+
+    fetchRatings();
+
+  }, []);
+
+  const getProductRating = (productId) => {
+    return ratings.find(r => r.productId === productId);
+  };
+
+  const addIncludedItem = () => {
+    const item = includedInput.trim();
+    if (!item) return;
+
+    if (formData.whatsIncluded.length >= limit) {
+      toast.error(`You can only add up to ${limit} items`);
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      whatsIncluded: [...prev.whatsIncluded, item]
+    }));
+
+    setIncludedInput("");
+  };
+
+  const removeIncludedItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      whatsIncluded: prev.whatsIncluded.filter((_, i) => i !== index)
+    }));
+  };
+
+  const toggleIncluded = (id) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   const limit = 6;
+
+  const [imageIndexes, setImageIndexes] = useState({});
 
   const categories = [
     "Study Material",
@@ -35,6 +125,7 @@ const SellerProducts = () => {
     price: "",
     description: "",
     images: [],
+    whatsIncluded: [] 
   });
 
   const fileInputRef = useRef(null);
@@ -120,6 +211,7 @@ const SellerProducts = () => {
     setError("");
     setEditingProduct(product);
     setExistingImages(product.images || []);
+    setIncludedInput("");
     setFormData({
       name: product.name,
       category: product.category,
@@ -128,6 +220,7 @@ const SellerProducts = () => {
       condition: product.condition || "",
       stock: product.stock || "",
       images: [],
+      whatsIncluded: product.whatsIncluded || []
     });
     setShowEditModal(true);
   };
@@ -184,6 +277,11 @@ const SellerProducts = () => {
         form.append("condition", formData.condition);
       }
 
+      form.append(
+        "whatsIncluded",
+        JSON.stringify(formData.whatsIncluded || [])
+      );
+
       if (editingProduct) {
         existingImages.forEach((img) => {
           form.append("existingImages", img.url);
@@ -218,14 +316,19 @@ const SellerProducts = () => {
             p._id === updatedProduct._id ? updatedProduct : p
           )
         );
+
+        toast.success("Product edited successfully");
       } else {
         setProducts((prev) => [updatedProduct, ...prev]);
+
+        toast.success("Product added successfully");
       }
 
       setEditingProduct(null);
       setExistingImages([]);
       setShowModal(false);
       setShowEditModal(false);
+      setIncludedInput("");
 
       setFormData({
         name: "",
@@ -235,13 +338,16 @@ const SellerProducts = () => {
         images: [],
         condition: "",
         stock: "",
+        whatsIncluded: []
       });
 
     } catch (err) {
-      setError(
+      const message =
         err.response?.data?.message ||
-        "Something went wrong while saving product."
-      );
+        "Something went wrong while saving product.";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -263,7 +369,7 @@ const SellerProducts = () => {
             <span>
               Avg rating:{" "}
               <span className="font-medium text-text">
-                4.4
+                {overallRating.toFixed(1)}
               </span>{" "}
               <span className="text-yellow-500">⭐</span>
             </span>
@@ -282,6 +388,7 @@ const SellerProducts = () => {
               images: [],
               condition: "",
               stock: "",
+              whatsIncluded: []
             });
             setError("");
             setShowModal(true);
@@ -301,12 +408,12 @@ const SellerProducts = () => {
 
         <div className="bg-card border border-border p-4 rounded-xl">
           <p className="text-sm text-muted">Total Revenue</p>
-          <h2 className="text-2xl font-bold">₹ 0</h2>
+          <h2 className="text-2xl font-bold">₹ {analytics?.totalRevenue || 0}</h2>
         </div>
 
         <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Avg Rating</p>
-          <h2 className="text-2xl font-bold">⭐ 4.4</h2>
+          <p className="text-sm text-muted">Average Rating</p>
+          <h2 className="text-2xl font-bold">⭐ {overallRating.toFixed(1)}</h2>
         </div>
       </div>
 
@@ -323,20 +430,56 @@ const SellerProducts = () => {
               key={p._id}
               className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition"
             >
-              {/* IMAGE */}
-             
-                {/* IMAGE */}
-                <div className="h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
-                  {p.images && p.images.length > 0 ? (
-                    <img
-                      src={p.images[0].url}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-muted">No Image</span>
+              <div className="relative h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
+
+                {/* STATUS BADGE */}
+                <span
+                  className={`absolute top-2 right-2 text-xs px-3 py-1 rounded-full font-medium shadow-sm
+                    ${
+                      p.status === "sold"
+                        ? "bg-red-100 text-red-700"
+                        : p.status === "available"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                >
+                  {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                </span>
+
+                {p.images && p.images.length > 0 ? (
+                <>
+                  <img
+                    src={p.images[imageIndexes[p._id] || 0].url}
+                    alt={p.name}
+                    className="w-full h-full object-contain"
+                  />
+
+                  {/* DOT INDICATOR */}
+                  {p.images.length > 1 && (
+                    <div className="absolute bottom-2 flex gap-1">
+                      {p.images.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            setImageIndexes((prev) => ({
+                              ...prev,
+                              [p._id]: index
+                            }))
+                          }
+                          className={`w-2 h-2 rounded-full ${
+                            (imageIndexes[p._id] || 0) === index
+                              ? "bg-white"
+                              : "bg-white/50"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   )}
-                </div>
+                </>
+              ) : (
+                <span className="text-muted">No Image</span>
+              )}
+              </div>
 
               <div className="p-6">
 
@@ -348,9 +491,42 @@ const SellerProducts = () => {
                 </div>
 
                 {/* DESCRIPTION */}
-                <p className="text-sm text-muted mt-2">
-                  {p.description}
-                </p>
+                {/* DESCRIPTION + ARROW */}
+                <div className="mt-2">
+                  
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm text-muted flex-1">
+                      {p.description}
+                    </p>
+
+                    {p.whatsIncluded?.length > 0 && (
+                      <button
+                        onClick={() => toggleIncluded(p._id)}
+                        className="text-muted hover:text-primary transition"
+                      >
+                        <ChevronDown
+                          size={18}
+                          className={`transition-transform ${
+                            expandedCards[p._id] ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* COLLAPSIBLE LIST */}
+                  {expandedCards[p._id] && (
+                    <ul className="mt-2 text-sm text-muted space-y-1">
+                      <h2 className="text-text">What's included: </h2>
+                      {p.whatsIncluded.map((item, index) => (
+                        <li key={index} className="flex items-center gap-2">
+                          ✓ {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                </div>
 
                 {/* CATEGORY + RATING */}
                 <div className="flex items-center gap-3 mt-3">
@@ -359,7 +535,7 @@ const SellerProducts = () => {
                   </span>
 
                   <span className="text-sm text-primary">
-                    ⭐ 4.6 (3)
+                    ⭐ {getProductRating(p._id)?.avgRating || 0} ({getProductRating(p._id)?.totalReviews || 0})
                   </span>
                 </div>
 
@@ -368,13 +544,13 @@ const SellerProducts = () => {
 
                   <div>
                     <p className="text-muted">Sales</p>
-                    <p className="font-semibold">0</p>
+                    <p className="font-semibold">{getProductAnalytics(p._id)?.sales || 0}</p>
                   </div>
 
                   <div>
                     <p className="text-muted">Revenue</p>
                     <p className="font-semibold text-green-700">
-                      0
+                      ₹ {getProductAnalytics(p._id)?.revenue || 0}
                     </p>
                   </div>
 
@@ -672,10 +848,55 @@ const SellerProducts = () => {
                   placeholder="Describe your product in detail. Include materials, dimensions, care instructions, etc."
                   className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text resize-none"
                 />
+              </div>
 
-                <p className="text-xs text-muted mt-2">
-                  Detailed descriptions help customers make informed decisions
-                </p>
+              {/* WHAT'S INCLUDED */}
+              <div className="mt-0.5">
+
+                <label className="block text-sm font-medium mb-2">
+                  What's Included
+                </label>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={includedInput}
+                    onChange={(e) => setIncludedInput(e.target.value)}
+                    disabled={formData.whatsIncluded.length >= limit}
+                    placeholder="Example: Source files"
+                    className="flex-1 border border-border rounded-lg px-3 py-2 text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addIncludedItem}
+                    disabled={formData.whatsIncluded.length >= limit}
+                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* LIST */}
+                <div className="mt-3 space-y-2">
+                  {formData.whatsIncluded.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                    >
+                      <span>✓ {item}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeIncludedItem(index)}
+                        className="text-red-600 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
               </div>
 
               {/* FOOTER BUTTONS */}
@@ -920,6 +1141,53 @@ const SellerProducts = () => {
                   placeholder="Describe your product in detail. Include materials, dimensions, care instructions, etc."
                   className="w-full border border-border bg-background rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-text resize-none"
                 />
+              </div>
+
+              {/* WHAT'S INCLUDED */}
+              <div className="mt-0.5">
+
+                <label className="block text-sm font-medium mb-2">
+                  What's Included
+                </label>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={includedInput}
+                    onChange={(e) => setIncludedInput(e.target.value)}
+                    placeholder="Example: Source files"
+                    className="flex-1 border border-border rounded-lg px-3 py-2 text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addIncludedItem}
+                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* LIST */}
+                <div className="mt-3 space-y-2">
+                  {formData.whatsIncluded.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                    >
+                      <span>✓ {item}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeIncludedItem(index)}
+                        className="text-red-600 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
               </div>
 
               {/* FOOTER BUTTONS */}

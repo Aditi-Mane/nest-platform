@@ -33,6 +33,7 @@ import {
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { Separator } from "@/components/ui/separator";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {useEffect, useState} from "react";
 import axios from "axios";
 import api from "../../../api/axios.js";
@@ -45,13 +46,133 @@ export default function ProductDetailPage() {
   const[product, setProduct]=useState(null);
   const isUnavailable = product?.status !== "available";
   const seller = product?.createdBy;
-  console.log(seller);
+
 
   const [reviews, setReviews] =useState([]);
   const [loadingReviews, setLoadingReviews] =useState(true);
+  const [conversation, setConversation] = useState(null);
+  const location = useLocation();
+
 
   //selected photo
   const [selectedImage, setSelectedImage] = useState(null);
+
+const getContactButtonText = (status, productStatus) => {
+  if (productStatus === "sold") return "Sold Out";
+  if (productStatus === "reserved") return "Currently Reserved";
+
+  if (!status) return "Contact Seller";
+
+  switch (status) {
+    case "initiated":
+      return "Contact Seller";
+    case "negotiating":
+      return "Continue Negotiation";
+    case "deal_confirmed":
+      return "Deal Confirmed";
+    case "cancelled":
+      return "Retry Contact";
+    default:
+      return "Contact Seller";
+  }
+};
+//for contact button
+const getButtonStyle = (status, productStatus) => {
+  if (productStatus === "sold") {
+    return "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+  }
+
+  if (productStatus === "reserved") {
+    return "bg-orange-50 text-orange-600 border-orange-100";
+  }
+
+  switch (status) {
+    case "deal_confirmed":
+      return "bg-green-100 text-green-700 border-green-200";
+    case "negotiating":
+      return "bg-yellow-50 text-yellow-600 border-yellow-100";
+    case "cancelled":
+      return "bg-red-50 text-red-600 border-red-100";
+    default:
+      return "bg-green-50 text-green-600 border-green-100";
+  }
+};
+
+const getHoverStyle = (status, productStatus) => {
+  if (productStatus === "sold") return "";
+
+  if (productStatus === "reserved") {
+    return "hover:!bg-orange-100 hover:!text-orange-700";
+  }
+
+  switch (status) {
+    case "deal_confirmed":
+      return "hover:!bg-green-200 hover:!text-green-800";
+    case "negotiating":
+      return "hover:!bg-yellow-100 hover:!text-yellow-700";
+    case "cancelled":
+      return "hover:!bg-red-100 hover:!text-red-700";
+    default:
+      return "hover:!bg-green-100 hover:!text-green-700";
+  }
+};
+
+const isContactButtonDisabled = (status, productStatus) => {
+  return (
+    status === "deal_confirmed" ||
+    productStatus === "sold" ||
+    productStatus === "reserved"
+  );
+};
+
+
+const getSoftButtonStyle = (productStatus, conversationStatus, type = "contact") => {
+  if (productStatus === "sold") {
+    return "bg-muted text-background border border-border";
+  }
+
+  if (type === "cart") {
+    return "bg-blue-50 text-blue-600 border-blue-100";
+  }
+
+  switch (conversationStatus) {
+    case "deal_confirmed":
+      return "bg-green-100 text-green-700 border-green-200";
+    case "negotiating":
+      return "bg-yellow-50 text-yellow-600 border-yellow-100";
+    case "cancelled":
+      return "bg-red-50 text-red-600 border-red-100";
+    default:
+      return "bg-green-50 text-green-600 border-green-100";
+  }
+};
+
+const getSoftHover = (productStatus, conversationStatus, type = "contact") => {
+  if (productStatus === "sold") return "";
+
+  if (type === "cart") {
+    return "hover:!bg-blue-100 hover:!text-blue-700";
+  }
+
+  switch (conversationStatus) {
+    case "negotiating":
+      return "hover:!bg-yellow-100 hover:!text-yellow-700";
+    case "cancelled":
+      return "hover:!bg-red-100 hover:!text-red-700";
+    default:
+      return "hover:!bg-green-100 hover:!text-green-700";
+  }
+};
+
+
+const fetchConversation = async () => {
+        try {
+          const res = await api.get(`/conversations/product/${id}`);
+          setConversation(res.data.conversation);
+        } catch (err) {
+          // no conversation exists → fine
+        }
+};
 
   //fetch product details from backend
   useEffect(()=>{
@@ -83,11 +204,16 @@ export default function ProductDetailPage() {
            setLoadingReviews(false);
         }
       }
+      
+    fetchConversation();
     fetchProduct();
     fetchReviews();
     
 
-  },[id]);
+  },[id, location ]);
+
+
+console.log("UPDATED STATUS:", conversation?.status);
 
   //format createdAt(Posted)
   const postedDate=product?.createdAt?
@@ -286,11 +412,21 @@ if (!product) {
 <Card className="rounded-2xl bg-card/80 backdrop-blur-sm border-border shadow-sm">
   <CardHeader>
     <CardTitle className="flex items-center justify-between">
-      <span>Reviews</span>
+      <p>Reviews</p>
 
-      <span className="text-sm text-muted-foreground">
-        {reviews.length} Reviews
-      </span>
+      <div className="flex items-center gap-1 text-sm mb-2">
+          <Star className="h-4 w-4 fill-primary text-primary" />
+
+          {product.reviewCount > 0 ? (
+            <span className="text-muted-foreground">
+              {product.averageRating.toFixed(1)} ({product.reviewCount})
+            </span>
+          ) : (
+            <span className="text-muted-foreground opacity-70">
+              No reviews yet
+            </span>
+          )}
+        </div>
     </CardTitle>
   </CardHeader>
 
@@ -372,18 +508,16 @@ if (!product) {
             <Card className="rounded-2xl top-24  self-start">
               <CardContent className="p-6 space-y-4">
           <Button
-                    className={`w-full rounded-xl gap-2 transition-all duration-300
-                      ${
-                        isUnavailable
-                          ? "bg-muted text-background cursor-not-allowed"
-                          : "bg-secondary text-background hover:bg-secondary focus:bg-secondary active:bg-secondary shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                      }
-                    `}
-                    size="lg"
-                    disabled={isUnavailable}
-                    onClick={handleAddToCart}
-                  >
-                  <ShoppingCart className="h-5 w-5" />
+                  size="lg"
+                  className={`w-full rounded-xl border transition-all duration-200
+                    ${getSoftButtonStyle(product?.status,conversation?.status, "cart")}
+                    ${getSoftHover(product?.status,conversation?.status, "cart")}
+                    !shadow-none
+                  `}
+                  disabled={isUnavailable}
+                  onClick={handleAddToCart}
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
                   {product?.status === "sold"
                     ? "Sold Out"
                     : product?.status === "reserved"
@@ -391,25 +525,48 @@ if (!product) {
                     : "Add to Cart"}
                 </Button>
 
-                <Button
-                    className={`w-full rounded-xl transition-all duration-300 shadow-md
-                      ${
-                        isUnavailable
-                          ? "bg-muted text-background cursor-not-allowed"
-                          : "bg-primary text-background hover:brightness-95 hover:shadow-lg hover:-translate-y-1"
-                      }
-                    `}
-                    size="lg"
-                    disabled={isUnavailable}
-                    onClick={handleBuyNow}
-                  >
-                  {product?.status === "sold"
-                    ? "Unavailable"
-                    : product?.status === "reserved"
-                    ? "Currently Reserved"
-                    : "Buy Now"}
+          <Button
+                  size="lg"
+                  className={`w-full rounded-xl border 
+                    ${getButtonStyle(conversation?.status, product?.status)}
+                    ${getHoverStyle(conversation?.status, product?.status)}
+                    !shadow-none transition-all`}
+                  disabled={isContactButtonDisabled(conversation?.status, product?.status)}
+                  onClick={async () => {
+                          try {
+
+                            await addToCart(product._id);
+
+                            let conversationId = conversation?._id;
+
+                            // Create NEW conversation if previous one ended
+                            if (
+                              !conversationId ||
+                              conversation?.status === "cancelled" ||
+                              conversation?.status === "completed"
+                            ) {
+                              const res = await api.post("/conversations/create", {
+                                productId: product._id,
+                              });
+
+                              const newConversation = res.data.conversation;
+
+                              conversationId = newConversation._id;
+
+                              setConversation(newConversation);
+                            }
+
+                            navigate(`/marketplace/buyer/messages/${conversationId}`);
+
+                          } catch (error) {
+                            console.error(error);
+                            alert("Something went wrong");
+                          }
+                }}
+                >
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  {getContactButtonText(conversation?.status, product?.status)}
                 </Button>
-                <Separator />
 
                 <div className="text-center text-sm text-muted-foreground">
                   <Shield className="h-5 w-5 mx-auto mb-2" />
@@ -474,14 +631,7 @@ if (!product) {
                     </div>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-xl gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary transition-all duration-300"
-                    onClick={() => navigate("/messages")}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Message Seller
-                  </Button>
+        
                 </CardContent>
               </Card>
             )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from '../../../api/axios.js'
 import { Outlet, useLocation, useNavigate} from "react-router-dom"
-import {Navigation} from "../../../components/Navigation";
+import {Navigation} from "../../../components/Navigation.jsx";
 
 export default function BuyerLayout(){
   const location = useLocation();

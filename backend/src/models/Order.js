@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    conversationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+    },
     // Which product was purchased
     productId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -28,6 +33,11 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 1,
       min: 1,
+    },
+
+    pricePerItem: {
+      type: Number,
+      required: true
     },
 
     //  Total amount paid(optional)

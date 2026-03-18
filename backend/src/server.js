@@ -16,6 +16,7 @@ import cartRoutes from "./routes/cartRoutes.js"
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js"
 import { initSocket } from "./config/socket.js"
 
 connectDB()
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/users", userRoutes);
@@ -40,7 +42,9 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/conversations", conversationRoutes);
-app.use("/api/messages", messageRoutes)
+app.use("/api/messages", messageRoutes);
+app.use("/api/orders", orderRoutes);
+
 
 
 app.get("/",(req, res)=>{
@@ -50,6 +54,8 @@ app.get("/",(req, res)=>{
 const PORT = process.env.PORT
 const server = app.listen(PORT,()=>{
   console.log(`Server is running on ${PORT}`);
+  
+  
 })
 
 initSocket(server);

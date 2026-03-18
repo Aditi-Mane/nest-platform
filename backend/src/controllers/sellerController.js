@@ -1,7 +1,12 @@
 import Conversation from "../models/Conversation.js";
 import Order from "../models/Order.js";
+import Cart from "../models/Cart.js"
 import Product from "../models/Product.js";
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
+import { getTransporter } from "../utils/mailer.js";
+import mongoose from "mongoose";
+import Review from "../models/Review.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -52,6 +57,7 @@ export const setupSeller = async (req, res) => {
 //create product
 export const createProduct = async (req, res) => {
   try {
+    
     const user = req.user;
 
     const {
@@ -61,6 +67,7 @@ export const createProduct = async (req, res) => {
       price,
       stock,
       condition,
+      whatsIncluded
     } = req.body;
 
     //basic validation
@@ -80,6 +87,21 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({
         message: "Stock cannot be negative",
       });
+    }
+
+    let includedItems = [];
+    if (whatsIncluded) {
+      try {
+        const parsed = JSON.parse(whatsIncluded);
+
+        if (Array.isArray(parsed)) {
+          includedItems = parsed.filter(
+            (item) => typeof item === "string" && item.trim() !== ""
+          );
+        }
+      } catch {
+        includedItems = [];
+      }
     }
 
     //handle uploaded images
@@ -104,6 +126,7 @@ export const createProduct = async (req, res) => {
       location: user.storeLocation || "",
       createdBy: user._id,
       status: stock === 0 ? "sold" : "available",
+      whatsIncluded: includedItems
     });
 
     return res.status(201).json({
@@ -161,7 +184,8 @@ export const editProduct = async (req, res) => {
       price,
       stock,
       condition,
-      existingImages
+      existingImages, 
+      whatsIncluded
     } = req.body;
 
     //find product
@@ -180,11 +204,14 @@ export const editProduct = async (req, res) => {
       });
     }
 
-    //prevent editing sold products
-    if (product.status === "sold") {
-      return res.status(400).json({
-        message: "Cannot edit a sold product"
-      });
+    if (stock !== undefined && Number(stock) >= 0) {
+      product.stock = Number(stock);
+
+      if (product.stock === 0) {
+        product.status = "sold";
+      } else {
+        product.status = "available";
+      }
     }
 
     //update basic fields
@@ -196,6 +223,23 @@ export const editProduct = async (req, res) => {
     if (stock !== undefined && Number(stock) >= 0)
       product.stock = Number(stock);
     if (condition) product.condition = condition;
+
+    if (whatsIncluded !== undefined) {
+      try {
+        const parsed =
+          typeof whatsIncluded === "string"
+            ? JSON.parse(whatsIncluded)
+            : whatsIncluded;
+
+        if (Array.isArray(parsed)) {
+          product.whatsIncluded = parsed
+            .map((item) => item?.toString().trim())
+            .filter((item) => item !== "");
+        }
+      } catch (err) {
+        console.error("Invalid whatsIncluded format:", err);
+      }
+    }
 
     //image Handling
 
@@ -284,14 +328,24 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-export const confirmDeal = async (req, res) =>{
+export const confirmDeal = async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const conversation = await Conversation.findById(conversationId);
+    const { quantity, pricePerItem, paymentMethod } = req.body;
 
+    const quantityNum = Number(quantity);
+    const priceNum = Number(pricePerItem);
+    const totalPrice = quantityNum * priceNum;
+
+    const conversation = await Conversation.findById(conversationId);
     if(!conversation) {
       return res.status(404).json({
         message: "Conversation not found",
+      });
+    }
+    if (["cancelled", "completed"].includes(conversation.status)) {
+      return res.status(400).json({
+        message: "This conversation is no longer active"
       });
     }
 
@@ -303,18 +357,14 @@ export const confirmDeal = async (req, res) =>{
 
     const product = await Product.findById(conversation.productId);
 
-    if (!product) {
+    if(!product) {
       return res.status(404).json({
         message: "Product not found",
       });
     }
 
     //check if order already exists
-    const existingOrder = await Order.findOne({
-      productId: conversation.productId,
-      buyerId: conversation.buyerId,
-      sellerId: conversation.sellerId,
-    });
+    const existingOrder = await Order.findOne({ conversationId });
 
     if (existingOrder) {
       return res.status(400).json({
@@ -322,27 +372,50 @@ export const confirmDeal = async (req, res) =>{
       });
     }
 
-    conversation.status = "deal_confirmed"
+    //check stock
+    if (product.stock < quantityNum) {
+      return res.status(400).json({
+        message: "Not enough stock available"
+      });
+    }
 
-    await conversation.save();
-
+    //create order
     const order = await Order.create({
+      conversationId: conversation._id,
       productId: conversation.productId,
       buyerId: conversation.buyerId,
       sellerId: conversation.sellerId,
-      totalPrice: product.price,
-    })
+      quantity: quantityNum,
+      pricePerItem: priceNum,
+      totalPrice,
+      paymentMethod
+    });
+
+    //reduce stock
+    product.stock -= quantityNum;
+
+    if (product.stock === 0) {
+      product.status = "reserved";
+    }
+
+    await product.save();
+
+    //update conversation
+    conversation.status = "deal_confirmed";
+    await conversation.save();
 
     return res.status(201).json({
-      message: "Deal confirmed and added to order",
+      message: "Deal confirmed and order created",
       order
     });
+
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Server error",
     });
   }
-}
+};
 
 export const cancelDeal = async (req, res) =>{
   try {
@@ -355,6 +428,11 @@ export const cancelDeal = async (req, res) =>{
         message: "Conversation not found",
       });
     }
+    if (["cancelled", "completed"].includes(conversation.status)) {
+      return res.status(400).json({
+        message: "This conversation is no longer active"
+      });
+    }
 
     if(conversation.status === "cancelled") {
       return res.status(400).json({
@@ -363,24 +441,29 @@ export const cancelDeal = async (req, res) =>{
     }
 
     //delete existing order
-    const existingOrder = await Order.findOne({
-      productId: conversation.productId,
-      buyerId: conversation.buyerId,
-      sellerId: conversation.sellerId,
-    });
+    const existingOrder = await Order.findOne({ conversationId })
 
-    if (existingOrder) {
+    // restore stock if order exists
+    if(existingOrder) {
+      const product = await Product.findById(conversation.productId);
+
+      if(product) {
+        product.stock += existingOrder.quantity;
+
+        if(product.stock > 0) {
+          product.status = "available";
+        }
+
+        await product.save();
+      }
+
+      //delete order
       await Order.deleteOne({ _id: existingOrder._id });
     }
 
     //update conversation status
     conversation.status = "cancelled";
     await conversation.save();
-
-    //make product available again
-    await Product.findByIdAndUpdate(conversation.productId, {
-      status: "available",
-    });
 
     return res.status(200).json({
       message: "Deal cancelled",
@@ -411,5 +494,247 @@ export const getSellerOrders = async (req, res) =>{
     return res.status(500).json({
       message: "Server error in fetching orders",
     });
+  }
+}
+
+export const generateOrderOtp = async (req, res) => {
+  try {
+    const transporter = getTransporter();
+    const { orderId } = req.body;
+
+    const order = await Order.findById(orderId).populate("buyerId", "email");
+
+    if(!order) {
+      return res.status(404).json({
+        message: "Order doesn't exist",
+      });
+    }
+
+    //authorize seller
+    if (order.sellerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    //prevent regenerating active OTP
+    if(order.otp && new Date(order.otpExpiry).getTime() > Date.now()) {
+      return res.status(400).json({
+        message: "OTP already active",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpiry = new Date(Date.now() + 2 * 60 * 1000);
+
+    const hashedOtp = await bcrypt.hash(otp.toString(), 10);
+
+    order.otp = hashedOtp;
+    order.otpExpiry = otpExpiry;
+    order.status = "otp_generated";
+
+    await order.save();
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: order.buyerId.email,
+      subject: "Order Delivery Confirmation OTP - NEST",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Order Delivery Confirmation</h2>
+          <p>Your OTP is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 2 minutes.</p>
+          <p>If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({
+      message: "OTP sent to buyer email",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Server error in generating OTP",
+    });
+  }
+};
+
+export const verifyOrderOtp = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required" });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order doesn't exist" });
+    }
+
+    if (order.sellerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (!order.otp || !order.otpExpiry) {
+      return res.status(400).json({ message: "No OTP generated" });
+    }
+
+    // OTP expired
+    if (new Date(order.otpExpiry).getTime() < Date.now()) {
+
+      const conversation = await Conversation.findById(order.conversationId);
+      const product = await Product.findById(order.productId);
+
+      if (conversation) {
+        conversation.status = "negotiating";
+        await conversation.save();
+      }
+
+      if (product) {
+        product.stock += order.quantity;
+        product.status = "available";
+        await product.save();
+      }
+
+      await Order.deleteOne({ _id: order._id });
+
+      return res.status(400).json({
+        message: "OTP expired. Deal reset.",
+      });
+    }
+
+    const isValid = await bcrypt.compare(otp, order.otp);
+
+    if (!isValid) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // Complete order
+    order.status = "otp_verified";
+    order.otp = undefined;
+    order.otpExpiry = undefined;
+
+    await order.save();
+
+    const product = await Product.findById(order.productId);
+
+    if (product) {
+      if (product.stock === 0) {
+        product.status = "sold";
+      } else {
+        product.status = "available";
+      }
+
+      await product.save();
+    }
+
+    await Cart.updateOne(
+      { user: order.buyerId },
+      { $pull: { items: { product: order.productId } } }
+    );
+
+    const conversation = await Conversation.findById(order.conversationId);
+
+    if (conversation) {
+      conversation.status = "completed";
+      await conversation.save();
+    }
+
+    return res.status(200).json({
+      message: "OTP verified successfully. Order completed.",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Server error in verifying OTP",
+    });
+  }
+};
+export const getSellerAnalytics = async (req, res) =>{
+  try {
+    const analytics = await Order.aggregate([
+      {
+        $match: {
+          sellerId: new mongoose.Types.ObjectId(req.user.id),
+          status: "otp_verified"
+        }
+      },
+      {
+        $group: {
+          _id: "$productId",
+          revenue: { $sum: "$totalPrice"},
+          sales: { $sum: "$quantity"}
+        }
+      }
+    ])
+
+    const totalRevenue = analytics.reduce(
+      (sum, item) => sum + item.revenue,
+      0
+    );
+
+    return res.status(200).json({
+      message: "Seller Analytics fetched successfully",
+      totalRevenue,
+      products: analytics.map(item => ({
+        productId: item._id,
+        revenue: item.revenue,
+        sales: item.sales
+      }))
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}
+
+export const getAverageRating = async (req, res) =>{
+  try {
+    const ratings = await Review.aggregate([
+      {
+        $group: {
+          _id: "$product",
+          avgRating: { $avg: "$starRating"},
+          totalReviews: { $sum: 1 }
+        }
+      }
+    ])
+
+    const productRatings = ratings.map(item => ({
+      productId: item._id,
+      avgRating: Number(item.avgRating.toFixed(1)),
+      totalReviews: item.totalReviews
+    }))
+
+    const overall = await Review.aggregate([
+      {
+        $group: {
+          _id: null,
+          overallRating: { $avg: "$starRating" },
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      overallRating: overall[0]?.overallRating || 0,
+      products: productRatings
+    });
+
+    
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
   }
 }
