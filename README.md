@@ -1,4 +1,4 @@
-# 🚀 NEST – Student Marketplace & Startup Innovation Hub
+# NEST – Student Marketplace & Startup Innovation Hub
 
 ### 📌 Overview
 
