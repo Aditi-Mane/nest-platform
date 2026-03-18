@@ -9,15 +9,11 @@ This project is being developed by a 4-member team as part of an academic initia
 ### 🎯 Problem Statement
 
 Many students have innovative business ideas but lack:
-
-Affordable and beginner-friendly platforms to buy and sell products/services
-
-Tools to easily manage and grow their businesses
-
-A supportive and student-focused ecosystem
+- Affordable and beginner-friendly platforms to buy and sell products/services
+- Tools to easily manage and grow their businesses
+- A supportive and student-focused ecosystem
 
 These limitations make it difficult for students to participate in marketplace activities and turn their ideas into real ventures.
-
 NEST aims to solve this by providing a simple, accessible platform for seamless buying, selling, and collaboration within a college environment.
 
 ### 🛠 Tech Stack
