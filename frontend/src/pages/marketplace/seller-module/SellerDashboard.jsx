@@ -3,6 +3,8 @@ import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles } from "lucide-react";
 import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import api from "../../../api/axios";
 
 // Mock data
 const mockRequests = [
@@ -94,10 +96,46 @@ const dailyEarnings = [
 ];
 
 const statusConfig = {
-  initiated: { label: "Initiated", color: "bg-gray-100 text-gray-600 border-gray-200" },
-  negotiating: { label: "Negotiating", color: "bg-blue-100 text-blue-600 border-blue-200" },
-  deal_confirmed: { label: "Deal Confirmed", color: "bg-secondary/10 text-secondary border-secondary/20" },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-600 border-red-200" },
+  initiated: {
+    label: "Initiated",
+    color: "bg-[#fff6db] text-[#a16207] border-[#f5e6a3]"
+  },
+  negotiating: {
+    label: "Negotiating",
+    color: "bg-[#e6f0ff] text-[#2563eb] border-[#c7dbff]"
+  },
+  deal_confirmed: {
+    label: "Deal Confirmed",
+    color: "bg-[#e6f7ed] text-[#15803d] border-[#b6e3c6]"
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-[#fde8e8] text-[#b91c1c] border-[#f5bcbc]"
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-[#ede9fe] text-[#7c3aed] border-[#d6ccfb]"
+  }
+};
+
+const getOrderStatusUI = (status) => {
+  switch (status) {
+    case "pending":
+      return {
+        icon: <Clock className="w-4 h-4 text-yellow-600" />,
+        label: "Pending"
+      };
+    case "otp_verified":
+      return {
+        icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+        label: "Completed"
+      };
+    default:
+      return {
+        icon: null,
+        label: status
+      };
+  }
 };
 
 const productStatusConfig = {
@@ -129,13 +167,59 @@ export function SellerDashboard() {
     .filter(p => p.sales > 0)
     .sort((a, b) => (b.price * b.sales) - (a.price * a.sales))[0];
 
+  const [user, setUser] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchName = async() =>{
+      try {
+        const { data } = await api.get("/users/me");
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    fetchName();
+  }, [])
+
+  useEffect(() => {
+    const fetchSellerConversations = async() =>{
+      try {
+        const res = await api.get("/conversations/seller");
+        setRequests(res.data.conversations);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSellerConversations();
+  }, [])
+
+  const fetchSellerOrders = async () =>{
+    try {
+      const res = await api.get("/seller/orders");
+      setOrders(res.data.orders);
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setLoading(false);
+    }
+  }
+  
+  useEffect(() => {
+    fetchSellerOrders();
+  }, [])
+  
   return (
     <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6">
       {/* WELCOME BANNER */}
       <div className="mb-8 bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold text-text mb-2">Welcome back, Seller! 👋</h1>
+            <h1 className="text-3xl font-semibold text-text mb-2">Welcome back, {user?.name}! 👋</h1>
             <p className="text-muted">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
@@ -206,12 +290,18 @@ export function SellerDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Daily Earnings Chart */}
-          <Card className="p-6 border-border">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-primary" />
+          <Card className="p-6 border-border border-2">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
               <div>
-                <h3 className="font-semibold text-foreground">Daily Earnings</h3>
-                <p className="text-xs text-muted-foreground">Last 7 days</p>
+                <h3 className="font-semibold text-lg text-text">
+                  Daily Earnings
+                </h3>
+                <p className="text-sm text-muted">
+                  Last 7 days
+                </p>
               </div>
             </div>
             <div className="flex items-end justify-between gap-2 h-48">
@@ -222,14 +312,14 @@ export function SellerDashboard() {
                 
                 return (
                   <div key={day.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                    <p className="text-xs font-semibold text-muted-foreground">${day.amount}</p>
+                    <p className="text-xs font-semibold text-text">${day.amount}</p>
                     <div 
                       className={`w-full rounded-t-lg transition-all ${
                         isToday ? 'bg-primary' : 'bg-secondary/40'
                       } hover:opacity-80 cursor-pointer`}
                       style={{ height: `${height}%`, minHeight: day.amount > 0 ? '8px' : '0' }}
                     />
-                    <p className={`text-xs ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}>
+                    <p className={`text-xs ${isToday ? 'font-bold text-primary' : 'text-text'}`}>
                       {day.day}
                     </p>
                   </div>
@@ -238,51 +328,86 @@ export function SellerDashboard() {
             </div>
           </Card>
 
-          {/* Top Earner This Week */}
-          <Card className="p-6 bg-linear-to-br border-border">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center">
+          <Card className="p-6 bg-linear-to-br from-secondary/10 via-accent/5 to-primary/10 border-2 border-secondary/40 rounded-2xl">
+
+            {/* HEADER */}
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-secondary" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">💰 Top Earner</h3>
-                <p className="text-xs text-muted-foreground">Best performer this week</p>
+                <h3 className="font-semibold text-lg text-text">
+                  💰 Top Product
+                </h3>
+                <p className="text-sm text-muted">
+                  Best performer this week
+                </p>
               </div>
             </div>
+
             {topEarner ? (
-              <div className="p-4 bg-card rounded-lg border border-border">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-4xl">{topEarner.image}</span>
+              <div className="bg-card border border-border rounded-2xl p-5">
+
+                {/* PRODUCT + PRICE */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-4xl">{topEarner.image}</div>
+
                   <div>
-                    <p className="font-semibold text-foreground">{topEarner.name}</p>
-                    <p className="text-2xl font-bold text-secondary">${(topEarner.price * topEarner.sales).toFixed(2)}</p>
+                    <p className="text-lg font-semibold text-text">
+                      {topEarner.name}
+                    </p>
+                    <p className="text-3xl font-bold text-secondary">
+                      ₹{(topEarner.price * topEarner.sales).toFixed(2)}
+                    </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2 bg-accent/20 rounded">
-                    <p className="text-muted-foreground">Sales</p>
-                    <p className="font-semibold text-foreground">{topEarner.sales} units</p>
+
+                {/* STATS */}
+                <div className="grid grid-cols-2 gap-3">
+                  
+                  {/* SALES */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-3">
+                    <p className="text-xs text-text mb-1">
+                      Sales
+                    </p>
+                    <p className="font-semibold text-text">
+                      {topEarner.sales} units
+                    </p>
                   </div>
-                  <div className="p-2 bg-accent/20 rounded">
-                    <p className="text-muted-foreground">Avg Price</p>
-                    <p className="font-semibold text-foreground">${topEarner.price.toFixed(2)}</p>
+
+                  {/* AVG PRICE */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-3">
+                    <p className="text-xs text-text mb-1">
+                      Avg Price
+                    </p>
+                    <p className="font-semibold text-text">
+                      ₹{topEarner.price.toFixed(2)}
+                    </p>
                   </div>
+
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No sales yet this week</p>
+              <div className="text-center py-6 text-text text-sm">
+                No sales yet this week
+              </div>
             )}
+
           </Card>
 
           {/* Price Too High? */}
           <Card className="p-6 bg-linear-to-br from-blue-50 to-purple-50 border-2 border-blue-500/30">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <Eye className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">👀 High Views, Few Inquiries</h3>
-                <p className="text-xs text-muted-foreground">Consider lowering price</p>
+                <h3 className="font-semibold text-lg text-text">
+                  👀 High Views, Few Inquiries
+                </h3>
+                <p className="text-sm text-muted">
+                  Consider lowering price
+                </p>
               </div>
             </div>
             {highViewsNoInquiries.length > 0 ? (
@@ -292,12 +417,15 @@ export function SellerDashboard() {
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{product.image}</span>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{product.name}</p>
+                        <p className="text-sm font-semibold text-text border-border">{product.name}</p>
                         <p className="text-xs text-blue-600">{product.viewsThisWeek} views • {product.inquiries} inquiries</p>
                       </div>
                     </div>
-                    <Link to="/products">
-                      <Button variant="outline" size="sm">
+                    <Link to="/marketplace/seller/products">
+                      <Button
+                        size="sm"
+                        className="px-3 py-1.5 font-semibold border border-border text-text bg-card rounded-lg hover:bg-primary/10 transition"
+                      >
                         Edit
                       </Button>
                     </Link>
@@ -305,7 +433,7 @@ export function SellerDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">All products performing well!</p>
+              <p className="text-sm text-text">All products performing well!</p>
             )}
           </Card>
 
@@ -319,56 +447,88 @@ export function SellerDashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-semibold text-foreground">Buyer Requests</h2>
+              <h2 className="text-2xl font-semibold text-text">Buyer Requests</h2>
             </div>
-            <Link to="/buyer-requests">
-              <Button variant="outline" size="sm">View All</Button>
+            <Link to="/marketplace/seller/messages">
+              <Button className="text-card" size="sm">View All</Button>
             </Link>
           </div>
 
-          <Card className="p-6">
-            <div className="space-y-3">
-              {mockRequests.slice(0, 4).map((request) => {
-                const statusInfo = statusConfig[request.conversationStatus];
-                return (
-                  <div
-                    key={request.id}
-                    className="p-3 bg-accent/20 rounded-lg hover:bg-accent/40 transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-accent/30 rounded-lg flex items-center justify-center text-xl shrink-0">
-                        {request.product.image}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold text-foreground text-sm truncate">{request.product.name}</h3>
-                          <Badge className={`${statusInfo.color} border text-xs ml-2`}>
-                            {statusInfo.label}
-                          </Badge>
-                        </div>
-                        <p className="text-sm font-bold text-primary mb-2">${request.product.price.toFixed(2)}</p>
-                        <div className="flex items-center justify-between gap-2">
+          <Card className="p-4 border-border">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+
+                {/* TABLE HEADER */}
+                <thead>
+                  <tr className="text-left border-b border-border text-muted">
+                    <th className="py-2">Product</th>
+                    <th>Buyer</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th className="text-right">Action</th>
+                  </tr>
+                </thead>
+
+                {/* TABLE BODY */}
+                <tbody>
+                  {requests?.slice(0, 5).map((request) => {
+                    const statusInfo = statusConfig[request.status];
+
+                    return (
+                      <tr
+                        key={request._id}
+                        className="border-b border-border hover:bg-accent/20 transition"
+                      >
+                        {/* PRODUCT */}
+                        <td className="py-3 flex items-center gap-3">
+                          <img
+                            src={request.productId?.images?.[0]}
+                            alt=""
+                            className="w-10 h-10 rounded-md object-cover"
+                          />
+                          <span className="font-medium truncate max-w-30">
+                            {request.productId?.name}
+                          </span>
+                        </td>
+
+                        {/* BUYER */}
+                        <td>
                           <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xs font-semibold">
-                              {request.buyer.avatar}
-                            </div>
-                            <span className="text-xs text-muted-foreground">{request.buyer.name}</span>
-                            {request.unread && (
-                              <Badge className="bg-red-500/10 text-red-600 border-red-500/20 border text-xs">New</Badge>
-                            )}
+                            <img
+                              src={request.buyerId?.avatar}
+                              alt=""
+                              className="w-6 h-6 rounded-full"
+                            />
+                            <span>{request.buyerId?.name}</span>
                           </div>
-                          <Link to={`/chat/${request.id}`}>
-                            <Button variant="secondary" size="sm">
-                              <MessageSquare className="w-3 h-3 mr-1" />
+                        </td>
+
+                        {/* PRICE */}
+                        <td className="font-semibold text-primary">
+                          ₹{request.productId?.price?.toFixed(2)}
+                        </td>
+
+                        {/* STATUS */}
+                        <td>
+                          <Badge className={`${statusInfo?.color} border text-xs`}>
+                            {statusInfo?.label}
+                          </Badge>
+                        </td>
+
+                        {/* ACTION */}
+                        <td className="text-right">
+                          <Link to={`/marketplace/seller/messages/${request._id}`}>
+                            <Button size="sm" className="bg-primary text-card">
                               Chat
                             </Button>
                           </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+
+              </table>
             </div>
           </Card>
         </div>
@@ -377,30 +537,100 @@ export function SellerDashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-6 h-6 text-secondary" />
-              <h2 className="text-2xl font-semibold text-foreground">Recent Completed Orders</h2>
+              <h2 className="text-2xl font-semibold text-text">Recent Orders</h2>
             </div>
-            <Link to="/order-history">
-              <Button variant="outline" size="sm">View All</Button>
+            <Link to="/marketplace/seller/orders">
+              <Button className="text-card" size="sm">View All</Button>
             </Link>
           </div>
 
-          <Card className="p-6">
-            <div className="space-y-3">
-              {completedOrders.slice(0, 5).map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg hover:bg-accent/40 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-secondary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{order.product}</p>
-                      <p className="text-xs text-muted-foreground">Sold to {order.buyer} • {order.date}</p>
-                    </div>
-                  </div>
-                  <p className="text-lg font-bold text-secondary">+${order.amount.toFixed(2)}</p>
-                </div>
-              ))}
-            </div>
+          <Card className="p-4 border-border">
+
+            {/* 🔄 LOADING STATE */}
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-accent/20 animate-pulse rounded-md" />
+                ))}
+              </div>
+            ) : orders?.length === 0 ? (
+
+              /* 📭 EMPTY STATE */
+              <div className="text-center py-8 text-muted">
+                <p className="text-sm">No orders yet</p>
+                <p className="text-xs">Your completed orders will appear here</p>
+              </div>
+
+            ) : (
+
+              /* ✅ TABLE */
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+
+                  <thead>
+                    <tr className="text-left border-b border-border text-muted">
+                      <th className="py-2">Product</th>
+                      <th>Buyer</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                      <th className="text-right">Amount</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {orders.slice(0, 5).map((order) => {
+                      const date = new Date(order.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit"
+                      });
+                      const statusUI = getOrderStatusUI(order.status);
+
+                      return (
+                        <tr
+                          key={order._id}
+                          className="border-b border-border hover:bg-accent/20 transition"
+                        >
+
+                          {/* PRODUCT */}
+                          <td className="py-3 flex items-center gap-3">
+                            <img
+                              src={order.productId?.images?.[0]}
+                              alt=""
+                              className="w-10 h-10 rounded-md object-cover"
+                            />
+                            <span className="font-medium truncate max-w-35">
+                              {order.productId?.name}
+                            </span>
+                          </td>
+
+                          {/* BUYER */}
+                          <td>{order.buyerId?.name}</td>
+
+                          {/* STATUS */}
+                          <td>
+                            <div className="flex items-center gap-2 text-xs">
+                              {statusUI.icon}
+                              <span>{statusUI.label}</span>
+                            </div>
+                          </td>
+
+                          {/* DATE */}
+                          <td className="text-muted">{date}</td>
+
+                          {/* AMOUNT */}
+                          <td className="text-right font-semibold text-secondary">
+                            ₹{(order.amount || order.productId?.price)?.toFixed(2)}
+                          </td>
+
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+
+                </table>
+              </div>
+            )}
           </Card>
         </div>
         

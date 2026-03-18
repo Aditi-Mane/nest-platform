@@ -738,3 +738,13 @@ export const getAverageRating = async (req, res) =>{
     })
   }
 }
+
+export const getDashboardAnalytics = async(req, res) =>{
+  try {
+    
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    })
+  }
+}

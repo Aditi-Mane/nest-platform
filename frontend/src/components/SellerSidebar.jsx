@@ -157,26 +157,6 @@ const SellerSidebar = () => {
             )}
           </div>
 
-          {/* <NavLink
-            to="/marketplace/seller/messages"
-            className={({ isActive }) =>
-              `${baseLink} ${isActive ? activeLink : normalLink}`
-            }
-          >
-            <LuMessageSquare size={20} />
-            Messages
-          </NavLink> */}
-
-          <NavLink
-            to="/marketplace/seller/payments"
-            className={({ isActive }) =>
-              `${baseLink} ${isActive ? activeLink : normalLink}`
-            }
-          >
-            <MdOutlinePayment size={20} />
-            Payments
-          </NavLink>
-
           <NavLink
             to="/marketplace/seller/settings"
             className={({ isActive }) =>
