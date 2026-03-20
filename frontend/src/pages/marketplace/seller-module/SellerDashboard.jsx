@@ -6,66 +6,6 @@ import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 
-// Mock data
-const mockRequests = [
-  {
-    id: "REQ-001",
-    product: { id: "prod-1", name: "Handmade Ceramic Mug", image: "🏺", price: 24.99 },
-    buyer: { name: "Emma Wilson", avatar: "E" },
-    conversationStatus: "negotiating",
-    lastMessage: "Can you do $22? I'll pick it up today.",
-    lastMessageTime: "5 min ago",
-    lastMessageTimestamp: Date.now() - 5 * 60 * 1000,
-    unread: true,
-  },
-  {
-    id: "REQ-002",
-    product: { id: "prod-2", name: "Organic Cotton Tote Bag", image: "👜", price: 18.50 },
-    buyer: { name: "James Chen", avatar: "J" },
-    conversationStatus: "deal_confirmed",
-    lastMessage: "Great! When can we meet?",
-    lastMessageTime: "1 hour ago",
-    lastMessageTimestamp: Date.now() - 60 * 60 * 1000,
-    unread: false,
-    otpGenerated: false,
-  },
-  {
-    id: "REQ-003",
-    product: { id: "prod-3", name: "Vintage Notebook Set", image: "📓", price: 32.00 },
-    buyer: { name: "Sarah Miller", avatar: "S" },
-    conversationStatus: "initiated",
-    lastMessage: "Hi! Is this still available?",
-    lastMessageTime: "30 min ago",
-    lastMessageTimestamp: Date.now() - 30 * 60 * 1000,
-    unread: true,
-  },
-  {
-    id: "REQ-004",
-    product: { id: "prod-4", name: "Artisan Tea Set", image: "🫖", price: 52.00 },
-    buyer: { name: "David Park", avatar: "D" },
-    conversationStatus: "negotiating",
-    lastMessage: "Would you accept $45?",
-    lastMessageTime: "26 hours ago",
-    lastMessageTimestamp: Date.now() - 26 * 60 * 60 * 1000,
-    unread: false,
-  },
-];
-
-const awaitingDelivery = [
-  {
-    id: "DEL-001",
-    product: { name: "Artisan Candle Collection", image: "🕯️", price: 45.99 },
-    buyer: { name: "Michael Brown", avatar: "M" },
-    otpGenerated: true,
-  },
-  {
-    id: "DEL-002",
-    product: { name: "Hand-knit Scarf", image: "🧣", price: 28.00 },
-    buyer: { name: "Lisa Anderson", avatar: "L" },
-    otpGenerated: true,
-  },
-];
-
 const myProducts = [
   { id: "prod-1", name: "Ceramic Mug", image: "🏺", price: 24.99, stock: 15, status: "available", views: 342, viewsThisWeek: 89, inquiries: 12, sales: 5 },
   { id: "prod-2", name: "Tote Bag", image: "👜", price: 18.50, stock: 2, status: "reserved", views: 287, viewsThisWeek: 156, inquiries: 8, sales: 3 },
@@ -75,24 +15,6 @@ const myProducts = [
   { id: "prod-6", name: "Planner", image: "📅", price: 19.99, stock: 0, status: "sold", views: 234, viewsThisWeek: 0, inquiries: 0, sales: 1 },
   { id: "prod-7", name: "Tea Set", image: "🫖", price: 52.00, stock: 3, status: "available", views: 178, viewsThisWeek: 134, inquiries: 9, sales: 6 },
   { id: "prod-8", name: "Cushion Cover", image: "🛋️", price: 22.50, stock: 18, status: "available", views: 89, viewsThisWeek: 201, inquiries: 1, sales: 0 },
-];
-
-const completedOrders = [
-  { id: "ORD-001", product: "Ceramic Mug", amount: 24.99, date: "Today", buyer: "Emma W." },
-  { id: "ORD-002", product: "Candle Set", amount: 45.99, date: "Today", buyer: "Michael B." },
-  { id: "ORD-003", product: "Tea Set", amount: 52.00, date: "Yesterday", buyer: "Sarah M." },
-  { id: "ORD-004", product: "Scarf", amount: 28.00, date: "Yesterday", buyer: "Lisa A." },
-  { id: "ORD-005", product: "Notebook", amount: 32.00, date: "2 days ago", buyer: "James C." },
-];
-
-const dailyEarnings = [
-  { day: "Mon", amount: 0 },
-  { day: "Tue", amount: 52 },
-  { day: "Wed", amount: 28 },
-  { day: "Thu", amount: 98 },
-  { day: "Fri", amount: 124 },
-  { day: "Sat", amount: 156 },
-  { day: "Today", amount: 71 },
 ];
 
 const statusConfig = {
@@ -145,27 +67,11 @@ const productStatusConfig = {
 };
 
 export function SellerDashboard() {
-  // Calculate key metrics
-  const todayEarnings = dailyEarnings[dailyEarnings.length - 1].amount;
-  const yesterdayEarnings = dailyEarnings[dailyEarnings.length - 2].amount;
-  const earningsChange = yesterdayEarnings > 0 ? ((todayEarnings - yesterdayEarnings) / yesterdayEarnings * 100).toFixed(0) : 0;
-  const weeklyEarnings = dailyEarnings.reduce((sum, day) => sum + day.amount, 0);
-  const weeklyGoal = 500;
-  const goalProgress = Math.min((weeklyEarnings / weeklyGoal * 100), 100).toFixed(0);
-  
-  const pendingMoney = awaitingDelivery.reduce((sum, order) => sum + order.product.price, 0);
-  const inNegotiationMoney = mockRequests
-    .filter(r => r.conversationStatus === "negotiating" || r.conversationStatus === "deal_confirmed")
-    .reduce((sum, r) => sum + r.product.price, 0);
 
   // Smart insights
   const highViewsNoInquiries = myProducts
     .filter(p => p.status === "available" && p.viewsThisWeek > 100 && p.inquiries < 3)
     .sort((a, b) => b.viewsThisWeek - a.viewsThisWeek);
-  
-  const topEarner = myProducts
-    .filter(p => p.sales > 0)
-    .sort((a, b) => (b.price * b.sales) - (a.price * a.sales))[0];
 
   const [user, setUser] = useState(null);
   const [requests, setRequests] = useState([]);
@@ -212,7 +118,150 @@ export function SellerDashboard() {
   useEffect(() => {
     fetchSellerOrders();
   }, [])
+
+  const [earnings, setEarnings] = useState({
+    today: 0,
+    yesterday: 0,
+  });
   
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        const { data } = await api.get("/seller/earnings")
+        setEarnings(data);
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEarnings();
+  }, []);
+
+  //calculate % change
+  const earningsChange = (() => {
+    if (earnings.yesterday === 0 && earnings.today === 0) {
+      return 0; //no change
+    }
+
+    if (earnings.yesterday === 0) {
+      return 100; //growth from zero
+    }
+
+    return (
+      ((earnings.today - earnings.yesterday) / earnings.yesterday) * 100
+    );
+  })();
+
+  const [pending, setPending] = useState({
+    totalPendingAmount: 0,
+    totalPendingOrders: 0,
+  });
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const { data } = await api.get("/seller/pendingEarnings")
+
+        setPending(data);
+      } catch (err) {
+        console.error("Error fetching pending earnings", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPending();
+  }, []);
+
+  const [negotiation, setNegotiation] = useState({
+    totalPotentialAmount: 0,
+    totalConversations: 0,
+  });
+
+  useEffect(() => {
+    const fetchNegotiations = async () => {
+      try {
+        const { data } = await api.get("/seller/negotiations")
+
+        setNegotiation(data);
+      } catch (err) {
+        console.error("Error fetching negotiations", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchNegotiations();
+  }, []);
+
+  const [weekly, setWeekly] = useState({
+    thisWeek: 0,
+    lastWeek: 0,
+  });
+  
+  useEffect(() => {
+    const fetchWeeklyEarnings = async () => {
+      try {
+        const { data } = await api.get("/seller/weeklyEarnings")
+
+        setWeekly(data);
+      } catch (err) {
+        console.error("Error fetching weekly earnings", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchWeeklyEarnings();
+  }, []);
+
+  const weeklyChange = (() => {
+    if (weekly.lastWeek === 0 && weekly.thisWeek === 0) return 0;
+    if (weekly.lastWeek === 0) return 100;
+
+    return (
+      ((weekly.thisWeek - weekly.lastWeek) / weekly.lastWeek) * 100
+    );
+  })();
+
+  const [dailyEarnings, setDailyEarnings] = useState([]);
+
+  useEffect(() => {
+    const fetchDaily = async () => {
+      try {
+        const { data } = await api.get("/seller/dailyEarnings");
+
+        setDailyEarnings(data);
+      } catch (err) {
+        console.error("Error fetching daily earnings", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchDaily();
+  }, []);
+
+  const [topEarner, setTopEarner] = useState(null);
+
+  useEffect(() => {
+    const fetchTopProduct = async () => {
+      try {
+        const { data } = await api.get("/seller/topProduct");
+
+        setTopEarner(data);
+      } catch (err) {
+        console.error("Error fetching top product", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchTopProduct();
+  }, []);
+
   return (
     <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6">
       {/* WELCOME BANNER */}
@@ -242,40 +291,81 @@ export function SellerDashboard() {
           <Card className="p-6 border border-border border-l-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-text">Today's Earnings</p>
-              <Badge variant={Number(earningsChange) >= 0 ? "success" : "destructive"} className="text-xs text-muted">
-                {Number(earningsChange) >= 0 ? '+' : ''}{earningsChange}%
-              </Badge>
+
+              <span
+                className={`text-xs ${
+                  earningsChange >= 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {earnings.yesterday === 0 && earnings.today > 0
+                  ? "New"
+                  : `${earningsChange >= 0 ? "+" : ""}${earningsChange.toFixed(2)}%`}
+              </span>
             </div>
-            <p className="text-4xl font-bold text-text">₹{todayEarnings.toFixed(2)}</p>
-            <p className="text-xs text-muted">vs ₹{yesterdayEarnings} yesterday</p>
+
+            <p className="text-4xl font-bold text-text">
+              ₹{earnings.today.toFixed(2)}
+            </p>
+
+            <p className="text-xs text-muted">
+              vs ₹{earnings.yesterday.toFixed(2)} yesterday
+            </p>
           </Card>
 
           {/* Pending Money */}
           <Card className="p-6 border border-border border-l-4 border-l-yellow-500">
             <p className="text-sm text-text">Pending (Ship & Collect)</p>
-            <p className="text-4xl font-bold text-yellow-600">₹{pendingMoney.toFixed(2)}</p>
+
+            <p className="text-4xl font-bold text-yellow-600">
+              ₹{pending.totalPendingAmount.toFixed(2)}
+            </p>
+
             <div className="flex items-center gap-1 text-xs text-muted">
               <Clock className="w-3 h-3" />
-              {awaitingDelivery.length} order{awaitingDelivery.length !== 1 ? 's' : ''} waiting
+              {pending.totalPendingOrders} order
+              {pending.totalPendingOrders !== 1 ? "s" : ""} waiting
             </div>
           </Card>
 
           {/* In Negotiation */}
           <Card className="p-6 border border-border border-l-4 border-l-blue-500">
-            <p className="text-sm text-text">In Negotiation</p>
-            <p className="text-4xl font-bold text-blue-600">₹{inNegotiationMoney.toFixed(2)}</p>
+            <p className="text-sm text-text">Potential Earnings</p>
+
+            <p className="text-4xl font-bold text-blue-600">
+              ₹{negotiation.totalPotentialAmount.toFixed(2)}
+            </p>
+
             <div className="flex items-center gap-1 text-xs text-muted">
               <MessageSquare className="w-3 h-3" />
-              Potential earnings
+              {negotiation.totalConversations} conversation
+              {negotiation.totalConversations !== 1 ? "s " : " "}
+              in negotiation
             </div>
           </Card>
 
           {/* Weekly Goal */}
           <Card className="p-6 border border-border border-l-4 border-l-secondary">
-            <p className="text-sm text-text">This Week's Total</p>
-            <p className="text-4xl font-bold text-secondary">₹{weeklyEarnings.toFixed(2)}</p>
-            
-            <p className="text-xs text-muted">vs ₹230 last week</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-text">This Week's Total</p>
+
+              <span
+                className={`text-xs ${
+                  weeklyChange >= 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {weekly.lastWeek === 0 && weekly.thisWeek > 0
+                  ? "New"
+                  : `${weeklyChange >= 0 ? "+" : ""}${weeklyChange.toFixed(2)}%`}
+              </span>
+            </div>
+
+            <p className="text-4xl font-bold text-secondary">
+              ₹{weekly.thisWeek.toFixed(2)}
+            </p>
+
+            <p className="text-xs text-muted">
+              vs ₹{weekly.lastWeek.toFixed(2)} last week
+            </p>
           </Card>
         </div>
       </div>
@@ -312,7 +402,7 @@ export function SellerDashboard() {
                 
                 return (
                   <div key={day.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                    <p className="text-xs font-semibold text-text">${day.amount}</p>
+                    <p className="text-xs font-semibold text-text">₹{day.amount}</p>
                     <div 
                       className={`w-full rounded-t-lg transition-all ${
                         isToday ? 'bg-primary' : 'bg-secondary/40'
@@ -350,7 +440,11 @@ export function SellerDashboard() {
 
                 {/* PRODUCT + PRICE */}
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="text-4xl">{topEarner.image}</div>
+                  <img
+                    src={topEarner.image}
+                    alt={topEarner.name}
+                    className="w-16 h-16 object-cover rounded-lg"
+                  />
 
                   <div>
                     <p className="text-lg font-semibold text-text">
@@ -481,11 +575,18 @@ export function SellerDashboard() {
                       >
                         {/* PRODUCT */}
                         <td className="py-3 flex items-center gap-3">
-                          <img
-                            src={request.productId?.images?.[0]}
-                            alt=""
-                            className="w-10 h-10 rounded-md object-cover"
-                          />
+                          {request.productId?.images?.[0]?.url ? (
+                            <img
+                              src={request.productId.images[0].url}
+                              alt={request.productId?.name}
+                              className="w-10 h-10 rounded-md object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-xs">
+                              No Img
+                            </div>
+                          )}
+
                           <span className="font-medium truncate max-w-30">
                             {request.productId?.name}
                           </span>
@@ -494,11 +595,18 @@ export function SellerDashboard() {
                         {/* BUYER */}
                         <td>
                           <div className="flex items-center gap-2">
-                            <img
-                              src={request.buyerId?.avatar}
-                              alt=""
-                              className="w-6 h-6 rounded-full"
-                            />
+                            {request.buyerId?.avatar ? (
+                              <img
+                                src={request.buyerId.avatar}
+                                alt={request.buyerId?.name}
+                                className="w-6 h-6 rounded-full"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-background rounded-full flex items-center justify-center text-xs">
+                                👤
+                              </div>
+                            )}
+
                             <span>{request.buyerId?.name}</span>
                           </div>
                         </td>
@@ -594,11 +702,18 @@ export function SellerDashboard() {
 
                           {/* PRODUCT */}
                           <td className="py-3 flex items-center gap-3">
-                            <img
-                              src={order.productId?.images?.[0]}
-                              alt=""
-                              className="w-10 h-10 rounded-md object-cover"
-                            />
+                            {order.productId?.images?.[0]?.url ? (
+                              <img
+                                src={order.productId.images[0].url}
+                                alt={order.productId?.name}
+                                className="w-10 h-10 rounded-md object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-xs">
+                                No Img
+                              </div>
+                            )}
+
                             <span className="font-medium truncate max-w-35">
                               {order.productId?.name}
                             </span>

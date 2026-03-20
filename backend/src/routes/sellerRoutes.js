@@ -1,5 +1,8 @@
 import express from "express"
-import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, generateOrderOtp, getAverageRating, getDashboardAnalytics, getMyProducts, getSellerAnalytics, getSellerOrders, setupSeller, verifyOrderOtp} from "../controllers/sellerController.js";
+import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, 
+  generateOrderOtp, getAverageRating, getDailyEarnings, getEarnings, getMyProducts, 
+  getNegotiatingConversations, getPendingEarnings, getSellerAnalytics, getSellerOrders, 
+  getTopProductThisWeek, getWeeklyEarnings, setupSeller, verifyOrderOtp} from "../controllers/sellerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { checkSeller } from "../middleware/sellerMiddleware.js";
@@ -20,5 +23,11 @@ router.get("/analytics", protect, checkSeller, getSellerAnalytics);
 router.get("/productRatings", protect, checkSeller, getAverageRating);
 
 //seller dashboard routes
-router.get("/dashboard", protect, checkSeller, getDashboardAnalytics);
+router.get("/earnings", protect, checkSeller, getEarnings);
+router.get("/pendingEarnings", protect, checkSeller, getPendingEarnings);
+router.get("/negotiations", protect, checkSeller, getNegotiatingConversations);
+router.get("/weeklyEarnings", protect, checkSeller, getWeeklyEarnings);
+router.get("/dailyEarnings", protect, checkSeller, getDailyEarnings);
+router.get("/topProduct", protect, checkSeller, getTopProductThisWeek);
+
 export default router;

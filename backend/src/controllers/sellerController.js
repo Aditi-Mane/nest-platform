@@ -739,12 +739,346 @@ export const getAverageRating = async (req, res) =>{
   }
 }
 
-export const getDashboardAnalytics = async(req, res) =>{
+export const getEarnings = async (req, res) => {
   try {
-    
+    const now = new Date();
+
+    //today start (midnight)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    //yesterday start
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(todayStart.getDate() - 1);
+
+    //tomorrow start (to cap today's range)
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(todayStart.getDate() + 1);
+
+    const earnings = await Order.aggregate([
+      {
+        $match: {
+          status: "otp_verified",
+          createdAt: {
+            $gte: yesterdayStart,
+            $lt: tomorrowStart,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $gte: ["$createdAt", todayStart] },
+              "today",
+              "yesterday",
+            ],
+          },
+          totalEarnings: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
+
+    //convert array to object
+    const result = {
+      today: 0,
+      yesterday: 0,
+    };
+
+    earnings.forEach((item) => {
+      result[item._id] = item.totalEarnings;
+    });
+
+    res.json(result);
   } catch (error) {
-    return res.status(500).json({
-      message: "Server error"
-    })
+    console.error(error);
+    res.status(500).json({ message: "Error fetching earnings" });
   }
-}
+};
+
+export const getPendingEarnings = async (req, res) => {
+  try {
+    const sellerId = new mongoose.Types.ObjectId(req.user.id); 
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          status: "pending",
+          sellerId: sellerId, //important for seller-specific data
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPendingAmount: { $sum: "$totalPrice" },
+          totalPendingOrders: { $sum: 1 },
+        },
+      },
+    ]);
+
+    //default response if no pending orders
+    const response = {
+      totalPendingAmount: 0,
+      totalPendingOrders: 0,
+    };
+
+    if (result.length > 0) {
+      response.totalPendingAmount = result[0].totalPendingAmount;
+      response.totalPendingOrders = result[0].totalPendingOrders;
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching pending earnings" });
+  }
+};
+
+export const getNegotiatingConversations = async (req, res) => {
+  try {
+    const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+    const result = await Conversation.aggregate([
+      {
+        $match: {
+          status: "negotiating",
+          sellerId: sellerId,
+        },
+      },
+      {
+        $lookup: {
+          from: "products", 
+          localField: "productId",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      {
+        $unwind: "$product",
+      },
+      {
+        $group: {
+          _id: null,
+          totalPotentialAmount: { $sum: "$product.price" }, // 🔥 key part
+          totalConversations: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const response = {
+      totalPotentialAmount: 0,
+      totalConversations: 0,
+    };
+
+    if (result.length > 0) {
+      response.totalPotentialAmount = result[0].totalPotentialAmount;
+      response.totalConversations = result[0].totalConversations;
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching negotiation data" });
+  }
+};
+
+export const getWeeklyEarnings = async (req, res) => {
+  try {
+    const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+    const now = new Date();
+
+    //get current day (0 = Sunday, 1 = Monday...)
+    const day = now.getDay();
+
+    //convert Sunday (0) to 7 for easier calc
+    const adjustedDay = day === 0 ? 7 : day;
+
+    //start of THIS week (Monday)
+    const startOfThisWeek = new Date(now);
+    startOfThisWeek.setDate(now.getDate() - (adjustedDay - 1));
+    startOfThisWeek.setHours(0, 0, 0, 0);
+
+    //start of LAST week
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+    //end of LAST week
+    const endOfLastWeek = new Date(startOfThisWeek);
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          status: "otp_verified",
+          sellerId: sellerId,
+          createdAt: {
+            $gte: startOfLastWeek,
+            $lt: now,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $gte: ["$createdAt", startOfThisWeek] },
+              "thisWeek",
+              "lastWeek",
+            ],
+          },
+          totalEarnings: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
+
+    const response = {
+      thisWeek: 0,
+      lastWeek: 0,
+    };
+
+    result.forEach((item) => {
+      response[item._id] = item.totalEarnings;
+    });
+
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching weekly earnings" });
+  }
+};
+
+export const getDailyEarnings = async (req, res) => {
+  try {
+    const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          status: "otp_verified",
+          sellerId: sellerId,
+          createdAt: {
+            $gte: sevenDaysAgo,
+            $lte: today,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt",
+            },
+          },
+          amount: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
+
+    //fill missing days 
+    const daysMap = {};
+
+    result.forEach((item) => {
+      daysMap[item._id] = item.amount;
+    });
+
+    const finalData = [];
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(sevenDaysAgo);
+      date.setDate(sevenDaysAgo.getDate() + i);
+
+      const key = date.toISOString().split("T")[0];
+
+      finalData.push({
+        day: date.toLocaleDateString("en-US", { weekday: "short" }),
+        amount: daysMap[key] || 0,
+      });
+    }
+
+    res.json(finalData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching daily earnings" });
+  }
+};
+
+export const getTopProductThisWeek = async (req, res) => {
+  try {
+    const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+    const now = new Date();
+    const day = now.getDay();
+    const adjustedDay = day === 0 ? 7 : day;
+
+    //start of this week (Monday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - (adjustedDay - 1));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          status: "otp_verified",
+          sellerId: sellerId,
+          createdAt: { $gte: startOfWeek },
+        },
+      },
+
+      //group by product
+      {
+        $group: {
+          _id: "$productId",
+          totalSales: { $sum: "$quantity" },
+          totalRevenue: { $sum: "$totalPrice" },
+          avgPrice: { $avg: "$pricePerItem" },
+        },
+      },
+
+      //sort by revenue (top performer)
+      { $sort: { totalRevenue: -1 } },
+
+      //only top 1
+      { $limit: 1 },
+
+      //join product data
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+
+      { $unwind: "$product" },
+
+      //final shape
+      {
+        $project: {
+          _id: 0,
+          name: "$product.name",
+          image: { $arrayElemAt: ["$product.images.url", 0] }, // first image
+          revenue: "$totalRevenue",
+          price: "$avgPrice",
+          sales: "$totalSales",
+        },
+      },
+    ]);
+
+    //handle no sales case
+    const response = result.length > 0 ? result[0] : null;
+
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching top product" });
+  }
+};
