@@ -13,6 +13,7 @@ import {
 import api from "../../../api/axios.js";
 
 const SellerMessages = () => {
+
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeField, setActiveField] = useState(null);
@@ -60,8 +61,6 @@ const SellerMessages = () => {
         return { ...base, background: "#fff6db", color: "#a16207" };
       case "cancelled":
         return { ...base, background: "#fde8e8", color: "#b91c1c" };
-      case "completed":
-        return { ...base, background: "#ede9fe", color: "#7c3aed" };
       default:
         return base;
     }
@@ -85,8 +84,6 @@ const SellerMessages = () => {
         return <Clock size={14} />;
       case "cancelled":
         return <XCircle size={14} />;
-      case "completed":
-        return <Trophy size={14} />;
       default:
         return null;
     }
@@ -178,14 +175,17 @@ const SellerMessages = () => {
           <option value="negotiating">Negotiating</option>
           <option value="deal_confirmed">Deal Confirmed</option>
           <option value="cancelled">Cancelled</option>
-          <option value="completed">Completed</option>
         </select>
       </div>
 
-      {/* CARDS */}
-      {filteredRequests.map((item) => (
-        <div className="bg-card"
-          key={item._id}
+      {loading ? (
+          <p className="text-muted mb-4">Loading requests...</p>
+        ) : filteredRequests.length === 0 ? (
+          <p className="text-muted mb-4">No requests yet</p>
+        ) : (
+          filteredRequests.map((item) => (
+            <div className="bg-card"
+              key={item._id}
           style={{
             padding: "20px 25px",
             borderRadius: "16px",
@@ -317,7 +317,7 @@ const SellerMessages = () => {
             </div>
           )}
         </div>
-      ))}
+      )))}
     </div>
   );
 };

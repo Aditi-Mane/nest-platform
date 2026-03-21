@@ -99,7 +99,24 @@ const SellerOrderHistory = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-card border border-border rounded-xl text-[14px] px-4 py-3 focus:outline-none focus:border-primary transition"
+            className="bg-card"
+            style={{
+              padding: "12px 18px",
+              borderRadius: "16px",
+              border: "1.5px solid var(--color-border)",
+              fontSize: "14px",
+              minWidth: "170px",
+              cursor: "pointer",
+              outline: "none",
+              appearance: "none",
+              WebkitAppearance: "none",
+              MozAppearance: "none",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+              backgroundImage:
+               "url(\"data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>\")",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 14px center",
+            }}
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -113,9 +130,9 @@ const SellerOrderHistory = () => {
       {/* ORDER CARDS */}
       <div className="space-y-5">
         {loading ? (
-          <p>Loading...</p>
+          <p className="text-muted mb-4">Loading orders...</p>
         ) : orders.length === 0 ? (
-          <p>No orders yet</p>
+          <p className="text-muted mb-4">No orders yet</p>
         ) : (
         filteredOrders.map(order => (
           <div
