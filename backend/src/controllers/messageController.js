@@ -22,10 +22,13 @@ export const sendMessage = async (req, res) => {
     }
 
     //Authorization check
-    if (
-      conversation.buyerId.toString() !== senderId.toString() &&
-      conversation.sellerId.toString() !== senderId.toString()
-    ) {
+    const isSenderBuyer =
+      conversation.buyerId.toString() === senderId.toString();
+
+    const isSenderSeller =
+      conversation.sellerId.toString() === senderId.toString();
+
+    if (!isSenderBuyer && !isSenderSeller) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -48,6 +51,16 @@ export const sendMessage = async (req, res) => {
     // Update conversation meta
     conversation.lastMessage = text;
     conversation.updatedAt = new Date();
+
+    // Update unread counts
+    if (isSenderBuyer) {
+      // Buyer sent → increment seller unread
+      conversation.unreadCountSeller += 1;
+    } else if (isSenderSeller) {
+      // Seller sent → increment buyer unread
+      conversation.unreadCountBuyer += 1;
+    }
+
     await conversation.save();
 
     //Emit via socket
@@ -57,11 +70,18 @@ export const sendMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate("senderId", "_id name");
 
-    io.to(conversationId).emit("receive_message", populatedMessage);
+    io.to(conversationId).emit("receive_message", {
+      message: populatedMessage,
+      conversationId,
+      unreadCountSeller: conversation.unreadCountSeller,
+      unreadCountBuyer: conversation.unreadCountBuyer,
+    });
 
     return res.status(201).json({
       message: "Message sent successfully",
       data: populatedMessage,
+      unreadCountSeller: conversation.unreadCountSeller,
+      unreadCountBuyer: conversation.unreadCountBuyer,
     });
 
   } catch (error) {
@@ -72,8 +92,6 @@ export const sendMessage = async (req, res) => {
     });
   }
 };
-
-
 
 //GET MESSAGES
 export const getMessages = async (req, res) => {
@@ -110,6 +128,89 @@ export const getMessages = async (req, res) => {
 
     return res.status(500).json({
       message: "Server error while fetching messages",
+    });
+  }
+};
+
+//MARK CONVERSATION AS READ
+export const markConversationAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // Check role
+    const isBuyer =
+      conversation.buyerId.toString() === userId.toString();
+
+    const isSeller =
+      conversation.sellerId.toString() === userId.toString();
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Reset ONLY current user's unread count
+    if (isBuyer) {
+      conversation.unreadCountBuyer = 0;
+    }
+
+    if (isSeller) {
+      conversation.unreadCountSeller = 0;
+    }
+
+    await conversation.save();
+
+    return res.status(200).json({
+      message: "Conversation marked as read",
+      unreadCountBuyer: conversation.unreadCountBuyer,
+      unreadCountSeller: conversation.unreadCountSeller,
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Error marking conversation as read",
+    });
+  }
+};
+
+// GET TOTAL UNREAD COUNT
+export const getTotalUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get all conversations where user is buyer or seller
+    const conversations = await Conversation.find({
+      $or: [
+        { buyerId: userId },
+        { sellerId: userId }
+      ]
+    });
+
+    let totalUnread = 0;
+
+    conversations.forEach((conv) => {
+      if (conv.buyerId.toString() === userId.toString()) {
+        totalUnread += conv.unreadCountBuyer;
+      } else if (conv.sellerId.toString() === userId.toString()) {
+        totalUnread += conv.unreadCountSeller;
+      }
+    });
+
+    return res.status(200).json({
+      totalUnread,
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Error fetching unread count",
     });
   }
 };

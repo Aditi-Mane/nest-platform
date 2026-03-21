@@ -245,27 +245,39 @@ const SellerMessages = () => {
                 {renderIcon(item.status)} {formatStatus(item.status)}
               </span>
 
-              <button
-                onClick={() =>
-                  navigate(`/marketplace/seller/messages/${item._id}`, {
-                    state: item,
-                  })
-                }
-                style={{
-                  background: themeColor,
-                  color: "white",
-                  border: "none",
-                  padding: "8px 14px",
-                  borderRadius: "10px",
-                  fontSize: "13px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                <MessageSquare size={14} /> Chat
-              </button>
+              <div className="relative inline-block">
+                <button
+                  onClick={async () => {
+                    try {
+                      //call mark as read API
+                      await api.patch(`/messages/${item._id}/read`);
+
+                      //navigate to chat page
+                      navigate(`/marketplace/seller/messages/${item._id}`, {
+                        state: item,
+                      });
+
+                    } catch (error) {
+                      console.error("Error marking as read:", error);
+
+                      //still navigate even if API fails
+                      navigate(`/marketplace/seller/messages/${item._id}`, {
+                        state: item,
+                      });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg"
+                  style={{ background: themeColor }}
+                >
+                  <MessageSquare size={14} /> Chat
+                </button>
+
+                {item.unreadCountSeller > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#E9C9A8] text-[#7A3E1D] text-[12px] font-semibold px-2 py-0.5 rounded-full shadow">
+                    {item.unreadCountSeller}
+                  </span>
+                )}
+              </div>
 
               <div
                 onClick={() =>
