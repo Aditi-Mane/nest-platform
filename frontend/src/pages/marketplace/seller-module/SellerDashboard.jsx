@@ -68,11 +68,6 @@ const productStatusConfig = {
 
 export function SellerDashboard() {
 
-  // Smart insights
-  const highViewsNoInquiries = myProducts
-    .filter(p => p.status === "available" && p.viewsThisWeek > 100 && p.inquiries < 3)
-    .sort((a, b) => b.viewsThisWeek - a.viewsThisWeek);
-
   const [user, setUser] = useState(null);
   const [requests, setRequests] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -260,6 +255,48 @@ export function SellerDashboard() {
     };
 
     fetchTopProduct();
+  }, []);
+
+  const [highViewsNoInquiries, setHighViewsNoInquiries] = useState([]);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInsights = async () => {
+      try {
+        const { data } = await api.get("/seller/insights");
+
+        //transform + compute conversion
+        const formatted = data.map((product) => {
+          const views = product.views || 0;
+          const inquiries = product.inquiries || 0;
+
+          const conversionRate =
+            views > 0 ? (inquiries / views) * 100 : 0;
+
+          return {
+            _id: product._id,
+            name: product.name,
+            image: product.image,
+            views,
+            inquiries,
+            conversionRate,
+          };
+        });
+
+        //filter logic
+        const filtered = formatted.filter(
+          (p) => p.views >= 50 && p.conversionRate <= 2
+        );
+
+        setHighViewsNoInquiries(filtered);
+      } catch (err) {
+        console.error("Error fetching insights", err.response || err);
+      } finally {
+        setInsightsLoading(false);
+      }
+    };
+
+    fetchInsights();
   }, []);
 
   return (
@@ -491,7 +528,7 @@ export function SellerDashboard() {
 
           {/* Price Too High? */}
           <Card className="p-6 bg-linear-to-br from-blue-50 to-purple-50 border-2 border-blue-500/30">
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <Eye className="w-5 h-5 text-blue-600" />
               </div>
@@ -504,17 +541,42 @@ export function SellerDashboard() {
                 </p>
               </div>
             </div>
-            {highViewsNoInquiries.length > 0 ? (
-              <div className="space-y-3">
-                {highViewsNoInquiries.slice(0, 2).map((product) => (
-                  <div key={product.id} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+            {insightsLoading ? (
+              <p className="text-sm text-muted">Analyzing products...</p>
+            ) : highViewsNoInquiries.length > 0 ? (
+              <div className="max-h-50 overflow-y-auto pr-1 space-y-3">
+                {highViewsNoInquiries.map((product) => (
+                  <div
+                    key={product._id}
+                    className="flex items-center justify-between p-3 bg-card rounded-lg border border-border"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{product.image}</span>
+
+                      {/* IMAGE */}
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-10 h-10 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-xs">
+                          No Img
+                        </div>
+                      )}
+
+                      {/* TEXT */}
                       <div>
-                        <p className="text-sm font-semibold text-text border-border">{product.name}</p>
-                        <p className="text-xs text-blue-600">{product.viewsThisWeek} views • {product.inquiries} inquiries</p>
+                        <p className="text-sm font-semibold text-text">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          {product.views} views • {product.inquiries} inquiries
+                        </p>
                       </div>
                     </div>
+
+                    {/* ACTION */}
                     <Link to="/marketplace/seller/products">
                       <Button
                         size="sm"
@@ -527,7 +589,9 @@ export function SellerDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-text">All products performing well!</p>
+              <p className="text-sm text-text text-center">
+                All products performing well!
+              </p>
             )}
           </Card>
 

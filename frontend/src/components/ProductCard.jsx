@@ -7,6 +7,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallBack";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Star } from "lucide-react";
+import api from "../api/axios";
 
  
     export function ProductCard({ 
@@ -134,8 +135,14 @@ import { Star } from "lucide-react";
         <Button
           variant="outline"
           className="flex-1 rounded-xl border-primary text-primary hover:bg-primary/10"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
+            try {
+              await api.patch(
+                `/seller/views/${product._id}`);
+            } catch (err) {
+              console.error("Error updating views", err);
+            }
             onViewDetails(product._id);
           }}
         >

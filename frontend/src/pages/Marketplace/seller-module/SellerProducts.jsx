@@ -556,7 +556,7 @@ const SellerProducts = () => {
 
                   <div>
                     <p className="text-muted">Views</p>
-                    <p className="font-semibold">0</p>
+                    <p className="font-semibold">{p.views}</p>
                   </div>
 
                 </div>

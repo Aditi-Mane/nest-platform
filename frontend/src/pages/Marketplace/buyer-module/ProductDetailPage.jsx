@@ -351,10 +351,10 @@ if (!product) {
                <Badge
                 className={
                   product?.status === "sold"
-                    ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm"
+                    ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-sm"
                     : product?.status === "reserved"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm"
-                    : "bg-gradient-to-r from-emerald-400 to-green-600 text-white shadow-sm"
+                    ? "bg-linear-to-r from-amber-400 to-orange-500 text-white shadow-sm"
+                    : "bg-linear-to-r from-emerald-400 to-green-600 text-white shadow-sm"
                 }
               >
                 {product?.status?.toUpperCase() ?? "AVAILABLE"}
@@ -512,7 +512,7 @@ if (!product) {
                   className={`w-full rounded-xl border transition-all duration-200
                     ${getSoftButtonStyle(product?.status,conversation?.status, "cart")}
                     ${getSoftHover(product?.status,conversation?.status, "cart")}
-                    !shadow-none
+                    shadow-none!
                   `}
                   disabled={isUnavailable}
                   onClick={handleAddToCart}
@@ -530,7 +530,7 @@ if (!product) {
                   className={`w-full rounded-xl border 
                     ${getButtonStyle(conversation?.status, product?.status)}
                     ${getHoverStyle(conversation?.status, product?.status)}
-                    !shadow-none transition-all`}
+                    shadow-none! transition-all`}
                   disabled={isContactButtonDisabled(conversation?.status, product?.status)}
                   onClick={async () => {
                           try {

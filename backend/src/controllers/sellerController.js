@@ -1082,3 +1082,75 @@ export const getTopProductThisWeek = async (req, res) => {
     res.status(500).json({ message: "Error fetching top product" });
   }
 };
+
+export const incrementViews = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    await Product.findByIdAndUpdate(productId, {
+      $inc: { views: 1 },
+    });
+
+    res.json({ message: "View counted" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating views" });
+  }
+};
+
+export const getInsights = async (req, res) => {
+  try {
+    const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+    const result = await Product.aggregate([
+      {
+        $match: {
+          createdBy: sellerId,
+        },
+      },
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "_id",
+          foreignField: "productId",
+          as: "conversations",
+        },
+      },
+      {
+        $addFields: {
+          inquiries: {
+            $size: {
+              $filter: {
+                input: "$conversations",
+                as: "conv",
+                cond: {
+                  $in: [
+                    { $toLower: "$$conv.status" }, //robust check
+                    ["initiated", "negotiating"],
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1, // 🔥 IMPORTANT
+          name: 1,
+          views: 1,
+          inquiries: 1,
+          image: {
+            $ifNull: [{ $arrayElemAt: ["$images.url", 0] }, null],
+          },
+        },
+      },
+      { $sort: { views: -1 } },
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching insights" });
+  }
+};
