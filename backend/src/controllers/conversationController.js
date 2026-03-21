@@ -53,7 +53,10 @@ export const getBuyerConversations = async (req, res) => {
   try {
     const buyerId = req.user._id;
 
-    const conversations = await Conversation.find({ buyerId })
+    const conversations = await Conversation.find({
+      buyerId,
+      status: { $ne: "completed" } //hide completed
+    })
       .populate("productId", "name images price status") // ✅ fixed
       .populate("sellerId", "name avatar")
       .sort({ updatedAt: -1 }); 
@@ -105,7 +108,10 @@ export const getSellerConversations = async(req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const conversations = await Conversation.find({sellerId})
+    const conversations = await Conversation.find({
+      sellerId,
+      status: { $ne: "completed" } //hide completed
+    })
     .populate("productId", "name images price status")
     .populate("buyerId", "name avatar")
     .sort({updatedAt: -1})
