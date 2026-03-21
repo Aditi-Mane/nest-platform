@@ -1,67 +1,41 @@
-from pymongo import MongoClient
-from bson import ObjectId
+# We use Sentence Transformers to convert product descriptions into 
+# embeddings and compute cosine similarity to recommend semantically similar items.
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import List
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
-client = MongoClient(process.env.M)  
-db = client["nestdb"]
-products_collection = db["products"]
+from sentence_transformers import SentenceTransformer, util
 
 app = FastAPI()
 
-
-# ---------- Request Schema ----------
-class ProductInput(BaseModel):
-    id: str
-    text: str
-
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 class RecommendationRequest(BaseModel):
-    current_product_id: str
-    products: List[ProductInput]
+    query: str
+    products: list  # [{id, text}]
 
+@app.post("/recommend")
+def recommend(req: RecommendationRequest):
+    try:
+        query_embedding = model.encode(req.query, convert_to_tensor=True)
 
-# ---------- API Endpoint ----------
-@app.post("/recommend/content-based")
-def recommend_products(req: RecommendationRequest):
+        product_texts = [p["text"] for p in req.products]
+        product_ids = [p["id"] for p in req.products]
 
-    # Extract all texts
-    product_texts = [p.text for p in req.products]
-    product_ids = [p.id for p in req.products]
+        product_embeddings = model.encode(product_texts, convert_to_tensor=True)
 
-    # TF-IDF Vectorization
-    vectorizer = TfidfVectorizer(stop_words="english")
-    tfidf_matrix = vectorizer.fit_transform(product_texts)
+        scores = util.cos_sim(query_embedding, product_embeddings)[0]
 
-    # Find index of current product
-    if req.current_product_id not in product_ids:
-        return {"error": "Product not found in dataset"}
+        results = []
+        for i, score in enumerate(scores):
+            results.append({
+                "id": product_ids[i],
+                "score": float(score)
+            })
 
-    current_index = product_ids.index(req.current_product_id)
+        # sort by similarity
+        results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    # Cosine similarity
-    similarity_scores = cosine_similarity(
-        tfidf_matrix[current_index],
-        tfidf_matrix
-    ).flatten()
+        return {"results": results[:5]}  # top 5
 
-    # Sort by similarity score
-    similar_products = sorted(
-        zip(product_ids, similarity_scores),
-        key=lambda x: x[1],
-        reverse=True
-    )
-
-    # Remove itself + take top 5
-    top_recommendations = [
-        {"productId": pid, "score": float(score)}
-        for pid, score in similar_products
-        if pid != req.current_product_id
-    ][:5]
-
-    return {"recommendations": top_recommendations}
+    except Exception as e:
+        return {"error": str(e)}

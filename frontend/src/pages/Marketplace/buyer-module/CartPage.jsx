@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
+  import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext"; 
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallBack.jsx";
@@ -30,7 +31,7 @@ import { useLocation } from "react-router-dom";
 
 
 
-//Temporary Static data
+
 
 
 
@@ -47,7 +48,34 @@ export default function CartPage() {
 
   const [promoCode, setPromoCode] = useState("");
   const [conversations, setConversations] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(true);
   const location = useLocation();
+
+
+const formattedItems = useMemo(() => {
+  return cartItems
+    .filter((item) => item.product !== null)
+    .map((item) => {
+      const conversation = conversations.find(
+        (c) => c.productId?._id === item.product._id
+      );
+
+      return {
+        id: item.product._id,
+        name: item.product.name,
+        price: item.product.price,
+        image: item.product.images?.[0]?.url,
+        category: item.product.category,
+        description: item.product.description,
+        quantity: item.quantity,
+        seller: item.product.createdBy,
+        productStatus: item.product.status,
+        conversationId: conversation?._id,
+        status: conversation?.status || null,
+      };
+    });
+}, [cartItems, conversations]);
 
   useEffect(() => {
   const fetchConversations = async () => {
@@ -58,33 +86,32 @@ export default function CartPage() {
       console.error(err);
     }
   };
+  const fetchCartRecommendations = async () => {
+    try {
+      setLoadingRecs(true);
 
+      const res = await api.post("/products/recommend-cart", {
+        productIds: formattedItems.map(item => item.id),
+      });
+
+      setRecommendations(res.data.recommendations);
+     
+
+    } catch (err) {
+      console.log("Cart rec error", err);
+    } finally {
+      setLoadingRecs(false);
+    }
+  };
   fetchConversations();
+
+  if (formattedItems.length > 0) {
+    fetchCartRecommendations();
+  }
+
   
-}, [location]);
+}, [location, formattedItems]);
 
-const formattedItems = cartItems
-  .filter((item) => item.product !== null)
-  .map((item) => {
-    const conversation = conversations.find(
-      (c) => c.productId?._id === item.product._id
-    );
-
-    return {
-      id: item.product._id,
-      name: item.product.name,
-      price: item.product.price,
-      image: item.product.images?.[0]?.url,
-      category: item.product.category,
-      description: item.product.description,
-      quantity: item.quantity,
-      seller: item.product.createdBy,
-      productStatus: item.product.status,
-
-      conversationId: conversation?._id,
-      status: conversation?.status || null,
-    };
-});
 
 //handleContactSeller
 const handleContactSeller = async (item) => {
@@ -453,36 +480,65 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
               </Card>
 
               {/* Recommended Items */}
-              <Card className="rounded-2xl border-border shadow-sm">
-                <CardContent className="p-6">
-                  <h4 className="mb-4 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-[#10B981]" />
-                    You might also like
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
-                      <div 
-                        className="w-16 h-16 rounded-lg bg-cover bg-center flex-shrink-0"
-                        style={{ backgroundImage: "url(https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=200)" }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm line-clamp-2 mb-1">Watercolor Cards Set</p>
-                        <p className="text-sm text-[#2563EB]">$18</p>
+              <Card className="rounded-2xl border-border shadow-sm hover:shadow-md transition-all">
+                    <CardContent className="p-6">
+                      
+                      <h4 className="mb-4 flex items-center gap-2 font-semibold">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Recommended for you
+                      </h4>
+
+                      {/* Loading */}
+                      {loadingRecs && recommendations.length === 0 && (
+                        <p className="text-sm text-muted">Finding best matches...</p>
+                      )}
+                      
+
+                      {/* Empty */}
+                      {!loadingRecs && recommendations.length === 0 && (
+                        <p className="text-sm text-muted">
+                          No recommendations available
+                        </p>
+                      )}
+
+                      {/* List */}
+                      <div className="space-y-3">
+                        {recommendations.map((item) => (
+                          <div
+                            key={item._id}
+                            onClick={() => navigate(`/marketplace/buyer/product/${item._id}`)}
+                            className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-xl transition-all hover:scale-[1.02]"
+                          >
+                            <div className="w-16 h-16 rounded-lg overflow-hidden border bg-white">
+                              <img
+                                src={item.images?.[0]?.url}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            <div className="flex-1">
+                              <p className="text-sm font-medium line-clamp-2">
+                                {item.name}
+                              </p>
+
+                              <div className="flex items-center justify-between mt-1">
+                                <p className="text-sm text-primary font-semibold">
+                                  ₹{item.price}
+                                </p>
+
+                                {/* Rating */}
+                                <span className="text-xs text-muted">
+                                  ⭐ {item.averageRating?.toFixed(1) || "0.0"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                    <div className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
-                      <div 
-                        className="w-16 h-16 rounded-lg bg-cover bg-center flex-shrink-0"
-                        style={{ backgroundImage: "url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200)" }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm line-clamp-2 mb-1">Calculus Study Guide</p>
-                        <p className="text-sm text-[#2563EB]">$22</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+                    </CardContent>
+            </Card>
             </div>
           </div>
         ) : (

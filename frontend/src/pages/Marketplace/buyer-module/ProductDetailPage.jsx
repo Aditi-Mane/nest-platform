@@ -8,7 +8,8 @@ import {
   CheckCircle2,
   MapPin,
   Package,
-  Shield
+  Shield,
+  Sparkles
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,7 +53,9 @@ export default function ProductDetailPage() {
   const [loadingReviews, setLoadingReviews] =useState(true);
   const [conversation, setConversation] = useState(null);
   const [sellerRating, setSellerRating] = useState(0.0);
-  const [reviewCount, setReviewCount] = useState(0);    
+  const [reviewCount, setReviewCount] = useState(0); 
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(true);   
   const location = useLocation();
 
 
@@ -206,11 +209,25 @@ const fetchConversation = async () => {
            setLoadingReviews(false);
         }
       }
+      const fetchRecommendations = async () => {
+      try {
+        const res = await api.get(`/products/recommend-ml/${id}`);
+        setRecommendations(res.data.recommendations);
+      } catch (err) {
+        console.log("ML rec error", err);
+      } finally {
+        setLoadingRecs(false);
+      }
+    };
+
+
+
 
       
     fetchConversation();
     fetchProduct();
     fetchReviews();
+    fetchRecommendations();
     
 
   },[id, location ]);
@@ -650,27 +667,84 @@ if (!product) {
               </Card>
             )}
 
-            {/* Similar Items */}
-            {/* <Card className="rounded-2xl">
-              <CardHeader>
-                <CardTitle>Similar Items</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {similarItems.map((item, i) => (
-                  <div key={i} className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <ImageWithFallback src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate mb-1">{item.name}</p>
-                      <p className="text-sm text-[#2563EB]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
-                        ${item.price}
+           <Card className="rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+  <CardHeader className="pb-2">
+    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+      <Sparkles className="h-5 w-5 text-primary" />
+      Recommended for you
+    </CardTitle>
+  </CardHeader>
+
+            <CardContent className="space-y-3">
+              {loadingRecs && (
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Finding best matches...
+                </div>
+              )}
+
+               {/* Recommendations */}
+              {!loadingRecs && recommendations.length === 0 && (
+                <p className="text-sm text-muted text-center py-4">
+                  No recommendations yet
+                </p>
+              )}
+
+              {recommendations.map((item) => (
+                <div
+                  key={item._id}
+                  onClick={() =>
+                    navigate(`/marketplace/buyer/product/${item._id}`)
+                  }
+                  className="flex gap-3 p-2 rounded-xl hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                >
+                  {/* Image */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border bg-white flex-shrink-0">
+                    <img
+                      src={item.images?.[0]?.url}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 flex flex-col justify-between">
+                    <p className="text-sm font-medium line-clamp-1">
+                      {item.name}
+                    </p>
+                    {/* Rating */}
+                    <span className="text-xs text-muted">
+                        ⭐ {item.averageRating?.toFixed(1) || "0.0"}
+                    </span>
+
+                    {/* Price + subtle tag */}
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm text-primary font-semibold">
+                        ₹{item.price}
                       </p>
+
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        Similar
+                      </span>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card> */}
+                </div>
+              ))}
+
+              {/* Optional CTA */}
+              {!loadingRecs && recommendations.length > 0 && (
+                <div className="pt-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full text-sm text-primary hover:bg-primary/10 rounded-xl"
+                    onClick={() => navigate("/marketplace")}
+                  >
+                    Explore more →
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           </div>
 
         </div>

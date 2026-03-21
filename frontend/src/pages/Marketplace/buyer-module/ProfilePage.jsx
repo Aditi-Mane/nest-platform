@@ -179,7 +179,9 @@ export function ProfilePage() {
               </div>
             ) : (
           <div className="space-y-4">
-        {purchaseHistory.map((order) => (
+        {purchaseHistory
+        .filter(order => order !== null)
+        .map((order) => (
           <Card
             key={order._id}
             className="rounded-2xl px-2 transition-all hover:shadow-md"

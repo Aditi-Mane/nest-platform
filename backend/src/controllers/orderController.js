@@ -17,8 +17,10 @@ export const getMyPurchases =async(req,res)=>{
     const ordersWithReviewStatus = await Promise.all(
       orders.map(async (order) => {
 
+        if (!order.productId) return null;
+        
         const review = await Review.findOne({
-          product: order.productId,
+          product: order.productId._id,
           user: buyerId
         });
 
