@@ -1154,3 +1154,40 @@ export const getInsights = async (req, res) => {
     res.status(500).json({ message: "Error fetching insights" });
   }
 };
+
+export const getSellerAverageRating = async (req, res) => {
+  try {
+    const sellerId = req.params.sellerId;
+
+    // Step 1: get products created by seller
+    const products = await Product.find({ createdBy: sellerId }).select("_id");
+
+    const productIds = products.map(p => p._id);
+
+    // Step 2: aggregate reviews
+    const stats = await Review.aggregate([
+      {
+        $match: {
+          product: { $in: productIds }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$starRating" },
+          totalReviews: { $sum: 1 }
+        }
+      }
+    ]);
+
+    return res.status(200).json({
+      avgRating: stats[0]?.avgRating?.toFixed(1) || 0,
+      totalReviews: stats[0]?.totalReviews || 0
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+};

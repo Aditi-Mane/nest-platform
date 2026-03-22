@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle2, Trophy, XCircle } from "lucide-react";
 import api from "../../../api/axios.js";
 
 const BuyerChatDetails = () => {
@@ -126,6 +126,39 @@ const BuyerChatDetails = () => {
       console.error(error.response?.data || error.message);
     }
   };
+const renderConversationBanner = (status) => {
+  const base = "flex items-center gap-2 px-4 py-2 text-sm rounded-lg mb-3 font-medium";
+
+  switch (status) {
+    case "deal_confirmed":
+      return (
+        <div className={`${base} bg-gradient-to-r from-green-50 to-emerald-100 border border-emerald-200 text-emerald-700`}>
+          <CheckCircle2 size={16} />
+          Deal confirmed. Waiting for delivery verification.
+        </div>
+      );
+
+    case "completed":
+      return (
+        <div className={`${base} bg-gradient-to-r from-yellow-50 to-amber-100 border border-amber-200 text-amber-700`}>
+          <Trophy size={16} />
+          Transaction completed successfully!
+        </div>
+      );
+
+    case "cancelled":
+      return (
+        <div className={`${base} bg-gradient-to-r from-red-50 to-rose-100 border border-rose-200 text-rose-700`}>
+          <XCircle size={16} />
+          This negotiation was cancelled.
+        </div>
+      );
+
+    default:
+      return null;
+  }
+};
+  const isChatLocked =conversationInfo?.status === "cancelled";
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -168,7 +201,7 @@ const BuyerChatDetails = () => {
 
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-
+          {renderConversationBanner(conversationInfo?.status)}
           {messages.map((msg) => {
             const senderId =
               typeof msg.senderId === "object"
@@ -209,13 +242,19 @@ const BuyerChatDetails = () => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Type a message..."
+              placeholder={isChatLocked ? "Conversation closed" : "Type a message..."}
               className="flex-1 bg-transparent outline-none text-sm"
+              disabled={isChatLocked}
             />
 
             <button
               onClick={handleSend}
-              className="bg-primary text-white p-2 rounded-lg"
+              disabled={isChatLocked}
+              className={`p-2 rounded-lg ${
+                isChatLocked
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-primary text-white"
+              }`}
             >
               <Send size={16} />
             </button>

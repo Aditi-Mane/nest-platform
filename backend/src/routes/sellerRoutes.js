@@ -1,7 +1,7 @@
 import express from "express"
 import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, 
   generateOrderOtp, getAverageRating, getDailyEarnings, getEarnings, getInsights, getMyProducts, 
-  getNegotiatingConversations, getPendingEarnings, getSellerAnalytics, getSellerOrders, 
+  getNegotiatingConversations, getPendingEarnings, getSellerAnalytics, getSellerAverageRating, getSellerOrders, 
   getTopProductThisWeek, getWeeklyEarnings, incrementViews, setupSeller, verifyOrderOtp} from "../controllers/sellerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
@@ -22,6 +22,8 @@ router.put("/otp", protect, checkSeller, generateOrderOtp);
 router.get("/analytics", protect, checkSeller, getSellerAnalytics);
 router.get("/productRatings", protect, checkSeller, getAverageRating);
 router.patch("/views/:productId", protect, incrementViews);
+
+router.get("/seller-rating/:sellerId", protect, getSellerAverageRating);
 
 //seller dashboard routes
 router.get("/earnings", protect, checkSeller, getEarnings);
