@@ -15,7 +15,6 @@ import Pagination from "../../../components/Pagination.jsx";
 
 const SellerMessages = () => {
 
-  const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeField, setActiveField] = useState(null);
   const [openCard, setOpenCard] = useState(null); // 👈 for dropdown toggle
@@ -30,7 +29,8 @@ const SellerMessages = () => {
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
+  const [statusFilter, setStatusFilter] = useState("all");
+  
   useEffect(() => {
     const fetchSellerConversations = async () => {
       try {
@@ -39,7 +39,8 @@ const SellerMessages = () => {
         const res = await api.get("/conversations/seller", {
           params: {
             page,
-            limit: 6
+            limit: 6,
+            status: statusFilter
           }
         });
 
@@ -54,7 +55,11 @@ const SellerMessages = () => {
     };
 
     fetchSellerConversations();
-  }, [page]);
+  }, [page, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
   
   const statusStyle = (status) => {
     const base = {
@@ -104,20 +109,6 @@ const SellerMessages = () => {
     }
   };
 
-  const filteredRequests = requests.filter((item) => {
-    const productName = item.productId?.name || "";
-    const buyerName = item.buyerId?.name || "";
-
-    const matchStatus =
-      selectedStatus === "all" || item.status === selectedStatus;
-
-    const matchSearch =
-      productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      buyerName.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchStatus && matchSearch;
-  });
-
   return (
     <div className="bg-background min-h-screen p-6">
       <div className="mb-6">
@@ -161,8 +152,8 @@ const SellerMessages = () => {
         </div>
 
         <select className="bg-card"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
           onFocus={() => setActiveField("status")}
           onBlur={() => setActiveField(null)}
           style={{
@@ -195,10 +186,10 @@ const SellerMessages = () => {
 
       {loading ? (
           <p className="text-muted mb-4">Loading requests...</p>
-        ) : filteredRequests.length === 0 ? (
+        ) : requests.length === 0 ? (
           <p className="text-muted mb-4">No requests yet</p>
         ) : (
-          filteredRequests.map((item) => (
+          requests.map((item) => (
             <div className="bg-card"
               key={item._id}
           style={{

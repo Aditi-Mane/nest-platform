@@ -24,7 +24,9 @@ const SellerOrderHistory = () => {
       const res = await api.get("/seller/orders", {
         params: {
           page,
-          limit: 6
+          limit: 6,
+          status: statusFilter,
+          search: searchTerm
         }
       });
 
@@ -40,7 +42,11 @@ const SellerOrderHistory = () => {
 
   useEffect(() => {
     fetchSellerOrders();
-  }, [page]);
+  }, [page, statusFilter, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, searchTerm]);
 
   const handleGenerateOtp = async (id) =>{
     try {
@@ -68,21 +74,6 @@ const SellerOrderHistory = () => {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.productId?.name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      order.buyerId?.name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-  
   return (
     <div className="bg-background min-h-screen p-6">
 
@@ -145,10 +136,10 @@ const SellerOrderHistory = () => {
       <div className="space-y-5">
         {loading ? (
           <p className="text-muted mb-4">Loading orders...</p>
-        ) : filteredOrders.length === 0 ? (
+        ) : orders.length === 0 ? (
           <p className="text-muted mb-4">No orders yet</p>
         ) : (
-        filteredOrders.map(order => (
+        orders.map(order => (
           <div
             key={order._id}
             className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"

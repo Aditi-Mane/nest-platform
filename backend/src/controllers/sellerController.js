@@ -148,9 +148,37 @@ export const getMyProducts = async (req, res) =>{
   try {
     const sellerId = req.user._id;
 
+    const { category, sort } = req.query;
+
+    let sortOption = { createdAt: -1 }; // default = latest
+
+    switch (sort) {
+      case "latest":
+        sortOption = { createdAt: -1 };
+        break;
+
+      case "rating":
+        sortOption = { averageRating: -1 };
+        break;
+
+      case "views":
+        sortOption = { views: -1 };
+        break;
+
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
     //base query
-    let query = Product.find({ createdBy: sellerId })
-      .sort({ createdAt: -1 });
+    let queryObj = { createdBy: sellerId };
+
+    //apply filter
+    if (category && category !== "all") {
+      queryObj.category = category;
+    }
+
+    let query = Product.find(queryObj)
+      .sort(sortOption);
 
     //apply pagination
     const { query: paginatedQuery, page, limit } = paginate(query, req.query);
@@ -483,8 +511,17 @@ export const getSellerOrders = async (req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    //base query
-    let query = Order.find({ sellerId })
+    const { status } = req.query;
+
+    //build query object
+    let queryObj = { sellerId };
+
+    //apply status filter
+    if (status && status !== "all") {
+      queryObj.status = status;
+    }
+
+    let query = Order.find(queryObj)
       .populate("productId", "name price images")
       .populate("buyerId", "name")
       .sort({ createdAt: -1 });

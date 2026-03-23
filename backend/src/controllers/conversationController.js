@@ -109,11 +109,20 @@ export const getSellerConversations = async(req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    //base query
-    let query = Conversation.find({
+    const { status } = req.query;
+
+    let queryObj = {
       sellerId,
-      status: { $ne: "completed" }
-    })
+      status: { $ne: "completed" } 
+    };
+
+    if (status && status !== "all") {
+      queryObj.status = status;
+    } else {
+      queryObj.status = { $ne: "completed" };
+    }
+
+    let query = Conversation.find(queryObj)
       .populate("productId", "name images price status")
       .populate("buyerId", "name avatar")
       .sort({ updatedAt: -1 });
@@ -124,10 +133,7 @@ export const getSellerConversations = async(req, res) =>{
     const conversations = await paginatedQuery;
 
     //total count
-    const total = await Conversation.countDocuments({
-      sellerId,
-      status: { $ne: "completed" }
-    });
+    const total = await Conversation.countDocuments(queryObj)
 
     return res.status(200).json({
       message: "Fetched seller conversations successfully",

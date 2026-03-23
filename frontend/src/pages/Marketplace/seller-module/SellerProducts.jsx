@@ -135,28 +135,6 @@ const SellerProducts = () => {
 
   const fileInputRef = useRef(null);
 
-  const filteredProducts = products
-    .filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.description.toLowerCase().includes(productSearch.toLowerCase());
-      const matchesCategory =
-        productCategory === "all" || p.category === productCategory;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (productSort === "rating") {
-        return (getProductRating(b._id)?.avgRating || 0) - (getProductRating(a._id)?.avgRating || 0);
-      }
-      if (productSort === "views") {
-        return (b.views || 0) - (a.views || 0);
-      }
-      if (productSort === "sales") {
-        return (getProductAnalytics(b._id)?.sales || 0) - (getProductAnalytics(a._id)?.sales || 0);
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -165,7 +143,9 @@ const SellerProducts = () => {
         const { data } = await api.get("/seller/my-products", {
           params: {
             page,
-            limit: 6
+            limit: 6,
+            category: productCategory,
+            sort: productSort
           }
         });
 
@@ -180,7 +160,11 @@ const SellerProducts = () => {
     };
 
     fetchProducts();
-  }, [page]);
+  }, [page, productCategory, productSort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [productCategory, productSort]);
   
   // FORM CHANGE
   const handleChange = (e) => {
@@ -474,7 +458,7 @@ const SellerProducts = () => {
           <option value="latest">Latest</option>
           <option value="rating">Highest Rating</option>
           <option value="views">Most Viewed</option>
-          <option value="sales">Best Selling</option>
+          {/* <option value="sales">Best Selling</option> */}
         </select>
       </div>
 

@@ -89,7 +89,7 @@ export function SellerDashboard() {
     const fetchSellerConversations = async() =>{
       try {
         const res = await api.get("/conversations/seller");
-        setRequests(res.data.conversations);
+        setRequests(res.data.data);
       } catch (error) {
         console.error(error);
       } finally {
@@ -102,7 +102,7 @@ export function SellerDashboard() {
   const fetchSellerOrders = async () =>{
     try {
       const res = await api.get("/seller/orders");
-      setOrders(res.data.orders);
+      setOrders(res.data.data);
     } catch (error) {
       console.log(error)
     } finally {
