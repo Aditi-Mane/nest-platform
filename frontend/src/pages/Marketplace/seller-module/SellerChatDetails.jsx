@@ -69,10 +69,16 @@ const SellerChatDetails = () => {
     if (!socketRef.current || !conversationId) return;
 
     if (socketRef.current.connected) {
-      socketRef.current.emit("join_conversation", conversationId);
+      socketRef.current.emit("join_conversation", {
+        conversationId,
+        userId: currentUser?._id,
+      });
     } else {
       socketRef.current.once("connect", () => {
-        socketRef.current.emit("join_conversation", conversationId);
+        socketRef.current.emit("join_conversation", {
+          conversationId,
+          userId: currentUser?._id,
+        });
       });
     }
   }, [conversationId]);
@@ -80,8 +86,15 @@ const SellerChatDetails = () => {
   useEffect(() => {
     if (!socketRef.current) return;
 
-    socketRef.current.on("receive_message", (message) => {
-      setMessages((prev) => [...prev, message]);
+    socketRef.current.on("receive_message", (data) => {
+      const { message } = data;
+
+      setMessages((prev) => {
+        const exists = prev.some((m) => m._id === message._id);
+        if (exists) return prev;
+
+        return [...prev, message];
+      });
     });
 
     return () => {
@@ -265,7 +278,7 @@ return (
             )}
 
             {/* Cancel Deal */}
-            {isSeller && !["otp_verified"].includes(conversationInfo?.status) && (
+            {isSeller && !["completed"].includes(conversationInfo?.status) && (
               <button
                 onClick={handleCancelDeal}
                 className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white"
@@ -281,50 +294,54 @@ return (
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-background/50">
 
-        {messages.map((msg) => {
-          const senderId =
-            typeof msg.senderId === "object"
-              ? msg.senderId._id
-              : msg.senderId;
+        {messages
+  .filter(
+    (msg, index, self) =>
+      msg.text?.trim() &&
+      index === self.findIndex((m) => m._id === msg._id)
+  )
+  .map((msg) => {
+    const senderId =
+      typeof msg.senderId === "object"
+        ? msg.senderId?._id
+        : msg.senderId;
 
-          const isMe =
-            String(senderId) === String(currentUser?._id);
+    const isMe =
+      String(senderId) === String(currentUser?._id);
 
-          const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+    const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-          return (
-            <div
-              key={msg._id}
-              className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-            >
-              <div className="flex flex-col max-w-[70%]">
+    return (
+      <div
+        key={msg._id}
+        className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+      >
+        <div className="flex flex-col max-w-[70%]">
 
-                {/* Bubble */}
-                <div
-                  className={`px-4 py-2 rounded-2xl text-sm ${
-                    isMe
-                      ? "bg-primary text-white rounded-br-md"
-                      : "bg-background border border-border text-text rounded-bl-md"
-                  }`}
-                >
-                  {msg.text}
-                </div>
+          <div
+            className={`px-4 py-2 rounded-2xl text-sm ${
+              isMe
+                ? "bg-primary text-white rounded-br-md"
+                : "bg-background border border-border text-text rounded-bl-md"
+            }`}
+          >
+            {msg.text}
+          </div>
 
-                {/* Time */}
-                <span
-                  className={`text-[10px] mt-1 text-muted ${
-                    isMe ? "text-right" : "text-left"
-                  }`}
-                >
-                  {formattedTime}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+          <span
+            className={`text-[10px] mt-1 text-muted ${
+              isMe ? "text-right" : "text-left"
+            }`}
+          >
+            {formattedTime}
+          </span>
+        </div>
+      </div>
+    );
+  })}
 
         <div ref={bottomRef}></div>
       </div>

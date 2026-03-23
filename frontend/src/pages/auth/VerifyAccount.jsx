@@ -7,7 +7,7 @@ import { FiUpload } from "react-icons/fi";
 import PrimaryButton from "../../components/auth/PrimaryButton.jsx"
 import { useState } from "react"
 import api from "../../api/axios.js"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 const VerifyAccount = () => {
   const [prn, setPrn] = useState("");
@@ -15,12 +15,7 @@ const VerifyAccount = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const userId =
-  location.state?.userId ||
-  localStorage.getItem("tempUserId");
-
+  
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -33,14 +28,8 @@ const VerifyAccount = () => {
       setError("");
       setLoading(true);
 
-      if (!userId || userId === "undefined") {
-        setError("Session expired. Please verify email again.");
-        return;
-      }
-
       const formData = new FormData();
 
-      formData.append("userId", userId);
       formData.append("collegeId", prn);
       formData.append("idCard", idImg);
 
@@ -48,9 +37,7 @@ const VerifyAccount = () => {
         "/auth/verify-account",
         formData
       );
-        
-      localStorage.removeItem("tempUserId");
-      
+              
       navigate("/auth/registration", {replace: true});
     } catch (err) {
       console.log(err);
@@ -59,7 +46,6 @@ const VerifyAccount = () => {
       setLoading(false);
     }
   };
-
 
   return (
     <AuthLayout>

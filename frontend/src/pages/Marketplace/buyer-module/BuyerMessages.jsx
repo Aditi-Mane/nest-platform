@@ -8,6 +8,7 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Trophy
 } from "lucide-react";
 import api from "../../../api/axios.js";
 
@@ -24,6 +25,50 @@ const BuyerMessages = () => {
   const softBorder = "var(--color-border)";
 
   const navigate = useNavigate();
+  const renderStatusBadge = (status) => {
+  const base =
+    "text-[10px] px-2 py-[1px] rounded-full flex items-center gap-[3px] font-medium whitespace-nowrap";
+
+  switch (status) {
+    case "initiated":
+      return (
+        <span className={`${base} bg-yellow-100 text-yellow-700`}>
+          <Clock size={10} /> Initiated
+        </span>
+      );
+
+    case "negotiating":
+      return (
+        <span className={`${base} bg-blue-100 text-blue-700`}>
+          <MessageSquare size={10} /> Negotiating
+        </span>
+      );
+
+    case "deal_confirmed":
+      return (
+        <span className={`${base} bg-green-100 text-green-700`}>
+          <CheckCircle size={10} /> Confirmed
+        </span>
+      );
+
+    case "completed":
+      return (
+      <span className={`${base} bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-sm`}>
+        <Trophy size={10} /> Completed
+      </span>
+    );
+
+    case "cancelled":
+      return (
+        <span className={`${base} bg-red-100 text-red-700`}>
+          <XCircle size={10} /> Cancelled
+        </span>
+      );
+
+    default:
+      return null;
+  }
+};
 
   const fetchBuyerConversations = async () => {
       try {
@@ -51,52 +96,8 @@ const BuyerMessages = () => {
   };
 }, []);
 
-  //STATUS STYLE
-  const statusStyle = (status) => {
-    const base = {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      padding: "5px 12px",
-      borderRadius: "20px",
-      fontSize: "12px",
-      fontWeight: 500,
-    };
-
-    switch (status) {
-      case "negotiating":
-        return { ...base, background: "#e6f0ff", color: "#2563eb" };
-      case "deal_confirmed":
-        return { ...base, background: "#e6f7ed", color: "#15803d" };
-      case "initiated":
-        return { ...base, background: "#fff6db", color: "#a16207" };
-      case "cancelled":
-        return { ...base, background: "#fde8e8", color: "#b91c1c" };
-      default:
-        return base;
-    }
-  };
-
-  const formatStatus = (status) => {
-    return status
-      ?.replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  };
-
-  const renderIcon = (status) => {
-    switch (status) {
-      case "negotiating":
-        return <MessageSquare size={14} />;
-      case "deal_confirmed":
-        return <CheckCircle size={14} />;
-      case "initiated":
-        return <Clock size={14} />;
-      case "cancelled":
-        return <XCircle size={14} />;
-      default:
-        return null;
-    }
-  };
+ 
+  
 
   //FILTER
   const filteredRequests = requests.filter((item) => {
@@ -138,14 +139,18 @@ const BuyerMessages = () => {
     </div>
 
     {/* CONVERSATION LIST */}
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1.2 overflow-y-auto">
       {filteredRequests.map((item) => (
         <div
           key={item._id}
           onClick={() =>
             navigate(`/marketplace/buyer/messages/${item._id}`)
           }
-          className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-muted transition-all duration-200 group"
+          className={`flex items-center gap-3 px-4 py-3 border-b border-gray-200 cursor-pointer transition-all duration-200 group
+            ${item.status === "cancelled"
+              ? "opacity-60 hover:bg-gray-50"
+              : "hover:bg-muted"}
+          `}
         >
           {/* Avatar */}
          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden">
@@ -163,9 +168,12 @@ const BuyerMessages = () => {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center">
-              <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-800 truncate">
+             
+              <p className="text-sm font-semibold text-gray-900 truncate">
                 {item.sellerId?.name}
               </p>
+
+            
             </div>
 
             <p className="text-xs text-primary group-hover:opacity-80 font-medium truncate mt-0.5">
@@ -176,6 +184,7 @@ const BuyerMessages = () => {
               {item.lastMessage || "Start conversation"}
             </p>
           </div>
+            {renderStatusBadge(item.status)}
         </div>
       ))}
     </div>

@@ -20,12 +20,28 @@ const conversationSchema =new mongoose.Schema(
       required: true,
     },
 
-    status: {
+    productName: {
       type: String,
-      enum: ["initiated", "negotiating", "deal_confirmed", "cancelled"],
-      default: "initiated",
+      required: true,
     },
 
+    buyerName: {
+      type: String,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "initiated",
+        "negotiating",
+        "deal_confirmed",
+        "cancelled",
+        "completed"
+      ],
+      default: "initiated",
+    },
+    
     lastMessage: {
       type: String,
       default: "",
@@ -36,12 +52,22 @@ const conversationSchema =new mongoose.Schema(
       default: 0
     },
 
+    unreadCountBuyer: {
+      type: Number,
+      default: 0
+    }
+
   },
   { timestamps: true }
 );
 conversationSchema.index(
   { productId: 1, buyerId: 1 },
-  { unique: true }
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: { $in: ["initiated", "negotiating", "deal_confirmed"] }
+    }
+  }
 );
 const Conversation =mongoose.model("Conversation", conversationSchema);
 

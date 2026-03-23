@@ -41,6 +41,21 @@ const SellerSidebar = () => {
   const normalLink =
     "text-[var(--color-muted)] hover:bg-[#f4ecdd] hover:text-[var(--color-primary)]";
 
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get("/messages/unread");
+        setTotalUnread(res.data.totalUnread);
+      } catch (err) {
+        console.error("Error fetching unread count", err);
+      }
+    };
+
+    fetchUnread();
+  }, []);
+
   return (
     <div className="w-72 h-screen bg-card border-r border-border flex flex-col justify-between">
 
@@ -75,11 +90,19 @@ const SellerSidebar = () => {
           <NavLink
             to="/marketplace/seller/messages"
             className={({ isActive }) =>
-              `${baseLink} ${isActive ? activeLink : normalLink}`
+              `${baseLink} ${isActive ? activeLink : normalLink} flex items-center justify-between`
             }
           >
-            <IoPeople size={20}/>
-            Buyer Requests
+            <div className="flex items-center gap-2">
+              <IoPeople size={20} />
+              Buyer Requests
+            </div>
+
+            {totalUnread > 0 && (
+              <span className="bg-[#E9C9A8] text-[#7A3E1D]  text-xs font-semibold px-2 py-[2px] rounded-full">
+                {totalUnread}
+              </span>
+            )}
           </NavLink>
 
           <NavLink
@@ -156,26 +179,6 @@ const SellerSidebar = () => {
               </div>
             )}
           </div>
-
-          {/* <NavLink
-            to="/marketplace/seller/messages"
-            className={({ isActive }) =>
-              `${baseLink} ${isActive ? activeLink : normalLink}`
-            }
-          >
-            <LuMessageSquare size={20} />
-            Messages
-          </NavLink> */}
-
-          <NavLink
-            to="/marketplace/seller/payments"
-            className={({ isActive }) =>
-              `${baseLink} ${isActive ? activeLink : normalLink}`
-            }
-          >
-            <MdOutlinePayment size={20} />
-            Payments
-          </NavLink>
 
           <NavLink
             to="/marketplace/seller/settings"

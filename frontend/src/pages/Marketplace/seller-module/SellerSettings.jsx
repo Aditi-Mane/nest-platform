@@ -1,6 +1,60 @@
 import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { MdDelete, MdEdit, MdSwapHoriz } from "react-icons/md";
+
+// /* ---------- REUSABLE COMPONENTS ---------- */
+
+const Section = ({ title, children }) => (
+  <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
+    <div className="flex items-center mb-6">
+      <div className="w-1.5 h-6 bg-primary rounded mr-3"></div>
+      <h2 className="text-lg font-semibold text-text">{title}</h2>
+    </div>
+    <div className="space-y-5">{children}</div>
+  </div>
+);
+
+const Input = ({ label, ...props }) => (
+  <div>
+    <label className="block text-sm mb-1 text-muted">{label}</label>
+    <input
+      {...props}
+      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition"
+    />
+  </div>
+);
+
+const TextArea = ({ label, ...props }) => (
+  <div>
+    <label className="block text-sm mb-1 text-muted">{label}</label>
+    <textarea
+      {...props}
+      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition min-h-25"
+    />
+  </div>
+);
+
+const Toggle = ({ title, desc, checked, onClick }) => (
+  <div className="flex items-center justify-between py-3">
+    <div>
+      <div className="font-medium text-text">{title}</div>
+      <div className="text-sm text-muted">{desc}</div>
+    </div>
+    <div
+      onClick={onClick}
+      className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition ${
+        checked ? "bg-primary" : "bg-border"
+      }`}
+    >
+      <div
+        className={`bg-white w-4 h-4 rounded-full shadow transform transition ${
+          checked ? "translate-x-6" : ""
+        }`}
+      />
+    </div>
+  </div>
+);
 
 const SellerSettings = () => {
 
@@ -309,3 +363,5 @@ const SellerSettings = () => {
     </div>
   );
 };
+
+export default SellerSettings;

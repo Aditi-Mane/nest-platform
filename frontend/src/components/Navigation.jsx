@@ -5,7 +5,13 @@ import {
   ShoppingCart,
   Heart,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
+
+
+import { useUser } from "@/context/UserContext";
+import { useEffect, useState } from "react";
+import api from "../api/axios.js";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -34,9 +40,11 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
     navigate("/marketplace/buyer/ventures");
   }
   };
+  const { user } = useUser();
+
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-[var(--color-background)]">
+    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="max-w-7xl mx-auto px-2 py-0">
         <div className="flex items-center justify-between h-16">
 
@@ -45,11 +53,11 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => onNavigate("marketplace")}
           >
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
               <span className="text-white text-xl font-bold">N</span>
             </div>
 
-            <span className="text-xl font-semibold text-[var(--color-text)]">
+            <span className="text-xl font-semibold text-text">
               NEST
             </span>
           </div>
@@ -68,8 +76,8 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
                   className={`gap-4 rounded-xl px-4 transition-all
                     ${
                       isActive
-                        ? "bg-[var(--color-primary)] text-white"
-                        : "text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-card)]"
+                        ? "bg-primary text-white"
+                        : "text-muted hover:text-text hover:bg-card"
                     }
                   `}
                 >
@@ -87,21 +95,21 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
             <Button
               variant="ghost"
               size="icon"
-              className="relative rounded-xl hover:bg-[var(--color-card)] transition-all duration-200"
+              className="relative rounded-xl hover:bg-card transition-all duration-200"
               onClick={() => onNavigate("wishlist")}
             >
               <Heart
                 className={`h-5 w-5 transition-all duration-300 ${
                   currentPage === "wishlist"
-                    ? "text-[var(--color-primary)] fill-[var(--color-primary)]"
+                    ? "text-primary fill-primary"
                     : wishlistCount > 0
                     ? "text-red-500 fill-red-500"
-                    : "text-[var(--color-text)]"
+                    : "text-text"
                 }`}
               />
 
               {wishlistCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-primary text-xs text-white">
                   {wishlistCount}
                 </Badge>
               )}
@@ -118,7 +126,7 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
 
               {cartCount > 0 && (
                 <Badge
-                  className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center p-0 bg-[var(--color-primary)] text-xs text-white"
+                  className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center p-0 bg-primary text-xs text-white"
                 >
                   {cartCount > 5 ? "5+" : cartCount}
                 </Badge>
@@ -127,12 +135,19 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
 
             {/* Profile Avatar */}
             <Avatar
-              className="cursor-pointer border border-[var(--color-border)]"
+              className="cursor-pointer border border-border"
               onClick={() => onNavigate("profile")}
             >
-              <AvatarImage src="https://images.unsplash.com/photo-1573164713988-8665fc963095?w=100" />
-              <AvatarFallback className="bg-[var(--color-card)] text-[var(--color-text)]">
-                JD
+              <AvatarImage
+                src={
+                  user?.avatar
+                    ? `http://localhost:5000${user.avatar}`
+                    : undefined
+                }
+              />
+
+              <AvatarFallback className="bg-card text-text font-bold">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
 

@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    //profile update 
+    university: { type: String },
+    major: { type: String },
+    year: { type: String },
+    bio: { type: String },
+    avatar: { type: String },
+
     // Cached average rating (updated via Review post-save hook after taking review)
     rating: {
       type: Number,
@@ -82,8 +89,8 @@ const userSchema = new mongoose.Schema(
     //verification Lifecycle
     verificationStatus: {
       type: String,
-      enum: ["email_verified","pending", "under_review", "approved", "rejected"],
-      default: "pending"
+      enum: ["pending_email", "email_verified", "under_review", "approved", "rejected"],
+      default: "pending_email"
     },
 
     //roles user has access to

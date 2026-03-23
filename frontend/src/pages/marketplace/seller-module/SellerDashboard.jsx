@@ -1,434 +1,821 @@
-import React, { useState } from "react";
-import {
-  MessageSquare,
-  Clock,
-  CheckCircle,
-  Package,
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Card } from "../../../components/ui/card";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
+import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles } from "lucide-react";
+import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import api from "../../../api/axios";
 
-const SellerDashboard = () => {
-  const [openRequest, setOpenRequest] = useState(false);
+const myProducts = [
+  { id: "prod-1", name: "Ceramic Mug", image: "🏺", price: 24.99, stock: 15, status: "available", views: 342, viewsThisWeek: 89, inquiries: 12, sales: 5 },
+  { id: "prod-2", name: "Tote Bag", image: "👜", price: 18.50, stock: 2, status: "reserved", views: 287, viewsThisWeek: 156, inquiries: 8, sales: 3 },
+  { id: "prod-3", name: "Candle Set", image: "🕯️", price: 45.99, stock: 1, status: "available", views: 198, viewsThisWeek: 98, inquiries: 15, sales: 8 },
+  { id: "prod-4", name: "Notebook", image: "📓", price: 32.00, stock: 12, status: "available", views: 421, viewsThisWeek: 67, inquiries: 4, sales: 2 },
+  { id: "prod-5", name: "Scarf", image: "🧣", price: 28.00, stock: 5, status: "available", views: 156, viewsThisWeek: 23, inquiries: 6, sales: 4 },
+  { id: "prod-6", name: "Planner", image: "📅", price: 19.99, stock: 0, status: "sold", views: 234, viewsThisWeek: 0, inquiries: 0, sales: 1 },
+  { id: "prod-7", name: "Tea Set", image: "🫖", price: 52.00, stock: 3, status: "available", views: 178, viewsThisWeek: 134, inquiries: 9, sales: 6 },
+  { id: "prod-8", name: "Cushion Cover", image: "🛋️", price: 22.50, stock: 18, status: "available", views: 89, viewsThisWeek: 201, inquiries: 1, sales: 0 },
+];
 
-  const [selectedRequestStatus, setSelectedRequestStatus] = useState("All");
-
-  const sectionTitle = {
-  fontSize: "26px",
-  margin: "24px 0 16px", // reduced spacing
-  fontWeight: "600",
+const statusConfig = {
+  initiated: {
+    label: "Initiated",
+    color: "bg-[#fff6db] text-[#a16207] border-[#f5e6a3]"
+  },
+  negotiating: {
+    label: "Negotiating",
+    color: "bg-[#e6f0ff] text-[#2563eb] border-[#c7dbff]"
+  },
+  deal_confirmed: {
+    label: "Deal Confirmed",
+    color: "bg-[#e6f7ed] text-[#15803d] border-[#b6e3c6]"
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-[#fde8e8] text-[#b91c1c] border-[#f5bcbc]"
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-[#ede9fe] text-[#7c3aed] border-[#d6ccfb]"
+  }
 };
 
-const cardBase = {
-  background: "#f6efe5",
-  padding: "10px 12px", // 🔥 reduced card padding
-  borderRadius: "14px",
-  boxShadow: "0 3px 8px rgba(0,0,0,0.08)",
+const getOrderStatusUI = (status) => {
+  switch (status) {
+    case "pending":
+      return {
+        icon: <Clock className="w-4 h-4 text-yellow-600" />,
+        label: "Pending"
+      };
+    case "otp_verified":
+      return {
+        icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+        label: "Completed"
+      };
+    default:
+      return {
+        icon: null,
+        label: status
+      };
+  }
 };
 
-  const badgeStyle = {
-    padding: "9px 14px",
-    borderRadius: "20px",
-    fontSize: "14px",
-    display: "inline-block",
-  };
+const productStatusConfig = {
+  available: { label: "Available", color: "bg-secondary/10 text-secondary border-secondary/20" },
+  reserved: { label: "Reserved", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
+  sold: { label: "Sold", color: "bg-gray-100 text-gray-600 border-gray-200" },
+};
 
-  const buyerRequests = [
-    {
-      product: "Handmade Ceramic Mug",
-      buyer: "Emma Wilson",
-      price: "$24.99",
-      message: "Can you do $22? I'll pick it up today.",
-      time: "5 min ago",
-      status: "Negotiating",
-    },
-    {
-      product: "Handmade Ceramic Mug",
-      buyer: "John Smith",
-      price: "$24.99",
-      message: "Is this still available?",
-      time: "10 min ago",
-      status: "Initiated",
-    },
-  ];
+export function SellerDashboard() {
+
+  const [user, setUser] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchName = async() =>{
+      try {
+        const { data } = await api.get("/users/me");
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    fetchName();
+  }, [])
+
+  useEffect(() => {
+    const fetchSellerConversations = async() =>{
+      try {
+        const res = await api.get("/conversations/seller");
+        setRequests(res.data.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSellerConversations();
+  }, [])
+
+  const fetchSellerOrders = async () =>{
+    try {
+      const res = await api.get("/seller/orders");
+      setOrders(res.data.data);
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setLoading(false);
+    }
+  }
+  
+  useEffect(() => {
+    fetchSellerOrders();
+  }, [])
+
+  const [earnings, setEarnings] = useState({
+    today: 0,
+    yesterday: 0,
+  });
+  
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        const { data } = await api.get("/seller/earnings")
+        setEarnings(data);
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEarnings();
+  }, []);
+
+  //calculate % change
+  const earningsChange = (() => {
+    if (earnings.yesterday === 0 && earnings.today === 0) {
+      return 0; //no change
+    }
+
+    if (earnings.yesterday === 0) {
+      return 100; //growth from zero
+    }
+
+    return (
+      ((earnings.today - earnings.yesterday) / earnings.yesterday) * 100
+    );
+  })();
+
+  const [pending, setPending] = useState({
+    totalPendingAmount: 0,
+    totalPendingOrders: 0,
+  });
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const { data } = await api.get("/seller/pendingEarnings")
+
+        setPending(data);
+      } catch (err) {
+        console.error("Error fetching pending earnings", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPending();
+  }, []);
+
+  const [negotiation, setNegotiation] = useState({
+    totalPotentialAmount: 0,
+    totalConversations: 0,
+  });
+
+  useEffect(() => {
+    const fetchNegotiations = async () => {
+      try {
+        const { data } = await api.get("/seller/negotiations")
+
+        setNegotiation(data);
+      } catch (err) {
+        console.error("Error fetching negotiations", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchNegotiations();
+  }, []);
+
+  const [weekly, setWeekly] = useState({
+    thisWeek: 0,
+    lastWeek: 0,
+  });
+  
+  useEffect(() => {
+    const fetchWeeklyEarnings = async () => {
+      try {
+        const { data } = await api.get("/seller/weeklyEarnings")
+
+        setWeekly(data);
+      } catch (err) {
+        console.error("Error fetching weekly earnings", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchWeeklyEarnings();
+  }, []);
+
+  const weeklyChange = (() => {
+    if (weekly.lastWeek === 0 && weekly.thisWeek === 0) return 0;
+    if (weekly.lastWeek === 0) return 100;
+
+    return (
+      ((weekly.thisWeek - weekly.lastWeek) / weekly.lastWeek) * 100
+    );
+  })();
+
+  const [dailyEarnings, setDailyEarnings] = useState([]);
+
+  useEffect(() => {
+    const fetchDaily = async () => {
+      try {
+        const { data } = await api.get("/seller/dailyEarnings");
+
+        setDailyEarnings(data);
+      } catch (err) {
+        console.error("Error fetching daily earnings", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchDaily();
+  }, []);
+
+  const [topEarner, setTopEarner] = useState(null);
+
+  useEffect(() => {
+    const fetchTopProduct = async () => {
+      try {
+        const { data } = await api.get("/seller/topProduct");
+
+        setTopEarner(data);
+      } catch (err) {
+        console.error("Error fetching top product", err);
+      } finally {
+        setLoading(false)
+      }
+    };
+
+    fetchTopProduct();
+  }, []);
+
+  const [highViewsNoInquiries, setHighViewsNoInquiries] = useState([]);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInsights = async () => {
+      try {
+        const { data } = await api.get("/seller/insights");
+
+        //transform + compute conversion
+        const formatted = data.map((product) => {
+          const views = product.views || 0;
+          const inquiries = product.inquiries || 0;
+
+          const conversionRate =
+            views > 0 ? (inquiries / views) * 100 : 0;
+
+          return {
+            _id: product._id,
+            name: product.name,
+            image: product.image,
+            views,
+            inquiries,
+            conversionRate,
+          };
+        });
+
+        //filter logic
+        const filtered = formatted.filter(
+          (p) => p.views >= 50 && p.conversionRate <= 2
+        );
+
+        setHighViewsNoInquiries(filtered);
+      } catch (err) {
+        console.error("Error fetching insights", err.response || err);
+      } finally {
+        setInsightsLoading(false);
+      }
+    };
+
+    fetchInsights();
+  }, []);
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        background: "#efe4d4",
-        minHeight: "100vh",
-        fontFamily: "Segoe UI, sans-serif",
-      }}
-    >
-      {/* ================= Dashboard Overview ================= */}
-      <h2 style={sectionTitle}>Dashboard Overview</h2>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "25px",
-        }}
-      >
-        <div style={{ ...cardBase, borderLeft: "5px solid #3b82f6" }}>
-          <MessageSquare size={28} />
-          <h3 style={{ fontSize: "30px", margin: "15px 0 5px" }}>1</h3>
-          <p style={{ color: "#555" }}>Active Negotiations</p>
-        </div>
-
-        <div style={{ ...cardBase, borderLeft: "5px solid #f59e0b" }}>
-          <Clock size={28} />
-          <h3 style={{ fontSize: "30px", margin: "15px 0 5px" }}>3</h3>
-          <p style={{ color: "#555" }}>Deals Confirmed / Reserved</p>
-        </div>
-
-        <div style={{ ...cardBase, borderLeft: "5px solid #16a34a" }}>
-          <CheckCircle size={28} />
-          <h3 style={{ fontSize: "30px", margin: "15px 0 5px" }}>12</h3>
-          <p style={{ color: "#555" }}>Completed Sales</p>
-        </div>
-
-        <div style={{ ...cardBase, borderLeft: "5px solid #8b5e3c" }}>
-          <Package size={28} />
-          <h3 style={{ fontSize: "30px", margin: "15px 0 5px" }}>6</h3>
-          <p style={{ color: "#555" }}>Total Products Listed</p>
-        </div>
-      </div>
-
-      {/* ================= Buyer Requests ================= */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          margin: "50px 0 25px",
-        }}
-      >
-        <h2 style={{ fontSize: "24px", fontWeight: "600" }}>
-          Buyer Requests
-        </h2>
-
-        <button
-          style={{
-            border: "1px solid #c9b8a3",
-            padding: "8px 18px",
-            borderRadius: "25px",
-            background: "transparent",
-            cursor: "pointer",
-          }}
-        >
-          View All
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div style={{ display: "flex", gap: "12px", marginBottom: "25px" }}>
-        {["All", "Initiated", "Negotiating", "Deal Confirmed", "Cancelled"].map(
-          (item, index) => (
-            <button
-              key={index}
-              onClick={() => setSelectedRequestStatus(item)}
-              style={{
-                padding: "8px 18px",
-                borderRadius: "25px",
-                border: "1px solid #c9b8a3",
-                background:
-                  selectedRequestStatus === item ? "#c5652d" : "#f6efe5",
-                color:
-                  selectedRequestStatus === item ? "#fff" : "#000",
-                cursor: "pointer",
-              }}
-            >
-              {item}
-            </button>
-          )
-        )}
-      </div>
-
-      {/* Buyer Request Cards */}
-      {buyerRequests
-        .filter((req) =>
-          selectedRequestStatus === "All"
-            ? true
-            : req.status === selectedRequestStatus
-        )
-        .map((req, index) => (
-          <div
-            key={index}
-            style={{
-              ...cardBase,
-              marginBottom: "25px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-                <div
-                  style={{
-                    width: "65px",
-                    height: "65px",
-                    background: "#e8d9c7",
-                    borderRadius: "15px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "26px",
-                  }}
-                >
-                  ☕
-                </div>
-
-                <div>
-                  <h4 style={{ fontSize: "18px" }}>{req.product}</h4>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                <span
-                  style={{
-                    ...badgeStyle,
-                    background: "#fef3c7",
-                    color: "#b45309",
-                  }}
-                >
-                  {req.status}
-                </span>
-
-                <button
-                  style={{
-                    background: "#c5652d",
-                    color: "#fff",
-                    border: "none",
-                    padding: "5px 10px",
-                    borderRadius: "14px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <MessageSquare size={18} /> Open Chat
-                </button>
-
-                <div
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setOpenRequest(!openRequest)}
-                >
-                  {openRequest ? (
-                    <ChevronUp size={22} />
-                  ) : (
-                    <ChevronDown size={22} />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {openRequest && (
-              <div
-                style={{
-                  marginTop: "25px",
-                  paddingTop: "20px",
-                  borderTop: "1px solid #e0d2bf",
-                }}
-              >
-                <div style={{ marginBottom: "8px", fontWeight: "600" }}>
-                  {req.buyer}
-                </div>
-
-                <div
-                  style={{
-                    color: "#c5652d",
-                    fontSize: "18px",
-                    fontWeight: "600",
-                    marginBottom: "8px",
-                  }}
-                >
-                  {req.price}
-                </div>
-
-                <p style={{ color: "#555", fontStyle: "italic" }}>
-                  "{req.message}"
-                </p>
-
-                <span style={{ fontSize: "13px", color: "#888" }}>
-                  {req.time}
-                </span>
-              </div>
-            )}
-          </div>
-        ))}
-      
-
-      {/* ================= Awaiting Delivery ================= */}
-      <h2 style={sectionTitle}>Awaiting Delivery</h2>
-
-      <div
-        style={{
-          ...cardBase,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-          <div
-            style={{
-              width: "55px",
-              height: "55px",
-              background: "#e8d9c7",
-              borderRadius: "12px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: "22px",
-            }}
-          >
-            🕯️
-          </div>
-
+    <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6">
+      {/* WELCOME BANNER */}
+      <div className="mb-8 bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h4 style={{ margin: "0 0 4px" }}>
-              Artisan Candle Collection
-            </h4>
-            <p style={{ color: "#555", fontSize: "14px", margin: 0 }}>
-              Michael Brown
+            <h1 className="text-3xl font-semibold text-text mb-2">Welcome back, {user?.name}! 👋</h1>
+            <p className="text-muted">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-        </div>
-
-        {/* 🔹 OTP Badge + Button in Same Row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "15px",
-          }}
-        >
-          <span
-            style={{
-              ...badgeStyle,
-              background: "#fde68a",
-              color: "#92400e",
-            }}
-          >
-            OTP Generated
-          </span>
-
-          <button
-            style={{
-              background: "#c5652d",
-              color: "#fff",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "12px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "13px",
-            }}
-          >
-            <ShieldCheck size={16} /> Verify OTP
-          </button>
+          <div className="flex gap-3">
+            <Link to="/marketplace/seller/products">
+              <Button className="flex items-center bg-primary gap-2 text-card">
+                <Plus className="w-4 h-4" />
+                Add New Product
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
-      {/* ================= Products Snapshot ================= */}
-      <h2 style={sectionTitle}>My Products Snapshot</h2>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "25px",
-        }}
-      >
-        {[
-          { name: "Ceramic Mug", price: "$24.99", stock: 15, status: "Available" },
-          { name: "Tote Bag", price: "$18.50", stock: 8, status: "Reserved" },
-          { name: "Candle Set", price: "$45.99", stock: 0, status: "Sold" },
-        ].map((item, index) => (
-          <div key={index} style={cardBase}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: "10px",
-              }}
-            >
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  background: "#e5d5c2",
-                  borderRadius: "12px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  fontSize: "24px",
-                }}
-              >
-                📦
-              </div>
+      {/* EARNINGS AT A GLANCE */}
+      <div className="mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Today's Earnings */}
+          <Card className="p-6 border border-border border-l-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-text">Today's Earnings</p>
 
               <span
-                style={{
-                  ...badgeStyle,
-                  background:
-                    item.status === "Available"
-                      ? "#d1fae5"
-                      : item.status === "Reserved"
-                      ? "#fef3c7"
-                      : "#e5e7eb",
-                  color:
-                    item.status === "Available"
-                      ? "#065f46"
-                      : item.status === "Reserved"
-                      ? "#b45309"
-                      : "#6b7280",
-                }}
+                className={`text-xs ${
+                  earningsChange >= 0 ? "text-green-500" : "text-red-500"
+                }`}
               >
-                {item.status}
+                {earnings.yesterday === 0 && earnings.today > 0
+                  ? "New"
+                  : `${earningsChange >= 0 ? "+" : ""}${earningsChange.toFixed(2)}%`}
               </span>
             </div>
 
-            <h4>{item.name}</h4>
-            <span style={{ color: "#c5652d", fontWeight: "600" }}>
-              {item.price}
-            </span>
-            <p
-              style={{
-                margin: "10px 0",
-                color: item.stock === 0 ? "red" : "#555",
-              }}
-            >
-              Stock: {item.stock}
+            <p className="text-4xl font-bold text-text">
+              ₹{earnings.today.toFixed(2)}
             </p>
 
-            <button
-              style={{
-                width: "100%",
-                background: item.stock === 0 ? "#ddd" : "#4d6f2e",
-                color: item.stock === 0 ? "#666" : "#fff",
-                border: "none",
-                padding: "10px",
-                borderRadius: "25px",
-                cursor: "pointer",
-              }}
-            >
-              {item.stock === 0 ? "Sold Out" : "Edit Product"}
-            </button>
+            <p className="text-xs text-muted">
+              vs ₹{earnings.yesterday.toFixed(2)} yesterday
+            </p>
+          </Card>
+
+          {/* Pending Money */}
+          <Card className="p-6 border border-border border-l-4 border-l-yellow-500">
+            <p className="text-sm text-text">Pending (Ship & Collect)</p>
+
+            <p className="text-4xl font-bold text-yellow-600">
+              ₹{pending.totalPendingAmount.toFixed(2)}
+            </p>
+
+            <div className="flex items-center gap-1 text-xs text-muted">
+              <Clock className="w-3 h-3" />
+              {pending.totalPendingOrders} order
+              {pending.totalPendingOrders !== 1 ? "s" : ""} waiting
+            </div>
+          </Card>
+
+          {/* In Negotiation */}
+          <Card className="p-6 border border-border border-l-4 border-l-blue-500">
+            <p className="text-sm text-text">Potential Earnings</p>
+
+            <p className="text-4xl font-bold text-blue-600">
+              ₹{negotiation.totalPotentialAmount.toFixed(2)}
+            </p>
+
+            <div className="flex items-center gap-1 text-xs text-muted">
+              <MessageSquare className="w-3 h-3" />
+              {negotiation.totalConversations} conversation
+              {negotiation.totalConversations !== 1 ? "s " : " "}
+              in negotiation
+            </div>
+          </Card>
+
+          {/* Weekly Goal */}
+          <Card className="p-6 border border-border border-l-4 border-l-secondary">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-text">This Week's Total</p>
+
+              <span
+                className={`text-xs ${
+                  weeklyChange >= 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {weekly.lastWeek === 0 && weekly.thisWeek > 0
+                  ? "New"
+                  : `${weeklyChange >= 0 ? "+" : ""}${weeklyChange.toFixed(2)}%`}
+              </span>
+            </div>
+
+            <p className="text-4xl font-bold text-secondary">
+              ₹{weekly.thisWeek.toFixed(2)}
+            </p>
+
+            <p className="text-xs text-muted">
+              vs ₹{weekly.lastWeek.toFixed(2)} last week
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      {/* SMART INSIGHTS & EARNINGS TREND */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-6 h-6 text-primary" />
+          <h2 className="text-2xl font-semibold text-text">Smart Insights & Trends</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Daily Earnings Chart */}
+          <Card className="p-6 border-border border-2">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-text">
+                  Daily Earnings
+                </h3>
+                <p className="text-sm text-muted">
+                  Last 7 days
+                </p>
+              </div>
+            </div>
+            <div className="flex items-end justify-between gap-2 h-48">
+              {dailyEarnings.map((day, index) => {
+                const maxAmount = Math.max(...dailyEarnings.map(d => d.amount));
+                const height = maxAmount > 0 ? (day.amount / maxAmount) * 100 : 0;
+                const isToday = index === dailyEarnings.length - 1;
+                
+                return (
+                  <div key={day.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                    <p className="text-xs font-semibold text-text">₹{day.amount}</p>
+                    <div 
+                      className={`w-full rounded-t-lg transition-all ${
+                        isToday ? 'bg-primary' : 'bg-secondary/40'
+                      } hover:opacity-80 cursor-pointer`}
+                      style={{ height: `${height}%`, minHeight: day.amount > 0 ? '8px' : '0' }}
+                    />
+                    <p className={`text-xs ${isToday ? 'font-bold text-primary' : 'text-text'}`}>
+                      {day.day}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-linear-to-br from-secondary/10 via-accent/5 to-primary/10 border-2 border-secondary/40 rounded-2xl">
+
+            {/* HEADER */}
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-text">
+                  💰 Top Product
+                </h3>
+                <p className="text-sm text-muted">
+                  Best performer this week
+                </p>
+              </div>
+            </div>
+
+            {topEarner ? (
+              <div className="bg-card border border-border rounded-2xl p-5">
+
+                {/* PRODUCT + PRICE */}
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src={topEarner.image}
+                    alt={topEarner.name}
+                    className="w-16 h-16 object-cover rounded-lg"
+                  />
+
+                  <div>
+                    <p className="text-lg font-semibold text-text">
+                      {topEarner.name}
+                    </p>
+                    <p className="text-3xl font-bold text-secondary">
+                      ₹{(topEarner.price * topEarner.sales).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* STATS */}
+                <div className="grid grid-cols-2 gap-3">
+                  
+                  {/* SALES */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-3">
+                    <p className="text-xs text-text mb-1">
+                      Sales
+                    </p>
+                    <p className="font-semibold text-text">
+                      {topEarner.sales} units
+                    </p>
+                  </div>
+
+                  {/* AVG PRICE */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-3">
+                    <p className="text-xs text-text mb-1">
+                      Avg Price
+                    </p>
+                    <p className="font-semibold text-text">
+                      ₹{topEarner.price.toFixed(2)}
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6 text-text text-sm">
+                No sales yet this week
+              </div>
+            )}
+
+          </Card>
+
+          {/* Price Too High? */}
+          <Card className="p-6 bg-linear-to-br from-blue-50 to-purple-50 border-2 border-blue-500/30">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Eye className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-text">
+                  👀 High Views, Few Inquiries
+                </h3>
+                <p className="text-sm text-muted">
+                  Consider lowering price
+                </p>
+              </div>
+            </div>
+            {insightsLoading ? (
+              <p className="text-sm text-muted">Analyzing products...</p>
+            ) : highViewsNoInquiries.length > 0 ? (
+              <div className="max-h-50 overflow-y-auto pr-1 space-y-3">
+                {highViewsNoInquiries.map((product) => (
+                  <div
+                    key={product._id}
+                    className="flex items-center justify-between p-3 bg-card rounded-lg border border-border"
+                  >
+                    <div className="flex items-center gap-2">
+
+                      {/* IMAGE */}
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-10 h-10 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-xs">
+                          No Img
+                        </div>
+                      )}
+
+                      {/* TEXT */}
+                      <div>
+                        <p className="text-sm font-semibold text-text">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          {product.views} views • {product.inquiries} inquiries
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* ACTION */}
+                    <Link to="/marketplace/seller/products">
+                      <Button
+                        size="sm"
+                        className="px-3 py-1.5 font-semibold border border-border text-text bg-card rounded-lg hover:bg-primary/10 transition"
+                      >
+                        Edit
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-text text-center">
+                All products performing well!
+              </p>
+            )}
+          </Card>
+
+        </div>
+      </div>
+
+      {/* RECENT COMPLETED ORDERS & BUYER REQUESTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ALL BUYER REQUESTS */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-semibold text-text">Buyer Requests</h2>
+            </div>
+            <Link to="/marketplace/seller/messages">
+              <Button className="text-card" size="sm">View All</Button>
+            </Link>
           </div>
-        ))}
+
+          <Card className="p-4 border-border">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+
+                {/* TABLE HEADER */}
+                <thead>
+                  <tr className="text-left border-b border-border text-muted">
+                    <th className="py-2">Product</th>
+                    <th>Buyer</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th className="text-right">Action</th>
+                  </tr>
+                </thead>
+
+                {/* TABLE BODY */}
+                <tbody>
+                  {requests?.slice(0, 5).map((request) => {
+                    const statusInfo = statusConfig[request.status];
+
+                    return (
+                      <tr
+                        key={request._id}
+                        className="border-b border-border hover:bg-accent/20 transition"
+                      >
+                        {/* PRODUCT */}
+                        <td className="py-3 flex items-center gap-3">
+                          {request.productId?.images?.[0]?.url ? (
+                            <img
+                              src={request.productId.images[0].url}
+                              alt={request.productId?.name}
+                              className="w-10 h-10 rounded-md object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-xs">
+                              No Img
+                            </div>
+                          )}
+
+                          <span className="font-medium truncate max-w-30">
+                            {request.productId?.name}
+                          </span>
+                        </td>
+
+                        {/* BUYER */}
+                        <td>
+                          <div className="flex items-center gap-2">
+                            {request.buyerId?.avatar ? (
+                              <img
+                                src={request.buyerId.avatar}
+                                alt={request.buyerId?.name}
+                                className="w-6 h-6 rounded-full"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-background rounded-full flex items-center justify-center text-xs">
+                                👤
+                              </div>
+                            )}
+
+                            <span>{request.buyerId?.name}</span>
+                          </div>
+                        </td>
+
+                        {/* PRICE */}
+                        <td className="font-semibold text-primary">
+                          ₹{request.productId?.price?.toFixed(2)}
+                        </td>
+
+                        {/* STATUS */}
+                        <td>
+                          <Badge className={`${statusInfo?.color} border text-xs`}>
+                            {statusInfo?.label}
+                          </Badge>
+                        </td>
+
+                        {/* ACTION */}
+                        <td className="text-right">
+                          <Link to={`/marketplace/seller/messages/${request._id}`}>
+                            <Button size="sm" className="bg-primary text-card">
+                              Chat
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+
+              </table>
+            </div>
+          </Card>
+        </div>
+        {/* RECENT COMPLETED ORDERS */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-6 h-6 text-secondary" />
+              <h2 className="text-2xl font-semibold text-text">Recent Orders</h2>
+            </div>
+            <Link to="/marketplace/seller/orders">
+              <Button className="text-card" size="sm">View All</Button>
+            </Link>
+          </div>
+
+          <Card className="p-4 border-border">
+
+            {/* 🔄 LOADING STATE */}
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-accent/20 animate-pulse rounded-md" />
+                ))}
+              </div>
+            ) : orders?.length === 0 ? (
+
+              /* 📭 EMPTY STATE */
+              <div className="text-center py-8 text-muted">
+                <p className="text-sm">No orders yet</p>
+                <p className="text-xs">Your completed orders will appear here</p>
+              </div>
+
+            ) : (
+
+              /* ✅ TABLE */
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+
+                  <thead>
+                    <tr className="text-left border-b border-border text-muted">
+                      <th className="py-2">Product</th>
+                      <th>Buyer</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                      <th className="text-right">Amount</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {orders.slice(0, 5).map((order) => {
+                      const date = new Date(order.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit"
+                      });
+                      const statusUI = getOrderStatusUI(order.status);
+
+                      return (
+                        <tr
+                          key={order._id}
+                          className="border-b border-border hover:bg-accent/20 transition"
+                        >
+
+                          {/* PRODUCT */}
+                          <td className="py-3 flex items-center gap-3">
+                            {order.productId?.images?.[0]?.url ? (
+                              <img
+                                src={order.productId.images[0].url}
+                                alt={order.productId?.name}
+                                className="w-10 h-10 rounded-md object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center text-xs">
+                                No Img
+                              </div>
+                            )}
+
+                            <span className="font-medium truncate max-w-35">
+                              {order.productId?.name}
+                            </span>
+                          </td>
+
+                          {/* BUYER */}
+                          <td>{order.buyerId?.name}</td>
+
+                          {/* STATUS */}
+                          <td>
+                            <div className="flex items-center gap-2 text-xs">
+                              {statusUI.icon}
+                              <span>{statusUI.label}</span>
+                            </div>
+                          </td>
+
+                          {/* DATE */}
+                          <td className="text-muted">{date}</td>
+
+                          {/* AMOUNT */}
+                          <td className="text-right font-semibold text-secondary">
+                            ₹{(order.amount || order.productId?.price)?.toFixed(2)}
+                          </td>
+
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
+        
       </div>
     </div>
   );
-};
+}
 
-export default SellerDashboard;
+export default SellerDashboard

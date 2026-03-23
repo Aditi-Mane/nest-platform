@@ -30,6 +30,11 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    views: {
+      type: Number,
+      default: 0,
+    },
+
     price: {
       type: Number,
       required: true,
@@ -55,25 +60,23 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    //Product's sentiment rating system => from ml-services (sentiment analyzer)
-    sentimentRating: {
-      type: Number, //0-5
-      default: 0,
-    },
+   //Product's sentiment rating system => from ml-services (sentiment analyzer)
+      averageRating: {
+        type: Number,
+        default: 0,
+      },
 
-    //No. of ratings
-    ratingCount: {
-      type: Number,
-      default: 0,
-    },
+      reviewCount: {
+        type: Number,
+        default: 0,
+      },
 
-    //from ml-services (sentiment analyzer) --> from dashboard analytics
-    sentimentBreakdown: {
-      positive: { type: Number, default: 0 },
-      neutral: { type: Number, default: 0 },
-      negative: { type: Number, default: 0 },
-    },
-
+      sentimentStats: {
+        positive: { type: Number, default: 0 },
+        neutral: { type: Number, default: 0 },
+        negative: { type: Number, default: 0 },
+      },
+      
     // Product condition (New, Used)
     condition: {
       type: String,

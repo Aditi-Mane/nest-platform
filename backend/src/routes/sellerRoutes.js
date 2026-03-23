@@ -1,5 +1,8 @@
 import express from "express"
-import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, generateOrderOtp, getMyProducts, getSellerOrders, setupSeller, verifyOrderOtp} from "../controllers/sellerController.js";
+import { cancelDeal, confirmDeal, createProduct, deleteProduct, editProduct, 
+  generateOrderOtp, getAverageRating, getDailyEarnings, getEarnings, getInsights, getMyProducts, 
+  getNegotiatingConversations, getPendingEarnings, getSellerAnalytics, getSellerAverageRating, getSellerOrders, 
+  getTopProductThisWeek, getWeeklyEarnings, incrementViews, setupSeller, verifyOrderOtp} from "../controllers/sellerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { checkSeller } from "../middleware/sellerMiddleware.js";
@@ -16,5 +19,19 @@ router.put("/cancel/:conversationId", protect, checkSeller, cancelDeal);
 router.get("/orders", protect, checkSeller, getSellerOrders);
 router.post("/orders/:orderId", protect, checkSeller, verifyOrderOtp);
 router.put("/otp", protect, checkSeller, generateOrderOtp);
+router.get("/analytics", protect, checkSeller, getSellerAnalytics);
+router.get("/productRatings", protect, checkSeller, getAverageRating);
+router.patch("/views/:productId", protect, incrementViews);
+
+router.get("/seller-rating/:sellerId", protect, getSellerAverageRating);
+
+//seller dashboard routes
+router.get("/earnings", protect, checkSeller, getEarnings);
+router.get("/pendingEarnings", protect, checkSeller, getPendingEarnings);
+router.get("/negotiations", protect, checkSeller, getNegotiatingConversations);
+router.get("/weeklyEarnings", protect, checkSeller, getWeeklyEarnings);
+router.get("/dailyEarnings", protect, checkSeller, getDailyEarnings);
+router.get("/topProduct", protect, checkSeller, getTopProductThisWeek);
+router.get("/insights", protect, checkSeller, getInsights);
 
 export default router;

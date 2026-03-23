@@ -8,7 +8,8 @@ import {
   CheckCircle2,
   MapPin,
   Package,
-  Shield
+  Shield,
+  Sparkles
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,10 @@ export default function ProductDetailPage() {
   const [reviews, setReviews] =useState([]);
   const [loadingReviews, setLoadingReviews] =useState(true);
   const [conversation, setConversation] = useState(null);
+  const [sellerRating, setSellerRating] = useState(0.0);
+  const [reviewCount, setReviewCount] = useState(0); 
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(true);   
   const location = useLocation();
 
 
@@ -204,13 +209,39 @@ const fetchConversation = async () => {
            setLoadingReviews(false);
         }
       }
+      const fetchRecommendations = async () => {
+      try {
+        const res = await api.get(`/products/recommend-ml/${id}`);
+        setRecommendations(res.data.recommendations);
+      } catch (err) {
+        console.log("ML rec error", err);
+      } finally {
+        setLoadingRecs(false);
+      }
+    };
+
+
+
+
       
     fetchConversation();
     fetchProduct();
     fetchReviews();
+    fetchRecommendations();
     
 
-  },[id]);
+  },[id, location ]);
+
+  useEffect(() => {
+  const fetchRating = async () => {
+    const res = await api.get(`/seller/seller-rating/${seller._id}`);
+
+    setSellerRating(res.data.avgRating);
+    setReviewCount(res.data.totalReviews);
+  };
+
+  if (seller?._id) fetchRating();
+}, [seller]);
 
 
 console.log("UPDATED STATUS:", conversation?.status);
@@ -351,10 +382,10 @@ if (!product) {
                <Badge
                 className={
                   product?.status === "sold"
-                    ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm"
+                    ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-sm"
                     : product?.status === "reserved"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm"
-                    : "bg-gradient-to-r from-emerald-400 to-green-600 text-white shadow-sm"
+                    ? "bg-linear-to-r from-amber-400 to-orange-500 text-white shadow-sm"
+                    : "bg-linear-to-r from-emerald-400 to-green-600 text-white shadow-sm"
                 }
               >
                 {product?.status?.toUpperCase() ?? "AVAILABLE"}
@@ -412,11 +443,21 @@ if (!product) {
 <Card className="rounded-2xl bg-card/80 backdrop-blur-sm border-border shadow-sm">
   <CardHeader>
     <CardTitle className="flex items-center justify-between">
-      <span>Reviews</span>
+      <p>Reviews</p>
 
-      <span className="text-sm text-muted-foreground">
-        {reviews.length} Reviews
-      </span>
+      <div className="flex items-center gap-1 text-sm mb-2">
+          <Star className="h-4 w-4 fill-primary text-primary" />
+
+          {product.reviewCount > 0 ? (
+            <span className="text-muted-foreground">
+              {product.averageRating.toFixed(1)} ({product.reviewCount})
+            </span>
+          ) : (
+            <span className="text-muted-foreground opacity-70">
+              No reviews yet
+            </span>
+          )}
+        </div>
     </CardTitle>
   </CardHeader>
 
@@ -502,7 +543,7 @@ if (!product) {
                   className={`w-full rounded-xl border transition-all duration-200
                     ${getSoftButtonStyle(product?.status,conversation?.status, "cart")}
                     ${getSoftHover(product?.status,conversation?.status, "cart")}
-                    !shadow-none
+                    shadow-none!
                   `}
                   disabled={isUnavailable}
                   onClick={handleAddToCart}
@@ -520,32 +561,39 @@ if (!product) {
                   className={`w-full rounded-xl border 
                     ${getButtonStyle(conversation?.status, product?.status)}
                     ${getHoverStyle(conversation?.status, product?.status)}
-                    !shadow-none transition-all`}
+                    shadow-none! transition-all`}
                   disabled={isContactButtonDisabled(conversation?.status, product?.status)}
                   onClick={async () => {
-                    try {
-                      
-                      await addToCart(product._id);
+                          try {
 
-                      let conversationId = conversation?._id;
+                            await addToCart(product._id);
 
-                      
-                      if (!conversationId) {
-                        const res = await api.post("/conversations/create", {
-                          productId: product._id,
-                        });
+                            let conversationId = conversation?._id;
 
-                        conversationId = res.data.conversation._id;
-                        setConversation(res.data.conversation);
-                      }
+                            // Create NEW conversation if previous one ended
+                            if (
+                              !conversationId ||
+                              conversation?.status === "cancelled" ||
+                              conversation?.status === "completed"
+                            ) {
+                              const res = await api.post("/conversations/create", {
+                                productId: product._id,
+                              });
 
-                      
-                      navigate(`/marketplace/buyer/messages/${conversationId}`);
-                    } catch (error) {
-                      console.error(error);
-                      alert("Something went wrong");
-                    }
-                  }}
+                              const newConversation = res.data.conversation;
+
+                              conversationId = newConversation._id;
+
+                              setConversation(newConversation);
+                            }
+
+                            navigate(`/marketplace/buyer/messages/${conversationId}`);
+
+                          } catch (error) {
+                            console.error(error);
+                            alert("Something went wrong");
+                          }
+                }}
                 >
                   <MessageSquare className="h-5 w-5 mr-2" />
                   {getContactButtonText(conversation?.status, product?.status)}
@@ -580,7 +628,7 @@ if (!product) {
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         <span className="text-sm">
-                          {seller.rating ?? 0} ({seller.reviewCount ?? 0} reviews)
+                          {sellerRating} ({reviewCount} reviews)
                         </span>
                       </div>
                     </div>
@@ -619,27 +667,84 @@ if (!product) {
               </Card>
             )}
 
-            {/* Similar Items */}
-            {/* <Card className="rounded-2xl">
-              <CardHeader>
-                <CardTitle>Similar Items</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {similarItems.map((item, i) => (
-                  <div key={i} className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <ImageWithFallback src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate mb-1">{item.name}</p>
-                      <p className="text-sm text-[#2563EB]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
-                        ${item.price}
+           <Card className="rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+  <CardHeader className="pb-2">
+    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+      <Sparkles className="h-5 w-5 text-primary" />
+      Recommended for you
+    </CardTitle>
+  </CardHeader>
+
+            <CardContent className="space-y-3">
+              {loadingRecs && (
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Finding best matches...
+                </div>
+              )}
+
+               {/* Recommendations */}
+              {!loadingRecs && recommendations.length === 0 && (
+                <p className="text-sm text-muted text-center py-4">
+                  No recommendations yet
+                </p>
+              )}
+
+              {recommendations.map((item) => (
+                <div
+                  key={item._id}
+                  onClick={() =>
+                    navigate(`/marketplace/buyer/product/${item._id}`)
+                  }
+                  className="flex gap-3 p-2 rounded-xl hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                >
+                  {/* Image */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border bg-white shrink-0">
+                    <img
+                      src={item.images?.[0]?.url}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 flex flex-col justify-between">
+                    <p className="text-sm font-medium line-clamp-1">
+                      {item.name}
+                    </p>
+                    {/* Rating */}
+                    <span className="text-xs text-muted">
+                        ⭐ {item.averageRating?.toFixed(1) || "0.0"}
+                    </span>
+
+                    {/* Price + subtle tag */}
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm text-primary font-semibold">
+                        ₹{item.price}
                       </p>
+
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        Similar
+                      </span>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card> */}
+                </div>
+              ))}
+
+              {/* Optional CTA */}
+              {!loadingRecs && recommendations.length > 0 && (
+                <div className="pt-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full text-sm text-primary hover:bg-primary/10 rounded-xl"
+                    onClick={() => navigate("/marketplace")}
+                  >
+                    Explore more →
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           </div>
 
         </div>

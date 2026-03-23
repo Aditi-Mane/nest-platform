@@ -6,6 +6,8 @@ import { ImageWithFallback } from "./figma/ImageWithFallBack";
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
+import { Star } from "lucide-react";
+import api from "../api/axios";
 
  
     export function ProductCard({ 
@@ -35,6 +37,7 @@ import { Badge } from "./ui/badge";
             onToggleFavourite();
           }}
           className="absolute top-3 right-3 transition-transform hover:scale-110"
+          disabled={product.status !== "available"}
         >
           <Heart
             className={`h-6 w-6 transition-all duration-300 ${
@@ -99,16 +102,24 @@ import { Badge } from "./ui/badge";
         )}
 
         {/* Description */}
-        <p className="text-sm font-medium text-muted-foreground line-clamp-2 mb-3">
+        <p className="text-sm font-medium text-muted-foreground line-clamp-2 mb-3  min-h-[2.75rem]">
           {product.description}
         </p>
 
         {/* Rating (Sentiment Rating from backend) */}
-        {product.sentimentRating && (
-          <p className="text-xs text-muted-foreground mb-2">
-            ⭐ {product.sentimentRating} ({product.ratingCount} reviews)
-          </p>
-        )}
+        <div className="flex items-center gap-1 text-sm mb-2">
+          <Star className="h-4 w-4 fill-primary text-primary" />
+
+          {product.reviewCount > 0 ? (
+            <span className="text-muted-foreground">
+              {product.averageRating.toFixed(1)} ({product.reviewCount})
+            </span>
+          ) : (
+            <span className="text-muted-foreground opacity-70">
+              No reviews yet
+            </span>
+          )}
+        </div>
 
         {/* Price */}
         <div className="flex items-center justify-between">
@@ -124,8 +135,14 @@ import { Badge } from "./ui/badge";
         <Button
           variant="outline"
           className="flex-1 rounded-xl border-primary text-primary hover:bg-primary/10"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
+            try {
+              await api.patch(
+                `/seller/views/${product._id}`);
+            } catch (err) {
+              console.error("Error updating views", err);
+            }
             onViewDetails(product._id);
           }}
         >
