@@ -11,6 +11,10 @@ import {
   Trophy
 } from "lucide-react";
 import api from "../../../api/axios.js";
+import { useMessages } from "@/context/MessageContext";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000");
 
 const BuyerMessages = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -24,6 +28,9 @@ const BuyerMessages = () => {
   const themeColor = "var(--color-primary)";
   const softBorder = "var(--color-border)";
 
+  const { setTotalUnread } = useMessages();
+
+ 
   const navigate = useNavigate();
   const renderStatusBadge = (status) => {
   const base =
@@ -69,6 +76,8 @@ const BuyerMessages = () => {
       return null;
   }
 };
+ 
+
 
   const fetchBuyerConversations = async () => {
       try {
@@ -95,6 +104,28 @@ const BuyerMessages = () => {
     window.removeEventListener("focus", handleFocus);
   };
 }, []);
+
+useEffect(() => {
+  socket.on("unread_update", (data) => {
+    setRequests((prev) =>
+      prev.map((conv) =>
+        conv._id === data.conversationId
+          ? { ...conv, unreadCountBuyer: data.unreadCountBuyer }
+          : conv
+      )
+    );
+  });
+
+  return () => socket.off("unread_update");
+}, []);
+ useEffect(() => {
+  const total = requests.reduce(
+    (sum, item) => sum + (item.unreadCountBuyer || 0),
+    0
+  );
+
+  setTotalUnread(total);
+}, [requests]);
 
  
   
@@ -141,51 +172,67 @@ const BuyerMessages = () => {
     {/* CONVERSATION LIST */}
     <div className="flex-1.2 overflow-y-auto">
       {filteredRequests.map((item) => (
-        <div
-          key={item._id}
-          onClick={() =>
-            navigate(`/marketplace/buyer/messages/${item._id}`)
-          }
-          className={`flex items-center gap-3 px-4 py-3 border-b border-gray-200 cursor-pointer transition-all duration-200 group
-            ${item.status === "cancelled"
-              ? "opacity-60 hover:bg-gray-50"
-              : "hover:bg-muted"}
-          `}
-        >
-          {/* Avatar */}
-         <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden">
-            {item.sellerId?.avatar ? (
-              <img
-                src={item.sellerId.avatar}
-                alt="avatar"
-                className="w-full h-full object-cover rounded-full"
-              />
-            ) : (
-              item.sellerId?.name?.[0]
-            )}
-          </div>
+       <div
+  key={item._id}
+  onClick={async () => {
+    await api.post("/messages/mark-read", {
+      conversationId: item._id,
+    });
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-center">
-             
-              <p className="text-sm font-semibold text-gray-900 truncate">
-                {item.sellerId?.name}
-              </p>
+    navigate(`/marketplace/buyer/messages/${item._id}`);
+  }}
+  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-muted"
+>
+  {/* Avatar */}
+  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden shrink-0">
+    {item.sellerId?.avatar ? (
+      <img
+        src={item.sellerId.avatar}
+        alt="avatar"
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      item.sellerId?.name?.[0]
+    )}
+  </div>
 
-            
-            </div>
+  {/* Content */}
+  <div className="flex-1 min-w-0">
+    
+    {/* Top Row */}
+    <div className="flex items-center justify-between gap-2">
+      
+      {/* Name */}
+      <p className="text-sm font-semibold text-gray-900 truncate">
+        {item.sellerId?.name}
+      </p>
 
-            <p className="text-xs text-primary group-hover:opacity-80 font-medium truncate mt-0.5">
-              {item.productId?.name}
-            </p>
+      {/* Right Side (Status + Unread) */}
+      <div className="flex items-center gap-2 shrink-0">
+        
+        {/* Status */}
+        {renderStatusBadge(item.status)}
 
-            <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate mt-1 leading-relaxed">
-              {item.lastMessage || "Start conversation"}
-            </p>
-          </div>
-            {renderStatusBadge(item.status)}
-        </div>
+        {/* Unread Badge */}
+        {item.unreadCountBuyer > 0 && (
+          <span className="bg-green-600 text-white text-[10px] px-2 py-[2px] rounded-full font-medium">
+            {item.unreadCountBuyer}
+          </span>
+        )}
+      </div>
+    </div>
+
+    {/* Product Name */}
+    <p className="text-xs text-primary font-medium truncate mt-1">
+      {item.productId?.name}
+    </p>
+
+    {/* Last Message */}
+    <p className="text-xs text-gray-500 truncate mt-1 leading-relaxed">
+      {item.lastMessage || "Start conversation"}
+    </p>
+  </div>
+</div>
       ))}
     </div>
   </div>

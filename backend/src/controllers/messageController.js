@@ -38,6 +38,15 @@ export const sendMessage = async (req, res) => {
       conversation.status = "negotiating";
     }
 
+    //Unread Messages 
+    if (senderId.toString() === conversation.buyerId.toString()) {
+      // Buyer sent → seller has unread
+      conversation.unreadCountSeller += 1;
+    } else {
+      // Seller sent → buyer has unread
+      conversation.unreadCountBuyer += 1;
+    }
+
     //Create message
     const message = await Message.create({
       conversationId,
@@ -58,6 +67,12 @@ export const sendMessage = async (req, res) => {
       .populate("senderId", "_id name");
 
     io.to(conversationId).emit("receive_message", populatedMessage);
+
+    io.to(conversationId).emit("unread_update", {
+      conversationId,
+      unreadCountBuyer: conversation.unreadCountBuyer,
+      unreadCountSeller: conversation.unreadCountSeller,
+    });
 
     return res.status(201).json({
       message: "Message sent successfully",
@@ -110,6 +125,37 @@ export const getMessages = async (req, res) => {
 
     return res.status(500).json({
       message: "Server error while fetching messages",
+    });
+  }
+};
+
+//MARK AS READ
+export const markAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { conversationId } = req.body;
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    if (userId.toString() === conversation.buyerId.toString()) {
+      conversation.unreadCountBuyer = 0;
+    } else {
+      conversation.unreadCountSeller = 0;
+    }
+
+    await conversation.save();
+
+    return res.status(200).json({
+      message: "Marked as read",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error marking as read",
     });
   }
 };
