@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react";
 import api from "../../../api/axios.js";
+import Pagination from "../../../components/Pagination.jsx";
 
 const SellerMessages = () => {
 
@@ -27,19 +28,33 @@ const SellerMessages = () => {
 
   const navigate = useNavigate();
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
-    const fetchSellerConversations = async() =>{
+    const fetchSellerConversations = async () => {
       try {
-        const res = await api.get("/conversations/seller");
-        setRequests(res.data.conversations);
+        setLoading(true);
+
+        const res = await api.get("/conversations/seller", {
+          params: {
+            page,
+            limit: 6
+          }
+        });
+
+        setRequests(res.data.data);          
+        setTotalPages(res.data.totalPages);
+
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
-    }
+    };
+
     fetchSellerConversations();
-  }, [])
+  }, [page]);
   
   const statusStyle = (status) => {
     const base = {
@@ -318,6 +333,12 @@ const SellerMessages = () => {
           )}
         </div>
       )))}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { TfiPencilAlt } from "react-icons/tfi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import toast from "react-hot-toast";
 import { ChevronDown } from "lucide-react";
+import Pagination from "../../../components/Pagination.jsx";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
@@ -157,15 +158,20 @@ const SellerProducts = () => {
     });
 
   useEffect(() => {
-    const fetchMyProducts = async () => {
+    const fetchProducts = async () => {
       try {
         setFetchLoading(true);
-        const { data } = await api.get(
-          `/seller/my-products?page=${page}&limit=${limit}`
-        );
 
-        setProducts(data.products);
+        const { data } = await api.get("/seller/my-products", {
+          params: {
+            page,
+            limit: 6
+          }
+        });
+
+        setProducts(data.data); 
         setTotalPages(data.totalPages);
+
       } catch (error) {
         console.error("Failed to load products", error);
       } finally {
@@ -173,7 +179,7 @@ const SellerProducts = () => {
       }
     };
 
-    fetchMyProducts();
+    fetchProducts();
   }, [page]);
   
   // FORM CHANGE
@@ -494,10 +500,10 @@ const SellerProducts = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {fetchLoading ? (
           <p className="text-muted mb-4">Loading products...</p>
-        ) : filteredProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <p className="text-muted mb-4">No matching products found</p>
         ) : (
-          filteredProducts.map((p) => {
+          products.map((p) => {
             return (
               <div
                 key={p._id}
@@ -674,53 +680,11 @@ const SellerProducts = () => {
       </div>
 
       {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-3 mt-10">
-
-            {/* PREVIOUS */}
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-              className="px-4 py-2 border border-border bg-card rounded-xl 
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        hover:bg-background transition"
-            >
-              ← Previous
-            </button>
-
-            {/* PAGE NUMBERS */}
-            {[...Array(totalPages)].map((_, index) => {
-              const pageNumber = index + 1;
-
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => setPage(pageNumber)}
-                  className={`w-10 h-10 rounded-xl border transition
-                    ${
-                      page === pageNumber
-                        ? "bg-primary text-white border-primary"
-                        : "bg-card border-border hover:bg-background"
-                    }`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
-
-            {/* NEXT */}
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="px-4 py-2 border border-border bg-card rounded-xl 
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        hover:bg-background transition"
-            >
-              Next →
-            </button>
-
-          </div>
-        )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
 
       {/* MODAL */}
       {showModal && (

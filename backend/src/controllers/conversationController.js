@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Product from "../models/Product.js";
+import { paginate } from "../utils/paginate.js";
 
 export const createConversation = async (req, res) => {
   try {
@@ -108,19 +109,37 @@ export const getSellerConversations = async(req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const conversations = await Conversation.find({
+    //base query
+    let query = Conversation.find({
       sellerId,
-      status: { $ne: "completed" } //hide completed
+      status: { $ne: "completed" }
     })
-    .populate("productId", "name images price status")
-    .populate("buyerId", "name avatar")
-    .sort({updatedAt: -1})
+      .populate("productId", "name images price status")
+      .populate("buyerId", "name avatar")
+      .sort({ updatedAt: -1 });
+
+    //apply pagination
+    const { query: paginatedQuery, page, limit } = paginate(query, req.query);
+
+    const conversations = await paginatedQuery;
+
+    //total count
+    const total = await Conversation.countDocuments({
+      sellerId,
+      status: { $ne: "completed" }
+    });
 
     return res.status(200).json({
       message: "Fetched seller conversations successfully",
-      conversations
-    })
+      data: conversations,
+      page,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
+
   } catch (error) {
+    console.log(error);
+    
     return res.status(500).json({
       message: "Server error whilst fetching conversations"
     })

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FiCheckCircle, FiClock} from "react-icons/fi";
 import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../../../components/Pagination";
 
 const SellerOrderHistory = () => {
   const navigate = useNavigate();
@@ -13,20 +14,33 @@ const SellerOrderHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchSellerOrders = async () =>{
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchSellerOrders = async () => {
     try {
-      const res = await api.get("/seller/orders");
-      setOrders(res.data.orders);
+      setLoading(true);
+
+      const res = await api.get("/seller/orders", {
+        params: {
+          page,
+          limit: 6
+        }
+      });
+
+      setOrders(res.data.data); 
+      setTotalPages(res.data.totalPages);
+
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchSellerOrders();
-  }, [])
+  }, [page]);
 
   const handleGenerateOtp = async (id) =>{
     try {
@@ -131,7 +145,7 @@ const SellerOrderHistory = () => {
       <div className="space-y-5">
         {loading ? (
           <p className="text-muted mb-4">Loading orders...</p>
-        ) : orders.length === 0 ? (
+        ) : filteredOrders.length === 0 ? (
           <p className="text-muted mb-4">No orders yet</p>
         ) : (
         filteredOrders.map(order => (
@@ -235,6 +249,12 @@ const SellerOrderHistory = () => {
           </div>
         )))}
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
 
     </div>
   );

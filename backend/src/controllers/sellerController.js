@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { getTransporter } from "../utils/mailer.js";
 import mongoose from "mongoose";
 import Review from "../models/Review.js";
+import { paginate } from "../utils/paginate.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -147,19 +148,22 @@ export const getMyProducts = async (req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const { page = 1, limit = 6 } = req.query;
+    //base query
+    let query = Product.find({ createdBy: sellerId })
+      .sort({ createdAt: -1 });
 
-    const products = await Product.find({ createdBy: sellerId })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    //apply pagination
+    const { query: paginatedQuery, page, limit } = paginate(query, req.query);
+
+    const products = await paginatedQuery;
 
     const total = await Product.countDocuments({
       createdBy: sellerId,
     });
 
     return res.status(200).json({
-      products,
+      data: products,
+      page,
       total,
       totalPages: Math.ceil(total / limit),
     });
@@ -478,14 +482,27 @@ export const cancelDeal = async (req, res) =>{
 export const getSellerOrders = async (req, res) =>{
   try {
     const sellerId = req.user._id;
-    const orders = await Order.find({sellerId})
-    .populate("productId", "name price images")
-    .populate("buyerId", "name")
-    .sort({createdAt: -1})
+
+    //base query
+    let query = Order.find({ sellerId })
+      .populate("productId", "name price images")
+      .populate("buyerId", "name")
+      .sort({ createdAt: -1 });
+
+    //apply pagination
+    const { query: paginatedQuery, page, limit } = paginate(query, req.query);
+
+    const orders = await paginatedQuery;
+
+    //total count
+    const total = await Order.countDocuments({ sellerId });
 
     return res.status(200).json({
       message: "Orders successfully fetched",
-      orders
+      data: orders,
+      page,
+      total,
+      totalPages: Math.ceil(total / limit),
     });
 
   } catch (error) {
