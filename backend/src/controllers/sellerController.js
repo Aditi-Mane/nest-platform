@@ -395,7 +395,7 @@ export const confirmDeal = async (req, res) => {
     }
 
     const product = await Product.findById(conversation.productId);
-    const buyer = await Product.findById(conversation.buyerId);
+    const buyer = await User.findById(conversation.buyerId);
 
     if(!product) {
       return res.status(404).json({
@@ -1046,11 +1046,12 @@ export const getDailyEarnings = async (req, res) => {
             $dateToString: {
               format: "%Y-%m-%d",
               date: "$createdAt",
+              timezone: "Asia/Kolkata", // 🔥 important
             },
           },
           amount: { $sum: "$totalPrice" },
         },
-      },
+      }
     ]);
 
     //fill missing days 
@@ -1066,10 +1067,18 @@ export const getDailyEarnings = async (req, res) => {
       const date = new Date(sevenDaysAgo);
       date.setDate(sevenDaysAgo.getDate() + i);
 
-      const key = date.toISOString().split("T")[0];
+      const key = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(date);
 
       finalData.push({
-        day: date.toLocaleDateString("en-US", { weekday: "short" }),
+        day: date.toLocaleDateString("en-US", {
+          weekday: "short",
+          timeZone: "Asia/Kolkata"
+        }),
         amount: daysMap[key] || 0,
       });
     }
