@@ -145,7 +145,8 @@ const SellerProducts = () => {
             page,
             limit: 6,
             category: productCategory,
-            sort: productSort
+            sort: productSort,
+            search: productSearch
           }
         });
 
@@ -160,11 +161,11 @@ const SellerProducts = () => {
     };
 
     fetchProducts();
-  }, [page, productCategory, productSort]);
+  }, [page, productCategory, productSort, productSearch]);
 
   useEffect(() => {
     setPage(1);
-  }, [productCategory, productSort]);
+  }, [productCategory, productSort, productSearch]);
   
   // FORM CHANGE
   const handleChange = (e) => {

@@ -148,7 +148,7 @@ export const getMyProducts = async (req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const { category, sort } = req.query;
+    const { category, sort, search } = req.query;
 
     let sortOption = { createdAt: -1 }; // default = latest
 
@@ -175,6 +175,13 @@ export const getMyProducts = async (req, res) =>{
     //apply filter
     if (category && category !== "all") {
       queryObj.category = category;
+    }
+
+    if (search) {
+      queryObj.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } }
+      ];
     }
 
     let query = Product.find(queryObj)
@@ -388,6 +395,7 @@ export const confirmDeal = async (req, res) => {
     }
 
     const product = await Product.findById(conversation.productId);
+    const buyer = await Product.findById(conversation.buyerId);
 
     if(!product) {
       return res.status(404).json({
@@ -419,6 +427,8 @@ export const confirmDeal = async (req, res) => {
       sellerId: conversation.sellerId,
       quantity: quantityNum,
       pricePerItem: priceNum,
+      productName: product.name,   
+      buyerName: buyer.name, 
       totalPrice,
       paymentMethod
     });
@@ -511,7 +521,7 @@ export const getSellerOrders = async (req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const { status } = req.query;
+    const { status, search } = req.query;
 
     //build query object
     let queryObj = { sellerId };
@@ -519,6 +529,13 @@ export const getSellerOrders = async (req, res) =>{
     //apply status filter
     if (status && status !== "all") {
       queryObj.status = status;
+    }
+
+    if (search) {
+      queryObj.$or = [
+        { productName: { $regex: search, $options: "i" } },
+        { buyerName: { $regex: search, $options: "i" } }
+      ];
     }
 
     let query = Order.find(queryObj)

@@ -20,6 +20,16 @@ const conversationSchema =new mongoose.Schema(
       required: true,
     },
 
+    productName: {
+      type: String,
+      required: true,
+    },
+
+    buyerName: {
+      type: String,
+      required: true,
+    },
+
     status: {
       type: String,
       enum: [

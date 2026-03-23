@@ -39,8 +39,9 @@ const SellerMessages = () => {
         const res = await api.get("/conversations/seller", {
           params: {
             page,
-            limit: 6,
-            status: statusFilter
+            limit: 5,
+            status: statusFilter, 
+            search: searchTerm
           }
         });
 
@@ -55,11 +56,11 @@ const SellerMessages = () => {
     };
 
     fetchSellerConversations();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, searchTerm]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter]);
+  }, [statusFilter, searchTerm]);
   
   const statusStyle = (status) => {
     const base = {

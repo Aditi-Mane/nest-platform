@@ -8,6 +8,7 @@ export const createConversation = async (req, res) => {
     const { productId } = req.body;
 
     const product = await Product.findById(productId);
+    const buyer = await Product.findById(buyerId);
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -37,6 +38,8 @@ export const createConversation = async (req, res) => {
       productId,
       buyerId,
       sellerId: product.createdBy,
+      productName: product.name,   
+      buyerName: buyer.name, 
       status: "initiated",
     });
 
@@ -109,7 +112,7 @@ export const getSellerConversations = async(req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const { status } = req.query;
+    const { status, search } = req.query;
 
     let queryObj = {
       sellerId,
@@ -120,6 +123,13 @@ export const getSellerConversations = async(req, res) =>{
       queryObj.status = status;
     } else {
       queryObj.status = { $ne: "completed" };
+    }
+
+    if (search) {
+      queryObj.$or = [
+        { productName: { $regex: search, $options: "i" } },
+        { buyerName: { $regex: search, $options: "i" } }
+      ];
     }
 
     let query = Conversation.find(queryObj)
