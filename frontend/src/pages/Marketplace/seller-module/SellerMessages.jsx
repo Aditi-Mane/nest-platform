@@ -135,7 +135,6 @@ const SellerMessages = () => {
                 : `1.5px solid ${softBorder}`,
           }}
         >
-          <Search size={15} />
           <input
             placeholder="Search by product name or buyer..."
             value={searchTerm}

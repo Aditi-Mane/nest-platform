@@ -16,7 +16,7 @@ import Wishlist from "./marketplace/buyer-module/Wishlist.jsx";
 import { ProfilePage } from "./marketplace/buyer-module/ProfilePage.jsx";
 import SellerSentiment from "./marketplace/seller-module/SellerSentiment.jsx";
 import SellerPrediction from "./marketplace/seller-module/SellerPrediction.jsx";
-import SellerSettings from "./Marketplace/seller-module/SellerSettings.jsx";
+import SellerSettings from "./marketplace/seller-module/SellerSettings.jsx";
 import SellerChatDetails from "./marketplace/seller-module/SellerChatDetails.jsx";
 import SellerVerifyOtp from "./marketplace/seller-module/SellerVerifyOtp.jsx";
 

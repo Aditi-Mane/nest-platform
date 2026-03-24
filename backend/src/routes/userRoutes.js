@@ -1,10 +1,11 @@
 import User from "../models/User.js";
 import express from "express"
 
-import { getCurrentUser, setUserRole, updateSellerSettings } from "../controllers/userController.js";
+import { getCurrentUser, setUserRole, updateProfile, updateStore } from "../controllers/userController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
+import { checkSeller } from "../middleware/sellerMiddleware.js";
 
 const router = express.Router();
 
@@ -13,7 +14,9 @@ router.patch("/choose-role", protect, setUserRole);
 // GET current logged in user
 router.get("/me", protect, getCurrentUser);
 
-router.put("/update-settings", protect, updateSellerSettings);
+router.put("/updateStore", protect, checkSeller, upload.single("storeLogo"), updateStore);
+router.put("/updateProfile", protect, upload.single("avatar"), updateProfile);
+
 router.put("/update-avatar", protect, (req, res) => {
   upload.single("avatar")(req, res, async (err) => {
 

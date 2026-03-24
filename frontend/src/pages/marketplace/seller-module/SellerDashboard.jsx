@@ -6,17 +6,6 @@ import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 
-const myProducts = [
-  { id: "prod-1", name: "Ceramic Mug", image: "🏺", price: 24.99, stock: 15, status: "available", views: 342, viewsThisWeek: 89, inquiries: 12, sales: 5 },
-  { id: "prod-2", name: "Tote Bag", image: "👜", price: 18.50, stock: 2, status: "reserved", views: 287, viewsThisWeek: 156, inquiries: 8, sales: 3 },
-  { id: "prod-3", name: "Candle Set", image: "🕯️", price: 45.99, stock: 1, status: "available", views: 198, viewsThisWeek: 98, inquiries: 15, sales: 8 },
-  { id: "prod-4", name: "Notebook", image: "📓", price: 32.00, stock: 12, status: "available", views: 421, viewsThisWeek: 67, inquiries: 4, sales: 2 },
-  { id: "prod-5", name: "Scarf", image: "🧣", price: 28.00, stock: 5, status: "available", views: 156, viewsThisWeek: 23, inquiries: 6, sales: 4 },
-  { id: "prod-6", name: "Planner", image: "📅", price: 19.99, stock: 0, status: "sold", views: 234, viewsThisWeek: 0, inquiries: 0, sales: 1 },
-  { id: "prod-7", name: "Tea Set", image: "🫖", price: 52.00, stock: 3, status: "available", views: 178, viewsThisWeek: 134, inquiries: 9, sales: 6 },
-  { id: "prod-8", name: "Cushion Cover", image: "🛋️", price: 22.50, stock: 18, status: "available", views: 89, viewsThisWeek: 201, inquiries: 1, sales: 0 },
-];
-
 const statusConfig = {
   initiated: {
     label: "Initiated",
@@ -27,17 +16,13 @@ const statusConfig = {
     color: "bg-[#e6f0ff] text-[#2563eb] border-[#c7dbff]"
   },
   deal_confirmed: {
-    label: "Deal Confirmed",
+    label: "Confirmed",
     color: "bg-[#e6f7ed] text-[#15803d] border-[#b6e3c6]"
   },
   cancelled: {
     label: "Cancelled",
     color: "bg-[#fde8e8] text-[#b91c1c] border-[#f5bcbc]"
   },
-  completed: {
-    label: "Completed",
-    color: "bg-[#ede9fe] text-[#7c3aed] border-[#d6ccfb]"
-  }
 };
 
 const getOrderStatusUI = (status) => {
@@ -58,12 +43,6 @@ const getOrderStatusUI = (status) => {
         label: status
       };
   }
-};
-
-const productStatusConfig = {
-  available: { label: "Available", color: "bg-secondary/10 text-secondary border-secondary/20" },
-  reserved: { label: "Reserved", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
-  sold: { label: "Sold", color: "bg-gray-100 text-gray-600 border-gray-200" },
 };
 
 export function SellerDashboard() {
@@ -676,13 +655,13 @@ export function SellerDashboard() {
                         </td>
 
                         {/* PRICE */}
-                        <td className="font-semibold text-primary">
-                          ₹{request.productId?.price?.toFixed(2)}
+                        <td className="font-semibold text-primary m-2">
+                          ₹{request.productId?.price}
                         </td>
 
                         {/* STATUS */}
                         <td>
-                          <Badge className={`${statusInfo?.color} border text-xs`}>
+                          <Badge className={`${statusInfo?.color} border m-2 text-xs`}>
                             {statusInfo?.label}
                           </Badge>
                         </td>
