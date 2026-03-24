@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useState, useEffect } from "react";
 import axios from "axios";
 import { MdDelete, MdEdit, MdSwapHoriz } from "react-icons/md";
 
