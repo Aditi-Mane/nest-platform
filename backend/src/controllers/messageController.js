@@ -41,14 +41,7 @@ export const sendMessage = async (req, res) => {
       conversation.status = "negotiating";
     }
 
-    //Unread Messages 
-    if (senderId.toString() === conversation.buyerId.toString()) {
-      // Buyer sent → seller has unread
-      conversation.unreadCountSeller += 1;
-    } else {
-      // Seller sent → buyer has unread
-      conversation.unreadCountBuyer += 1;
-    }
+    
 
     //Create message
     const message = await Message.create({
@@ -81,11 +74,15 @@ export const sendMessage = async (req, res) => {
 
     io.to(conversationId).emit("receive_message", populatedMessage);
 
-    io.to(conversationId).emit("unread_update", {
-      conversationId,
-      unreadCountBuyer: conversation.unreadCountBuyer,
-      unreadCountSeller: conversation.unreadCountSeller,
-    });
+    io.to(conversation.buyerId.toString()).emit("unread_update", {
+        conversationId,
+        unreadCountBuyer: conversation.unreadCountBuyer,
+      });
+
+    io.to(conversation.sellerId.toString()).emit("unread_update", {
+        conversationId,
+        unreadCountSeller: conversation.unreadCountSeller,
+      });
 
     return res.status(201).json({
       message: "Message sent successfully",
@@ -161,7 +158,13 @@ export const markAsRead = async (req, res) => {
     }
 
     await conversation.save();
+    const io = getIO();
 
+    io.to(userId.toString()).emit("unread_update", {
+      conversationId,
+      unreadCountBuyer: conversation.unreadCountBuyer,
+      unreadCountSeller: conversation.unreadCountSeller,
+    });
     return res.status(200).json({
       message: "Marked as read",
     });

@@ -11,7 +11,7 @@ import { IoSettingsSharp } from "react-icons/io5";
 import { MdReplay } from "react-icons/md";
 import { SiGoogleanalytics } from "react-icons/si";
 import { IoPeople } from "react-icons/io5";
-
+import { useMessages } from "@/context/MessageContext";
 
 import { useEffect } from "react";
 import api from "../api/axios.js";
@@ -41,20 +41,7 @@ const SellerSidebar = () => {
   const normalLink =
     "text-[var(--color-muted)] hover:bg-[#f4ecdd] hover:text-[var(--color-primary)]";
 
-  const [totalUnread, setTotalUnread] = useState(0);
-
-  useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const res = await api.get("/messages/unread");
-        setTotalUnread(res.data.totalUnread);
-      } catch (err) {
-        console.error("Error fetching unread count", err);
-      }
-    };
-
-    fetchUnread();
-  }, []);
+  const { totalUnread } = useMessages();
 
   return (
     <div className="w-72 h-screen bg-card border-r border-border flex flex-col justify-between">

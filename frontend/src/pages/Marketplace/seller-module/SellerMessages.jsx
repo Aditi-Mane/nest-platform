@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import api from "../../../api/axios.js";
 import Pagination from "../../../components/Pagination.jsx";
-
+import { useSocket } from "@/context/SocketContext";
 const SellerMessages = () => {
 
+  const socket = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeField, setActiveField] = useState(null);
   const [openCard, setOpenCard] = useState(null); // 👈 for dropdown toggle
@@ -31,6 +32,28 @@ const SellerMessages = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   
+  useEffect(() => {
+  if (!socket) return;
+
+  const handler = (data) => {
+    setRequests((prev) =>
+      prev.map((conv) => {
+        if (conv._id !== data.conversationId) return conv;
+
+        return {
+          ...conv,
+          unreadCountSeller:
+            data.unreadCountSeller ?? conv.unreadCountSeller,
+        };
+      })
+    );
+  };
+
+  socket.on("unread_update", handler);
+
+  return () => socket.off("unread_update", handler);
+}, [socket]);
+
   useEffect(() => {
     const fetchSellerConversations = async () => {
       try {
@@ -203,7 +226,7 @@ const SellerMessages = () => {
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between", // ✅ important
+              justifyContent: "space-between", // important
               alignItems: "center",
             }}
           >
@@ -254,24 +277,30 @@ const SellerMessages = () => {
               <div className="relative inline-block">
                 <button
                   onClick={async () => {
-                    try {
-                      //call mark as read API
-                      await api.patch(`/messages/${item._id}/read`);
+                  try {
+                    await api.patch(`/messages/${item._id}/read`);
 
-                      //navigate to chat page
-                      navigate(`/marketplace/seller/messages/${item._id}`, {
-                        state: item,
-                      });
+                    //  instant UI update (IMPORTANT)
+                    setRequests((prev) =>
+                      prev.map((conv) =>
+                        conv._id === item._id
+                          ? { ...conv, unreadCountSeller: 0 }
+                          : conv
+                      )
+                    );
 
-                    } catch (error) {
-                      console.error("Error marking as read:", error);
+                    navigate(`/marketplace/seller/messages/${item._id}`, {
+                      state: item,
+                    });
 
-                      //still navigate even if API fails
-                      navigate(`/marketplace/seller/messages/${item._id}`, {
-                        state: item,
-                      });
-                    }
-                  }}
+                  } catch (error) {
+                    console.error("Error marking as read:", error);
+
+                    navigate(`/marketplace/seller/messages/${item._id}`, {
+                      state: item,
+                    });
+                  }
+                }}
                   className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg"
                   style={{ background: themeColor }}
                 >

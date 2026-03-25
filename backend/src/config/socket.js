@@ -8,7 +8,7 @@ export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: "http://localhost:5173", // FRONTEND URL
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PATCH"],
       credentials: true,
     },
   });
@@ -17,7 +17,12 @@ export const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    socket.on("join_conversation", (conversationId) => {
+
+  socket.on("join_user_room", (userId) => {
+    socket.join(userId);
+  });
+
+  socket.on("join_conversation", (conversationId) => {
       console.log("JOIN EVENT RECEIVED:", conversationId);
       socket.join(conversationId);
     });

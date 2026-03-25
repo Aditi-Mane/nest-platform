@@ -22,12 +22,12 @@ const conversationSchema =new mongoose.Schema(
 
     productName: {
       type: String,
-      required: true,
+      
     },
 
     buyerName: {
       type: String,
-      required: true,
+      
     },
 
     status: {

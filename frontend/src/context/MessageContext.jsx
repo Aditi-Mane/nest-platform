@@ -6,40 +6,77 @@ const MessageContext = createContext();
 
 export const MessageProvider = ({ children }) => {
   const [totalUnread, setTotalUnread] = useState(0);
+  const [unreadMap, setUnreadMap] = useState({});
   const socket = useSocket();
 
-  
+  //  detect role ONCE
+  const isSeller = window.location.pathname.includes("seller");
+
+  // INITIAL FETCH
   const fetchUnread = async () => {
     try {
-      const res = await api.get("/conversations/buyer");
-
-      const total = res.data.conversations.reduce(
-        (sum, item) => sum + (item.unreadCountBuyer || 0),
-        0
+      const res = await api.get(
+        isSeller ? "/conversations/seller" : "/conversations/buyer"
       );
 
+      const map = {};
+      let total = 0;
+
+      res.data.conversations.forEach((item) => {
+        const count = isSeller
+          ? item.unreadCountSeller || 0
+          : item.unreadCountBuyer || 0;
+
+        map[item._id] = count;
+        total += count;
+      });
+
+      setUnreadMap(map);
       setTotalUnread(total);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // INITIAL LOAD (THIS FIXES YOUR ISSUE)
   useEffect(() => {
     fetchUnread();
   }, []);
 
-  // SOCKET REAL-TIME
+  //  REAL-TIME SOCKET UPDATE
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("unread_update", fetchUnread);
+    const handler = (data) => {
+      const count = isSeller
+        ? data.unreadCountSeller ?? 0
+        : data.unreadCountBuyer ?? 0;
 
-    return () => socket.off("unread_update", fetchUnread);
-  }, [socket]);
+      setUnreadMap((prev) => {
+        const updated = {
+          ...prev,
+          [data.conversationId]: count,
+        };
+
+        const total = Object.values(updated).reduce(
+          (sum, val) => sum + val,
+          0
+        );
+
+        setTotalUnread(total);
+
+        return updated;
+      });
+    };
+
+    socket.on("unread_update", handler);
+
+    return () => socket.off("unread_update", handler);
+  }, [socket, isSeller]);
 
   return (
-    <MessageContext.Provider value={{ totalUnread, setTotalUnread, fetchUnread }}>
+    <MessageContext.Provider
+      value={{ totalUnread, unreadMap, setTotalUnread, fetchUnread }}
+    >
       {children}
     </MessageContext.Provider>
   );
