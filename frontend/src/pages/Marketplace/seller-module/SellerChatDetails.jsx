@@ -39,9 +39,7 @@ const SellerChatDetails = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceive = (data) => {
-      const msg = data?.message;
-
+    const handleReceive = (msg) => {
       if (!msg || !msg._id) return; 
 
       setMessages((prev) => {

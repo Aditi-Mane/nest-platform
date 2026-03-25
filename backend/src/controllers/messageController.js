@@ -41,8 +41,6 @@ export const sendMessage = async (req, res) => {
       conversation.status = "negotiating";
     }
 
-    
-
     //Create message
     const message = await Message.create({
       conversationId,

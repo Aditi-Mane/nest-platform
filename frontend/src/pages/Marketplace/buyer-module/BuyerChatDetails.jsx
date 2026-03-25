@@ -40,15 +40,15 @@ const BuyerChatDetails = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceive = (data) => {
-      const msg = data.message;
+    const handleReceive = (msg) => {
+      if (!msg || !msg._id) return;
 
-      if (data.conversationId === conversationId) {
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === msg._id)) return prev;
-          return [...prev, msg];
-        });
-      }
+      if (String(msg.conversationId) !== String(conversationId)) return;
+
+      setMessages((prev) => {
+        if (prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
     };
 
     socket.on("receive_message", handleReceive);

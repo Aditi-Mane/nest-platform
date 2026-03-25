@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Product from "../models/Product.js";
+import User from "../models/User.js";
 import { paginate } from "../utils/paginate.js";
 
 export const createConversation = async (req, res) => {
@@ -8,7 +9,7 @@ export const createConversation = async (req, res) => {
     const { productId } = req.body;
 
     const product = await Product.findById(productId);
-    const buyer = await Product.findById(buyerId);
+    const buyer = await User.findById(buyerId);
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
