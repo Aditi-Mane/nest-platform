@@ -770,49 +770,82 @@ export const getSellerAnalytics = async (req, res) =>{
   }
 }
 
-export const getAverageRating = async (req, res) =>{
+export const getAverageRating = async (req, res) => {
   try {
+    const sellerId = req.user._id;
+
     const ratings = await Review.aggregate([
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "productData",
+        },
+      },
+      {
+        $unwind: "$productData",
+      },
+
+      {
+        $match: {
+          "productData.createdBy": sellerId,
+        },
+      },
+
       {
         $group: {
           _id: "$product",
-          avgRating: { $avg: "$starRating"},
-          totalReviews: { $sum: 1 }
-        }
-      }
-    ])
+          avgRating: { $avg: "$starRating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
 
-    const productRatings = ratings.map(item => ({
+    const productRatings = ratings.map((item) => ({
       productId: item._id,
       avgRating: Number(item.avgRating.toFixed(1)),
-      totalReviews: item.totalReviews
-    }))
+      totalReviews: item.totalReviews,
+    }));
 
     const overall = await Review.aggregate([
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "productData",
+        },
+      },
+      { $unwind: "$productData" },
+      {
+        $match: {
+          "productData.createdBy": sellerId,
+        },
+      },
       {
         $group: {
           _id: null,
           overallRating: { $avg: "$starRating" },
-        }
-      }
+        },
+      },
     ]);
 
     res.status(200).json({
       overallRating: overall[0]?.overallRating || 0,
-      products: productRatings
+      products: productRatings,
     });
 
-    
   } catch (error) {
     return res.status(500).json({
-      message: "Server error"
-    })
+      message: "Server error",
+    });
   }
-}
+};
 
 export const getEarnings = async (req, res) => {
   try {
-    const now = new Date();
+    const sellerId = new mongoose.Types.ObjectId(req.user._id);
 
     //today start (midnight)
     const todayStart = new Date();
@@ -829,6 +862,7 @@ export const getEarnings = async (req, res) => {
     const earnings = await Order.aggregate([
       {
         $match: {
+          sellerId: sellerId,
           status: "otp_verified",
           createdAt: {
             $gte: yesterdayStart,

@@ -1,28 +1,34 @@
 import { useState, useEffect } from "react";
 import { MdEdit } from "react-icons/md";
 import api from "../../../api/axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../../../context/UserContext";
 
 // /* ---------- REUSABLE COMPONENTS ---------- */
 
 const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => (
-  <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
+  <div className="bg-card rounded-2xl border border-border p-8 shadow-sm hover:shadow-md transition">
+
+    {/* Header */}
     <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center">
-        <div className="w-1.5 h-6 bg-primary rounded mr-3"></div>
+      <div className="flex items-center gap-3">
+        <div className="w-1.5 h-6 bg-primary rounded"></div>
         <h2 className="text-lg font-semibold text-text">{title}</h2>
       </div>
+
       <div className="flex items-center gap-2">
         {isEditing ? (
           <>
             <button
               onClick={onCancel}
-              className="text-sm text-muted hover:text-text transition"
+              className="px-3 py-1.5 text-sm rounded-full border border-border text-muted hover:text-text hover:bg-background transition"
             >
               Cancel
             </button>
             <button
               onClick={onSave}
-              className="text-sm text-primary hover:text-primary/80 transition font-medium"
+              className="px-4 py-1.5 text-sm rounded-full bg-primary text-white hover:bg-primary/90 transition font-medium"
             >
               Save
             </button>
@@ -31,16 +37,18 @@ const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => (
           onEdit && (
             <button
               onClick={onEdit}
-              className="text-muted hover:text-primary transition"
+              className="p-2 rounded-full hover:bg-background text-muted hover:text-primary transition"
               aria-label={`Edit ${title}`}
             >
-              <MdEdit />
+              <MdEdit size={18} />
             </button>
           )
         )}
       </div>
     </div>
-    <div className="space-y-5">{children}</div>
+
+    {/* Content */}
+    <div className="space-y-6">{children}</div>
   </div>
 );
 
@@ -72,12 +80,17 @@ const SellerSettings = () => {
     "https://i.pravatar.cc/150?img=12"
   );
 
+  const { user, setUser } = useUser();
+
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
   const [storeLocation, setStoreLocation] = useState("");
   const [storeLogo, setStoreLogo] = useState("");
   const [storeLogoFile, setStoreLogoFile] = useState(null);
   const [payoutUPI, setPayoutUPI] = useState("");
+  const [role, setRole] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [notifications, setNotifications] = useState({});
 
   // Personal Info States
   const [name, setName] = useState("");
@@ -85,6 +98,7 @@ const SellerSettings = () => {
   const [avatar, setAvatar] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [collegeName, setCollegeName] = useState("");
+  const navigate = useNavigate();
 
   // Edit mode states
   const [editingStore, setEditingStore] = useState(false);
@@ -128,16 +142,72 @@ const SellerSettings = () => {
     }
   };
 
+  // Password change modal state + behavior
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const [targetRole, setTargetRole] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handlePassChange = async () => {
+    if (!newPassword) {
+      setPasswordError("Please enter a new password");
+      return;
+    }
+
+    if (newPassword.length < 6 || !/\d/.test(newPassword)) {
+      setPasswordError("Password must be at least 6 characters and contain a number");
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+      setPasswordError("");
+      const res = await api.put("/users/updatePassword", { password: newPassword });
+
+      setPasswordSuccess(res.data.message || "Password updated successfully");
+      setNewPassword("");
+      setTimeout(() => {
+        setIsPasswordModalOpen(false);
+        setPasswordSuccess("");
+      }, 1200);
+    } catch (error) {
+      console.log("Change password error:", error);
+      setPasswordError(error?.response?.data?.message || "Failed to update password");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const openPasswordModal = () => {
+    setNewPassword("");
+    setPasswordError("");
+    setPasswordSuccess("");
+    setShowPassword(false);
+    setIsPasswordModalOpen(true);
+  };
+
+  const closePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
+
   useEffect(() => {
 
     const fetchUserSettings = async () => {
       try {
-
-        const token = localStorage.getItem("token");
-
         const res = await api.get("/users/me");
 
         const user = res.data;
+        setRole(user.activeRole);
 
         if(user.avatar) setProfileImage(user.avatar);
 
@@ -170,9 +240,74 @@ const SellerSettings = () => {
 
   }, []);
 
+  const handleSwitchClick = () => {
+    if (!user) return;
+
+    const newRole =
+      user.activeRole === "buyer" ? "seller" : "buyer";
+
+    setTargetRole(newRole);
+    setShowSwitchModal(true);
+  };
+
+  const confirmSwitch = async () => {
+    try {
+      const res = await api.put("/users/switch-role", {
+        role: targetRole,
+      });
+
+      const updatedRole = res.data.role;
+
+      //update GLOBAL user (context)
+      setUser((prev) => ({
+        ...prev,
+        activeRole: updatedRole,
+      }));
+
+      setShowSwitchModal(false);
+
+      navigate(`/marketplace/${updatedRole}`);
+    } catch (error) {
+      console.error(error.response?.data);
+    }
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem("token");
+    setUser(null);                   
+    navigate("/auth/login");              
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setDeleteLoading(true);
+
+      await api.delete("/users/delete");
+
+      //logout after delete
+      localStorage.removeItem("token");
+      setUser(null);
+
+      navigate("/auth/login");
+
+    } catch (error) {
+      console.error(error.response?.data);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-text">
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div className="p-6 space-y-8">
 
         {/* HEADER ROW */}
         <div className="flex items-center justify-between">
@@ -211,14 +346,26 @@ const SellerSettings = () => {
           onSave={saveStoreChanges}
           onCancel={cancelEditingStore}
         >
-          <div className="mb-6">
-            <label className="block text-sm mb-2 text-muted">Store Logo</label>
-            <div className="flex items-center gap-4">
+
+          {/* Logo */}
+          <div className="flex items-center gap-6 pb-4 border-b border-border">
+            <div className="relative group">
               <img
-                src={storeLogo || "https://via.placeholder.com/80x80?text=Logo"}
+                src={storeLogo || "https://via.placeholder.com/100x100?text=Logo"}
                 alt="Store Logo"
-                className="w-20 h-20 object-cover border border-border rounded-lg"
+                className="w-24 h-24 object-cover rounded-full border-2 border-border shadow-sm"
               />
+
+              {editingStore && (
+                <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
+                  Change
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted">Store Logo</p>
+
               <input
                 type="file"
                 accept="image/*"
@@ -230,34 +377,38 @@ const SellerSettings = () => {
                   }
                 }}
                 disabled={!editingStore}
-                className="text-sm text-muted"
+                className="text-xs text-muted file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-full file:text-sm file:bg-background hover:file:bg-card transition"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-6">
 
+          {/* Store Name + Location */}
+          <div className="grid grid-cols-2 gap-6">
             <Input
               label="Store Name"
               value={storeName}
-              onChange={(e)=>setStoreName(e.target.value)}
+              onChange={(e) => setStoreName(e.target.value)}
               disabled={!editingStore}
             />
 
             <Input
               label="Store Location"
               value={storeLocation}
-              onChange={(e)=>setStoreLocation(e.target.value)}
+              onChange={(e) => setStoreLocation(e.target.value)}
               disabled={!editingStore}
             />
-
           </div>
 
-          <TextArea
-            label="Store Description"
-            value={storeDescription}
-            onChange={(e)=>setStoreDescription(e.target.value)}
-            disabled={!editingStore}
-          />
+          {/* Description */}
+          <div>
+            <TextArea
+              label="Store Description"
+              value={storeDescription}
+              onChange={(e) => setStoreDescription(e.target.value)}
+              disabled={!editingStore}
+            />
+          </div>
+
         </Section>
 
 
@@ -269,14 +420,27 @@ const SellerSettings = () => {
           onSave={saveProfileChanges}
           onCancel={cancelEditingProfile}
         >
-          <div className="mb-6">
-            <label className="block text-sm mb-2 text-muted">Profile Avatar</label>
-            <div className="flex items-center gap-4">
+
+          {/* Avatar */}
+          <div className="flex items-center gap-6 pb-4 border-b border-border">
+            <div className="relative group">
               <img
-                src={avatar || "https://via.placeholder.com/80x80?text=Avatar"}
+                src={avatar || "https://via.placeholder.com/100x100?text=Avatar"}
                 alt="Profile Avatar"
-                className="w-20 h-20 object-cover border border-border rounded-full"
+                className="w-24 h-24 object-cover rounded-full border-2 border-border shadow-sm"
               />
+
+              {/* subtle overlay on edit */}
+              {editingProfile && (
+                <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
+                  Change
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted">Profile Avatar</p>
+
               <input
                 type="file"
                 accept="image/*"
@@ -288,25 +452,27 @@ const SellerSettings = () => {
                   }
                 }}
                 disabled={!editingProfile}
-                className="text-sm text-muted"
+                className="text-xs text-muted file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-full file:text-sm file:bg-background hover:file:bg-card transition"
               />
             </div>
           </div>
+
+          {/* Name + Email */}
           <div className="grid grid-cols-2 gap-6">
             <Input
               label="Full Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={true}
+              disabled
             />
             <Input
               label="Email Address"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={true}
+              disabled
             />
           </div>
+
+          {/* Editable Fields */}
           <div className="grid grid-cols-2 gap-6">
             <Input
               label="College Name"
@@ -314,36 +480,257 @@ const SellerSettings = () => {
               onChange={(e) => setCollegeName(e.target.value)}
               disabled={!editingProfile}
             />
+
             <Input
               label="UPI ID (Optional)"
               value={payoutUPI}
-              onChange={(e)=>setPayoutUPI(e.target.value)}
+              onChange={(e) => setPayoutUPI(e.target.value)}
               disabled={!editingProfile}
             />
           </div>
+
         </Section>
 
         {/* PROFILE ACTIONS */}
-        <div className="mt-4 flex justify-end gap-3">
+        <div className="mt-6 flex justify-end gap-3 flex-wrap">
+
+          {/* Secondary Actions */}
           <button
-            onClick={() => handlePassChange}
-            className="px-4 py-2 rounded-full border border-border text-sm hover:bg-background"
+            onClick={openPasswordModal}
+            className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-text hover:bg-background transition"
           >
             Change Password
           </button>
+
           <button
-            onClick={() => handleSwitch}
-            className="px-4 py-2 rounded-full border border-border text-sm hover:bg-background"
+            onClick={handleSwitchClick}
+            className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-primary hover:bg-background transition"
           >
             Switch Profile
           </button>
+
+          {/* Divider feel */}
+          <div className="w-px h-8 bg-border mx-1 hidden sm:block"></div>
+
+          {/* Logout */}
           <button
-            onClick={() => handleDelete}
-            className="px-4 py-2 rounded-full border border-red-300 text-sm text-red-500 hover:bg-red-50"
+            onClick={handleLogoutClick}
+            className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-muted hover:bg-background transition"
+          >
+            Logout
+          </button>
+
+          {/* Danger */}
+          <button
+            onClick={handleDeleteClick}
+            className="px-4 py-2 rounded-full bg-red-500/10 text-red-600 text-sm font-semibold hover:bg-red-500/20 transition"
           >
             Delete Account
           </button>
+
         </div>
+
+        {/* Password modal overlay */}
+        {isPasswordModalOpen && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+              <button
+                onClick={closePasswordModal}
+                className="absolute top-3 right-3 text-muted hover:text-gray-800"
+                aria-label="Close password modal"
+              >
+                &#10005;
+              </button>
+
+              <h3 className="text-xl font-semibold text-text mb-4">Enter New Password</h3>
+
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xl text-muted"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <FaEye/> : <FaEyeSlash/>}
+                </button>
+              </div>
+
+              {passwordError && <p className="text-red-500 text-sm mt-2">{passwordError}</p>}
+              {passwordSuccess && <p className="text-green-500 text-sm mt-2">{passwordSuccess}</p>}
+
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  onClick={closePasswordModal}
+                  className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePassChange}
+                  disabled={passwordLoading}
+                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {passwordLoading ? "Saving..." : "Save Password"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showSwitchModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+
+              {/* Close button */}
+              <button
+                onClick={() => setShowSwitchModal(false)}
+                className="absolute top-3 right-3 text-muted hover:text-gray-800"
+              >
+                ✕
+              </button>
+
+              {/* Title */}
+              <h3 className="text-xl font-semibold mb-2 text-text">
+                Switch Profile
+              </h3>
+
+              {/* Message */}
+              <p className="text-sm text-muted mb-5">
+                You are about to switch to{" "}
+                <span className="font-semibold text-primary">
+                  {targetRole}
+                </span>{" "}
+                mode.
+              </p>
+
+              {/* Context message */}
+              <p className="text-xs text-muted mb-6">
+                {targetRole === "seller"
+                  ? "You will manage your store, products, and orders."
+                  : "You will browse and purchase products."}
+              </p>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowSwitchModal(false)}
+                  className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmSwitch}
+                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90"
+                >
+                  Confirm Switch
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {showLogoutModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+
+              {/* Close */}
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="absolute top-3 right-3 text-muted hover:text-gray-800"
+              >
+                ✕
+              </button>
+
+              {/* Title */}
+              <h3 className="text-xl font-semibold mb-2 text-text">
+                Logout
+              </h3>
+
+              {/* Message */}
+              <p className="text-sm text-muted mb-6">
+                Are you sure you want to log out of your account?
+              </p>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmLogout}
+                  className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600"
+                >
+                  Logout
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+
+              {/* Close */}
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+                className="absolute top-3 right-3 text-muted hover:text-gray-800"
+              >
+                ✕
+              </button>
+
+              {/* Title */}
+              <h3 className="text-xl font-semibold mb-2 text-red-500">
+                Delete Account
+              </h3>
+
+              {/* Message */}
+              <p className="text-sm text-muted mb-4">
+                This action cannot be undone.
+              </p>
+
+              <p className="text-sm text-muted mb-6">
+                Your account will be permanently removed and all your personal
+                data will be anonymized.
+              </p>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600 disabled:opacity-60"
+                >
+                  {deleteLoading ? "Deleting..." : "Delete Account"}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

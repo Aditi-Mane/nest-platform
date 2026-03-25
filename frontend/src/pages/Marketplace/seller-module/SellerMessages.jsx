@@ -39,7 +39,7 @@ const SellerMessages = () => {
         const res = await api.get("/conversations/seller", {
           params: {
             page,
-            limit: 5,
+            limit: 6,
             status: statusFilter, 
             search: searchTerm
           }
