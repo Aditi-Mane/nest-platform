@@ -25,6 +25,11 @@ import BuyerChatDetails from "./marketplace/buyer-module/BuyerChatDetails.jsx";
 import BuyerMessages from "./marketplace/buyer-module/BuyerMessages.jsx";
 import MessagesLayout from "./marketplace/buyer-module/MessagesLayout.jsx";
 
+import VenturesPage from "./marketplace/ventures-module/VenturesPage.jsx";
+import VentureDetailPage from "./marketplace/ventures-module/VentureDetailPage.jsx";
+import InvestorsPage from "./marketplace/ventures-module/InvestorsPage.jsx";
+import CreateVenturePage from "./marketplace/ventures-module/CreateVenturePage.jsx";
+import CreateStartupPage from "./marketplace/ventures-module/CreateStartupPage.jsx";
 
 function Marketplace() {
   return (
@@ -51,6 +56,14 @@ function Marketplace() {
       <Route path="product/:id" element={<ProductDetailPage />} />
       <Route path="cart" element={<CartPage />} />
       <Route path="wishlist" element={<Wishlist />} />
+
+      {/* ── Ventures Module ── */}
+      <Route path="ventures" element={<VenturesPage />} />
+      <Route path="ventures/:id" element={<VentureDetailPage />} />
+      <Route path="ventures/create" element={<CreateVenturePage />} />
+      <Route path="ventures/investors" element={<InvestorsPage />} />
+      <Route path="ventures/create-startup" element={<CreateStartupPage />} />
+ 
       <Route path="ProfilePage" element={<ProfilePage />} />
       <Route path="messages" element={<MessagesLayout />}>
             <Route

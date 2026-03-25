@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import api from "../../../api/axios.js";
 import { useMessages } from "@/context/MessageContext";
-import { io } from "socket.io-client";
+import { useSocket } from "@/context/SocketContext";
 
-const socket = io("http://localhost:5000");
+
 
 const BuyerMessages = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -32,6 +32,8 @@ const BuyerMessages = () => {
 
  
   const navigate = useNavigate();
+  const socket = useSocket();
+
   const renderStatusBadge = (status) => {
   const base =
     "text-[10px] px-2 py-[1px] rounded-full flex items-center gap-[3px] font-medium whitespace-nowrap";
@@ -104,9 +106,17 @@ const BuyerMessages = () => {
     window.removeEventListener("focus", handleFocus);
   };
 }, []);
-
 useEffect(() => {
-  socket.on("unread_update", (data) => {
+  if (!socket) return;
+
+  requests.forEach((conv) => {
+    socket.emit("join_conversation", conv._id);
+  });
+}, [socket, requests]);
+useEffect(() => {
+  if (!socket) return;
+
+  const handleUnreadUpdate = (data) => {
     setRequests((prev) =>
       prev.map((conv) =>
         conv._id === data.conversationId
@@ -114,10 +124,14 @@ useEffect(() => {
           : conv
       )
     );
-  });
+  };
 
-  return () => socket.off("unread_update");
-}, []);
+  socket.on("unread_update", handleUnreadUpdate);
+
+  return () => {
+    socket.off("unread_update", handleUnreadUpdate);
+  };
+}, [socket]);
  useEffect(() => {
   const total = requests.reduce(
     (sum, item) => sum + (item.unreadCountBuyer || 0),
