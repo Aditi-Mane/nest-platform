@@ -21,6 +21,16 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    productName: {
+      type: String,
+      required: true,
+    },
+
+    buyerName: {
+      type: String,
+      required: true,
+    },
+
     // Seller (owner of the product)
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,

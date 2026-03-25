@@ -206,9 +206,7 @@ useEffect(() => {
   setTotalUnread((prev) => Math.max(prev - unread, 0));
 
   try {
-    await api.post("/messages/mark-read", {
-      conversationId: item._id,
-    });
+    await api.patch(`/messages/${item._id}/read`);
   } catch (err) {
     console.error(err);
   }

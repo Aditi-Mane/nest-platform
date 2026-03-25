@@ -59,7 +59,9 @@ export const getCurrentUser = async (req, res) =>{
       })
     }
 
-    const user = await User.findById(req.user._id).select("verificationStatus activeRole sellerStatus availableRoles email name");
+    const user = await User.findById(req.user._id).select(
+      "verificationStatus activeRole sellerStatus availableRoles email name storeName storeDescription storeLocation storeLogo payoutUPI avatar collegeName"
+    );
     if(!user){
       return res.status(404).json({
         message: "User not found"
@@ -73,35 +75,8 @@ export const getCurrentUser = async (req, res) =>{
   }
 } 
 
-// @desc   Get logged in user profile
-// @route  GET /api/users/me
-// @access Private
-export const getMe = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
-    // req.user is already attached by protect middleware
-    const user = await User.findById(req.user._id)
-      .select("-password -verificationOtp -verificationOtpExpiry");
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    res.status(200).json(user);
-
-  } catch (error) {
-    console.log("Get Profile Error:", error);
-    res.status(500).json({
-      message: "Server error"
-    });
-  }
-};
-
-export const updateSellerSettings = async (req, res) => {
-  try {
-
-    console.log("Incoming Settings:", req.body);  // 👈 ADD THIS
 
     const user = await User.findById(req.user._id);
 
@@ -112,25 +87,61 @@ export const updateSellerSettings = async (req, res) => {
     }
 
     const {
-      avatar,
-      storeName,
-      storeDescription,
-      storeLocation,
       payoutUPI,
-      notifications
+      collegeName
     } = req.body;
 
-    if(avatar) user.avatar = avatar;
-    if(storeName) user.storeName = storeName;
-    if(storeDescription) user.storeDescription = storeDescription;
-    if(storeLocation) user.storeLocation = storeLocation;
+    if(collegeName) user.collegeName = collegeName;
     if(payoutUPI) user.payoutUPI = payoutUPI;
-    if(notifications) user.notifications = notifications;
+
+    if (req.file) {
+      user.avatar = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+    }
 
     await user.save();
 
     res.json({
-      message:"Settings updated successfully",
+      message:"Profile updated successfully",
+      user
+    });
+
+  } catch(error){
+    console.log(error);
+    res.status(500).json({message:"Server error"});
+  }
+};
+
+export const updateStore = async (req, res) => {
+  try {
+
+    const user = await User.findById(req.user._id);
+
+    if(!user){
+      return res.status(404).json({
+        message:"User not found"
+      });
+    }
+
+    const {
+      storeName,
+      storeDescription,
+      storeLocation,
+      payoutUPI,
+    } = req.body;
+
+    if(storeName) user.storeName = storeName;
+    if(storeDescription) user.storeDescription = storeDescription;
+    if(storeLocation) user.storeLocation = storeLocation;
+    if(payoutUPI) user.payoutUPI = payoutUPI;
+
+    if (req.file) {
+      user.storeLogo = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+    }
+
+    await user.save();
+
+    res.json({
+      message:"Store updated successfully",
       user
     });
 
@@ -203,4 +214,3 @@ export const updateAvatar = async (req, res) => {
     });
   }
 };
-

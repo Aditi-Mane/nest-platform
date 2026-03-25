@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Product from "../models/Product.js";
+import { paginate } from "../utils/paginate.js";
 
 export const createConversation = async (req, res) => {
   try {
@@ -7,6 +8,7 @@ export const createConversation = async (req, res) => {
     const { productId } = req.body;
 
     const product = await Product.findById(productId);
+    const buyer = await Product.findById(buyerId);
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -36,6 +38,8 @@ export const createConversation = async (req, res) => {
       productId,
       buyerId,
       sellerId: product.createdBy,
+      productName: product.name,   
+      buyerName: buyer.name, 
       status: "initiated",
     });
 
@@ -53,7 +57,10 @@ export const getBuyerConversations = async (req, res) => {
   try {
     const buyerId = req.user._id;
 
-    const conversations = await Conversation.find({ buyerId })
+    const conversations = await Conversation.find({
+      buyerId,
+      status: { $ne: "completed" } //hide completed
+    })
       .populate("productId", "name images price status") // ✅ fixed
       .populate("sellerId", "name avatar")
       .sort({ updatedAt: -1 }); 
@@ -106,16 +113,50 @@ export const getSellerConversations = async(req, res) =>{
   try {
     const sellerId = req.user._id;
 
-    const conversations = await Conversation.find({sellerId})
-    .populate("productId", "name images price status")
-    .populate("buyerId", "name avatar")
-    .sort({updatedAt: -1})
+    const { status, search } = req.query;
+
+    let queryObj = {
+      sellerId,
+      status: { $ne: "completed" } 
+    };
+
+    if (status && status !== "all") {
+      queryObj.status = status;
+    } else {
+      queryObj.status = { $ne: "completed" };
+    }
+
+    if (search) {
+      queryObj.$or = [
+        { productName: { $regex: search, $options: "i" } },
+        { buyerName: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    let query = Conversation.find(queryObj)
+      .populate("productId", "name images price status")
+      .populate("buyerId", "name avatar")
+      .sort({ updatedAt: -1 });
+
+    //apply pagination
+    const { query: paginatedQuery, page, limit } = paginate(query, req.query);
+
+    const conversations = await paginatedQuery;
+
+    //total count
+    const total = await Conversation.countDocuments(queryObj)
 
     return res.status(200).json({
       message: "Fetched seller conversations successfully",
-      conversations
-    })
+      data: conversations,
+      page,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
+
   } catch (error) {
+    console.log(error);
+    
     return res.status(500).json({
       message: "Server error whilst fetching conversations"
     })

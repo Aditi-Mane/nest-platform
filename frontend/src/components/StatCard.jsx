@@ -5,7 +5,7 @@ export function StatCard({ title, value, icon: Icon, trend, gradient }) {
     <Card
       className={`rounded-2xl border-border ${
         gradient
-          ? "bg-gradient-to-br from-[#2563EB] to-[#10B981] text-white border-0"
+          ? "bg-linear-to-br from-[#2563EB] to-[#10B981] text-white border-0"
           : ""
       }`}
     >

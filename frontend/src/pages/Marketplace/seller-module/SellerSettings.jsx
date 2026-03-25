@@ -1,57 +1,68 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { MdDelete, MdEdit, MdSwapHoriz } from "react-icons/md";
+import { MdEdit } from "react-icons/md";
+import api from "../../../api/axios";
 
 // /* ---------- REUSABLE COMPONENTS ---------- */
 
-const Section = ({ title, children }) => (
+const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => (
   <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
-    <div className="flex items-center mb-6">
-      <div className="w-1.5 h-6 bg-primary rounded mr-3"></div>
-      <h2 className="text-lg font-semibold text-text">{title}</h2>
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center">
+        <div className="w-1.5 h-6 bg-primary rounded mr-3"></div>
+        <h2 className="text-lg font-semibold text-text">{title}</h2>
+      </div>
+      <div className="flex items-center gap-2">
+        {isEditing ? (
+          <>
+            <button
+              onClick={onCancel}
+              className="text-sm text-muted hover:text-text transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onSave}
+              className="text-sm text-primary hover:text-primary/80 transition font-medium"
+            >
+              Save
+            </button>
+          </>
+        ) : (
+          onEdit && (
+            <button
+              onClick={onEdit}
+              className="text-muted hover:text-primary transition"
+              aria-label={`Edit ${title}`}
+            >
+              <MdEdit />
+            </button>
+          )
+        )}
+      </div>
     </div>
     <div className="space-y-5">{children}</div>
   </div>
 );
 
-const Input = ({ label, ...props }) => (
+const Input = ({ label, disabled, ...props }) => (
   <div>
     <label className="block text-sm mb-1 text-muted">{label}</label>
     <input
       {...props}
+      disabled={disabled}
       className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition"
     />
   </div>
 );
 
-const TextArea = ({ label, ...props }) => (
+const TextArea = ({ label, disabled, ...props }) => (
   <div>
     <label className="block text-sm mb-1 text-muted">{label}</label>
     <textarea
       {...props}
+      disabled={disabled}
       className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition min-h-25"
     />
-  </div>
-);
-
-const Toggle = ({ title, desc, checked, onClick }) => (
-  <div className="flex items-center justify-between py-3">
-    <div>
-      <div className="font-medium text-text">{title}</div>
-      <div className="text-sm text-muted">{desc}</div>
-    </div>
-    <div
-      onClick={onClick}
-      className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition ${
-        checked ? "bg-primary" : "bg-border"
-      }`}
-    >
-      <div
-        className={`bg-white w-4 h-4 rounded-full shadow transform transition ${
-          checked ? "translate-x-6" : ""
-        }`}
-      />
-    </div>
   </div>
 );
 
@@ -61,37 +72,61 @@ const SellerSettings = () => {
     "https://i.pravatar.cc/150?img=12"
   );
 
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-
-  const [notifications, setNotifications] = useState({
-    newOrders: true,
-    lowStock: true,
-    marketing: false,
-    messages: true,
-  });
-
-  /* NEW STATES (ADDED) */
-
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
   const [storeLocation, setStoreLocation] = useState("");
+  const [storeLogo, setStoreLogo] = useState("");
+  const [storeLogoFile, setStoreLogoFile] = useState(null);
   const [payoutUPI, setPayoutUPI] = useState("");
 
-  const toggle = (key) => {
-    setNotifications({ ...notifications, [key]: !notifications[key] });
-  };
+  // Personal Info States
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [collegeName, setCollegeName] = useState("");
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(URL.createObjectURL(file));
-      setShowProfileMenu(false);
+  // Edit mode states
+  const [editingStore, setEditingStore] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+
+  // Edit handlers
+  const startEditingStore = () => setEditingStore(true);
+  const cancelEditingStore = () => setEditingStore(false);
+  const saveStoreChanges = async () => {
+    try {
+      const formData = new FormData();
+
+      if (storeLogoFile) formData.append("storeLogo", storeLogoFile); // file
+      if (storeName) formData.append("storeName", storeName);
+      if (storeDescription) formData.append("storeDescription", storeDescription);
+      if (storeLocation) formData.append("storeLocation", storeLocation);
+
+      await api.put("/users/updateStore", formData);
+
+      setEditingStore(false);
+    } catch (error) {
+      console.log("Save store error:", error);
     }
   };
 
-  /* ==============================
-      LOAD USER DATA FROM DATABASE
-     ============================== */
+  const startEditingProfile = () => setEditingProfile(true);
+  const cancelEditingProfile = () => setEditingProfile(false);
+  const saveProfileChanges = async () => {
+    try {
+      const formData = new FormData();
+
+      if (avatarFile) formData.append("avatar", avatarFile);
+      if (collegeName) formData.append("collegeName", collegeName);
+      if (payoutUPI) formData.append("payoutUPI", payoutUPI);
+
+      await api.put("/users/updateProfile", formData);
+
+      setEditingProfile(false);
+    } catch (error) {
+      console.log("Save profile error:", error);
+    }
+  };
 
   useEffect(() => {
 
@@ -100,14 +135,7 @@ const SellerSettings = () => {
 
         const token = localStorage.getItem("token");
 
-        const res = await axios.get(
-          "http://localhost:5000/api/users/me",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
+        const res = await api.get("/users/me");
 
         const user = res.data;
 
@@ -123,7 +151,15 @@ const SellerSettings = () => {
 
         if(user.storeLocation) setStoreLocation(user.storeLocation);
 
+        if(user.storeLogo) setStoreLogo(user.storeLogo);
+
         if(user.payoutUPI) setPayoutUPI(user.payoutUPI);
+
+        // Personal Info Load
+        if(user.name) setName(user.name);
+        if(user.email) setEmail(user.email);
+        if(user.avatar) setAvatar(user.avatar);
+        if(user.collegeName) setCollegeName(user.collegeName);
 
       } catch (error) {
         console.log("Error loading settings:", error);
@@ -134,46 +170,9 @@ const SellerSettings = () => {
 
   }, []);
 
-
-  /* ==============================
-        SAVE SETTINGS TO DATABASE
-     ============================== */
-
-  const handleSave = async () => {
-
-    try {
-
-      const token = localStorage.getItem("token");
-
-      await axios.put(
-        "http://localhost:5000/api/users/update-settings",
-        {
-          avatar: profileImage,
-          storeName,
-          storeDescription,
-          storeLocation,
-          payoutUPI,
-          notifications
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      alert("Settings saved successfully");
-
-    } catch (error) {
-      console.log("Save settings error:", error);
-    }
-
-  };
-
-
   return (
     <div className="min-h-screen bg-background text-text">
-      <div className="max-w-6xl mx-auto px-10 py-10 space-y-8">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
 
         {/* HEADER ROW */}
         <div className="flex items-center justify-between">
@@ -188,64 +187,16 @@ const SellerSettings = () => {
           <div className="flex items-center gap-4">
 
             <div className="text-right">
-              <h2 className="text-sm font-semibold text-text">John Doe</h2>
-              <p className="text-xs text-muted">john.doe@example.com</p>
+              <h2 className="text-sm font-semibold text-text">{name}</h2>
+              <p className="text-xs text-muted">{email}</p>
             </div>
 
-            <div className="relative">
-
+            <div>
               <img
                 src={profileImage}
                 alt="Profile"
                 className="w-16 h-16 rounded-full object-cover border-2 border-border"
               />
-
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] px-3 py-1 rounded-full shadow"
-              >
-                Profile
-              </button>
-
-              {showProfileMenu && (
-                <div className="absolute right-0 mt-6 w-44 bg-card border border-border rounded-lg shadow-md p-2 space-y-2">
-
-                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer hover:text-primary transition">
-                    <MdEdit />
-                    Edit Profile
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                  </label>
-
-                  <button
-                    onClick={() => {
-                      setProfileImage("https://i.pravatar.cc/150?img=12");
-                      setShowProfileMenu(false);
-                    }}
-                    className="flex items-center gap-2 text-sm text-text hover:text-primary transition"
-                  >
-                    <MdDelete />
-                    Delete Profile
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      alert("Switch Role Clicked");
-                      setShowProfileMenu(false);
-                    }}
-                    className="flex items-center gap-2 text-sm text-text hover:text-primary transition"
-                  >
-                    <MdSwapHoriz />
-                    Switch Role
-                  </button>
-
-                </div>
-              )}
-
             </div>
 
           </div>
@@ -253,19 +204,50 @@ const SellerSettings = () => {
 
 
         {/* STORE INFORMATION */}
-        <Section title="Store Information">
+        <Section
+          title="Store Information"
+          onEdit={startEditingStore}
+          isEditing={editingStore}
+          onSave={saveStoreChanges}
+          onCancel={cancelEditingStore}
+        >
+          <div className="mb-6">
+            <label className="block text-sm mb-2 text-muted">Store Logo</label>
+            <div className="flex items-center gap-4">
+              <img
+                src={storeLogo || "https://via.placeholder.com/80x80?text=Logo"}
+                alt="Store Logo"
+                className="w-20 h-20 object-cover border border-border rounded-lg"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setStoreLogo(URL.createObjectURL(file));
+                    setStoreLogoFile(file);
+                  }
+                }}
+                disabled={!editingStore}
+                className="text-sm text-muted"
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-6">
 
             <Input
               label="Store Name"
               value={storeName}
               onChange={(e)=>setStoreName(e.target.value)}
+              disabled={!editingStore}
             />
 
             <Input
               label="Store Location"
               value={storeLocation}
               onChange={(e)=>setStoreLocation(e.target.value)}
+              disabled={!editingStore}
             />
 
           </div>
@@ -274,88 +256,93 @@ const SellerSettings = () => {
             label="Store Description"
             value={storeDescription}
             onChange={(e)=>setStoreDescription(e.target.value)}
+            disabled={!editingStore}
           />
         </Section>
 
 
         {/* PROFILE INFORMATION */}
-        <Section title="Profile Information">
-          <div className="grid grid-cols-2 gap-6">
-            <Input label="First Name" defaultValue="John" />
-            <Input label="Last Name" defaultValue="Doe" />
+        <Section
+          title="Profile Information"
+          onEdit={startEditingProfile}
+          isEditing={editingProfile}
+          onSave={saveProfileChanges}
+          onCancel={cancelEditingProfile}
+        >
+          <div className="mb-6">
+            <label className="block text-sm mb-2 text-muted">Profile Avatar</label>
+            <div className="flex items-center gap-4">
+              <img
+                src={avatar || "https://via.placeholder.com/80x80?text=Avatar"}
+                alt="Profile Avatar"
+                className="w-20 h-20 object-cover border border-border rounded-full"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setAvatar(URL.createObjectURL(file));
+                    setAvatarFile(file);
+                  }
+                }}
+                disabled={!editingProfile}
+                className="text-sm text-muted"
+              />
+            </div>
           </div>
-          <Input label="Email Address" defaultValue="john.doe@example.com" />
-          <Input label="Phone Number" defaultValue="+1 234 567 8900" />
-        </Section>
-
-
-        {/* BANK DETAILS */}
-        <Section title="Bank / Payment Details">
-
-          <Input label="Account Holder Name" defaultValue="John Doe" />
-
           <div className="grid grid-cols-2 gap-6">
-            <Input label="Bank Account Number" defaultValue="****1234" />
-            <Input label="Routing Number" defaultValue="****5678" />
+            <Input
+              label="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={true}
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={true}
+            />
           </div>
-
-          <Input
-            label="UPI ID (Optional)"
-            value={payoutUPI}
-            onChange={(e)=>setPayoutUPI(e.target.value)}
-          />
-
+          <div className="grid grid-cols-2 gap-6">
+            <Input
+              label="College Name"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
+              disabled={!editingProfile}
+            />
+            <Input
+              label="UPI ID (Optional)"
+              value={payoutUPI}
+              onChange={(e)=>setPayoutUPI(e.target.value)}
+              disabled={!editingProfile}
+            />
+          </div>
         </Section>
 
-
-        {/* NOTIFICATIONS */}
-        <Section title="Notification Preferences">
-
-          <Toggle
-            title="New Orders"
-            desc="Get notified when you receive a new order"
-            checked={notifications.newOrders}
-            onClick={() => toggle("newOrders")}
-          />
-
-          <Toggle
-            title="Low Stock Alerts"
-            desc="Get notified when products are running low"
-            checked={notifications.lowStock}
-            onClick={() => toggle("lowStock")}
-          />
-
-          <Toggle
-            title="Marketing Updates"
-            desc="Receive tips and updates to grow your store"
-            checked={notifications.marketing}
-            onClick={() => toggle("marketing")}
-          />
-
-          <Toggle
-            title="Customer Messages"
-            desc="Get notified when buyers send you messages"
-            checked={notifications.messages}
-            onClick={() => toggle("messages")}
-          />
-
-        </Section>
-
-
-        {/* BUTTONS */}
-        <div className="flex justify-end gap-4 pt-2">
-
-          <button className="px-6 py-2 rounded-full border border-border bg-card hover:bg-background transition">
-            Cancel
-          </button>
-
+        {/* PROFILE ACTIONS */}
+        <div className="mt-4 flex justify-end gap-3">
           <button
-            onClick={handleSave}
-            className="px-8 py-3 rounded-full bg-primary text-white font-semibold shadow-md hover:opacity-90 transition"
+            onClick={() => handlePassChange}
+            className="px-4 py-2 rounded-full border border-border text-sm hover:bg-background"
           >
-            Save Changes
+            Change Password
           </button>
-
+          <button
+            onClick={() => handleSwitch}
+            className="px-4 py-2 rounded-full border border-border text-sm hover:bg-background"
+          >
+            Switch Profile
+          </button>
+          <button
+            onClick={() => handleDelete}
+            className="px-4 py-2 rounded-full border border-red-300 text-sm text-red-500 hover:bg-red-50"
+          >
+            Delete Account
+          </button>
         </div>
 
       </div>

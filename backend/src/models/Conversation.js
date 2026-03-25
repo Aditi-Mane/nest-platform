@@ -20,6 +20,16 @@ const conversationSchema =new mongoose.Schema(
       required: true,
     },
 
+    productName: {
+      type: String,
+      
+    },
+
+    buyerName: {
+      type: String,
+      
+    },
+
     status: {
       type: String,
       enum: [
@@ -45,6 +55,11 @@ const conversationSchema =new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    unreadCountBuyer: {
+      type: Number,
+      default: 0
+    }
 
   },
   { timestamps: true }

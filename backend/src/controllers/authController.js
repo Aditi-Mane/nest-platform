@@ -52,10 +52,9 @@ export const signup = async (req, res) => {
       email: normalizedEmail,
       password: hashedPassword,
 
-      verificationStatus: "pending",
+      verificationStatus: "pending_email",
       availableRoles: [],
       activeRole: null,
-      isVerified: false
     })
 
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -99,17 +98,10 @@ export const signup = async (req, res) => {
   }
 };
 
-import mongoose from "mongoose";
 export const verifyAccount = async (req, res) =>{
   try {
-    const {userId, collegeId} = req.body;
+    const {collegeId} = req.body;
     const file = req.file;
-
-    if(!userId){
-      return res.status(400).json({
-        message: "User Id is required"
-      })
-    }
 
     if(!collegeId){
       return res.status(400).json({
@@ -139,23 +131,17 @@ export const verifyAccount = async (req, res) =>{
       });
     }
 
-    if (!userId || userId === "undefined") {
-      return res.status(400).json({
-        message: "Invalid user id"
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        message: "Invalid user id format"
-      });
-    }
-
-    const user = await User.findById(userId);
+    const user = req.user;
 
     if(!user) {
       return res.status(404).json({
         message: "User not found",
+      });
+    }
+
+    if (user.verificationStatus !== "email_verified") {
+      return res.status(400).json({
+        message: "Complete email verification first",
       });
     }
 
@@ -233,9 +219,11 @@ export const verifyEmailOTP = async (req, res) => {
 
     await user.save();
 
+    const token = generateToken(user._id);
+
     return res.status(200).json({
       message: "OTP verified",
-      userId: user._id.toString()
+      token
     });
 
   } catch (error) {
@@ -452,3 +440,154 @@ export const createNewPass = async(req, res) =>{
   }
 }
 
+export const resendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required"
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found"
+      });
+    }
+
+    // Only allow resend if email not verified yet
+    if (user.verificationStatus !== "pending_email") {
+      return res.status(400).json({
+        message: "Email already verified or invalid state"
+      });
+    }
+
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    const hashedOtp = await bcrypt.hash(otp.toString(), 10);
+
+    user.verificationOtp = hashedOtp;
+    user.verificationOtpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    await user.save();
+
+    // Send email
+    const transporter = getTransporter();
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: normalizedEmail,
+      subject: "Resent OTP - Email Verification",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Email Verification</h2>
+          <p>Your new OTP is:</p>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+        </div>
+      `
+    });
+
+    return res.status(200).json({
+      message: "OTP resent successfully"
+    });
+
+  } catch (error) {
+    console.log("Resend OTP Error:", error);
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+};
+
+export const changeEmailBeforeVerification = async (req, res) => {
+  try {
+    const { email, newEmail } = req.body;
+
+    //validate input
+    if (!email || !newEmail) {
+      return res.status(400).json({
+        message: "Both email and newEmail are required"
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase();
+    const normalizedNewEmail = newEmail.toLowerCase();
+
+    if (normalizedEmail === normalizedNewEmail) {
+      return res.status(400).json({
+        message: "New email must be different"
+      });
+    }
+
+    //find user by CURRENT email
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found"
+      });
+    }
+
+    //only allow before email verification
+    if (user.verificationStatus !== "pending_email") {
+      return res.status(400).json({
+        message: "Email already verified"
+      });
+    }
+
+    //check if new email already exists
+    const existingUser = await User.findOne({ email: normalizedNewEmail });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already in use"
+      });
+    }
+
+    //update email
+    user.email = normalizedNewEmail;
+
+    //eneragte fresh OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const hashedOtp = await bcrypt.hash(otp.toString(), 10);
+
+    user.verificationOtp = hashedOtp;
+    user.verificationOtpExpiry = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    //send new OTP
+    const transporter = getTransporter();
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: normalizedNewEmail,
+      subject: "Email Verification - Updated Email",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Your new OTP</h2>
+          <h1 style="letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+        </div>
+      `
+    });
+
+    return res.status(200).json({
+      message: "Email updated successfully",
+      email: normalizedNewEmail
+    });
+
+  } catch (error) {
+    console.log("Change Email Error:", error);
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+};

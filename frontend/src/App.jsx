@@ -14,7 +14,6 @@ import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-
     <>
     <Toaster
       position="top-right"
@@ -43,10 +42,8 @@ function App() {
         },
       }}
     />
-
     <UserProvider>
-      
-        
+ 
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth/*" element={<AuthPage />} />

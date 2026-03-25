@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FiCheckCircle, FiClock} from "react-icons/fi";
 import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../../../components/Pagination";
 
 const SellerOrderHistory = () => {
   const navigate = useNavigate();
@@ -13,20 +14,39 @@ const SellerOrderHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchSellerOrders = async () =>{
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchSellerOrders = async () => {
     try {
-      const res = await api.get("/seller/orders");
-      setOrders(res.data.orders);
+      setLoading(true);
+
+      const res = await api.get("/seller/orders", {
+        params: {
+          page,
+          limit: 6,
+          status: statusFilter,
+          search: searchTerm
+        }
+      });
+
+      setOrders(res.data.data); 
+      setTotalPages(res.data.totalPages);
+
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchSellerOrders();
-  }, [])
+  }, [page, statusFilter, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, searchTerm]);
 
   const handleGenerateOtp = async (id) =>{
     try {
@@ -54,21 +74,6 @@ const SellerOrderHistory = () => {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.productId?.name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      order.buyerId?.name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-  
   return (
     <div className="bg-background min-h-screen p-6">
 
@@ -99,7 +104,24 @@ const SellerOrderHistory = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-card border border-border rounded-xl text-[14px] px-4 py-3 focus:outline-none focus:border-primary transition"
+            className="bg-card"
+            style={{
+              padding: "12px 18px",
+              borderRadius: "16px",
+              border: "1.5px solid var(--color-border)",
+              fontSize: "14px",
+              minWidth: "170px",
+              cursor: "pointer",
+              outline: "none",
+              appearance: "none",
+              WebkitAppearance: "none",
+              MozAppearance: "none",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+              backgroundImage:
+               "url(\"data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>\")",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 14px center",
+            }}
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -113,11 +135,11 @@ const SellerOrderHistory = () => {
       {/* ORDER CARDS */}
       <div className="space-y-5">
         {loading ? (
-          <p>Loading...</p>
+          <p className="text-muted mb-4">Loading orders...</p>
         ) : orders.length === 0 ? (
-          <p>No orders yet</p>
+          <p className="text-muted mb-4">No orders yet</p>
         ) : (
-        filteredOrders.map(order => (
+        orders.map(order => (
           <div
             key={order._id}
             className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
@@ -218,6 +240,12 @@ const SellerOrderHistory = () => {
           </div>
         )))}
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
 
     </div>
   );
