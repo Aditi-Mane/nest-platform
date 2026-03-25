@@ -21,8 +21,8 @@ export const MessageProvider = ({ children }) => {
 
       const map = {};
       let total = 0;
-
-      res.data.conversations.forEach((item) => {
+      const conversations = res.data?.data || [];
+      conversations.forEach((item) => {
         const count = isSeller
           ? item.unreadCountSeller || 0
           : item.unreadCountBuyer || 0;

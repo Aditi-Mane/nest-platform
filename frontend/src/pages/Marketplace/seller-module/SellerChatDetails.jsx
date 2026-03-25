@@ -40,10 +40,12 @@ const SellerChatDetails = () => {
     if (!socket) return;
 
     const handleReceive = (data) => {
-      const msg = data.message;
+      const msg = data?.message;
+
+      if (!msg || !msg._id) return; 
 
       setMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev;
+        if (prev.some((m) => m?._id === msg._id)) return prev;
         return [...prev, msg];
       });
     };
@@ -63,7 +65,7 @@ const SellerChatDetails = () => {
   // FETCH MESSAGES
   useEffect(() => {
     api.get(`/messages/${conversationId}`).then((res) => {
-      setMessages(res.data.messages);
+      setMessages(res.data?.messages || res.data?.data || []);
     });
   }, [conversationId]);
 
@@ -118,8 +120,9 @@ const SellerChatDetails = () => {
     toast.success("Deal cancelled");
   };
   const isSeller =
-  String(currentUser?._id) ===
-  String(conversationInfo?.sellerId?._id);
+  currentUser && conversationInfo
+    ? String(currentUser._id) === String(conversationInfo.sellerId)
+    : false;
 return (
   <div className="bg-background flex items-center justify-center h-full px-6 py-6">
     <div className="w-full max-w-2xl bg-card border border-border rounded-3xl flex flex-col h-[90vh] shadow-sm">
@@ -200,52 +203,55 @@ return (
 
         {messages
   .filter(
-    (msg, index, self) =>
-      msg.text?.trim() &&
-      index === self.findIndex((m) => m._id === msg._id)
-  )
-  .map((msg) => {
-    const senderId =
-      typeof msg.senderId === "object"
-        ? msg.senderId?._id
-        : msg.senderId;
+  (msg, index, self) =>
+    msg?.text?.trim() &&
+    index === self.findIndex((m) => m?._id === msg?._id)
+)
+.map((msg) => {
+  if (!msg) return null;
 
-    const isMe =
-      String(senderId) === String(currentUser?._id);
+  const senderId =
+    typeof msg?.senderId === "object"
+      ? msg?.senderId?._id
+      : msg?.senderId || null;
 
-    const formattedTime = new Date(msg.createdAt).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const isMe =
+    String(senderId) === String(currentUser?._id);
 
-    return (
-      <div
-        key={msg._id}
-        className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-      >
-        <div className="flex flex-col max-w-[70%]">
+  const formattedTime = msg?.createdAt
+    ? new Date(msg.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
 
-          <div
-            className={`px-4 py-2 rounded-2xl text-sm ${
-              isMe
-                ? "bg-primary text-white rounded-br-md"
-                : "bg-background border border-border text-text rounded-bl-md"
-            }`}
-          >
-            {msg.text}
-          </div>
-
-          <span
-            className={`text-[10px] mt-1 text-muted ${
-              isMe ? "text-right" : "text-left"
-            }`}
-          >
-            {formattedTime}
-          </span>
+  return (
+    <div
+      key={msg._id}
+      className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+    >
+      <div className="flex flex-col max-w-[70%]">
+        <div
+          className={`px-4 py-2 rounded-2xl text-sm ${
+            isMe
+              ? "bg-primary text-white rounded-br-md"
+              : "bg-background border border-border text-text rounded-bl-md"
+          }`}
+        >
+          {msg.text}
         </div>
+
+        <span
+          className={`text-[10px] mt-1 text-muted ${
+            isMe ? "text-right" : "text-left"
+          }`}
+        >
+          {formattedTime}
+        </span>
       </div>
-    );
-  })}
+    </div>
+  );
+})}
 
         <div ref={bottomRef}></div>
       </div>
