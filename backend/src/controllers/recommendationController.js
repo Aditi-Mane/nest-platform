@@ -114,7 +114,7 @@ export const recommendFromCart = async (req, res) => {
         averageRating: -1,   //  better products first
         reviewCount: -1      //  popular products
       })
-      .limit(12);
+      .limit(5);
 
     res.json({
       success: true,

@@ -18,6 +18,10 @@ import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useCart } from "../context/CartContext.jsx";
 import { useMessages } from "@/context/MessageContext";
+import { io } from "socket.io-client";
+
+
+
 
 
 
@@ -27,10 +31,11 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
     { id: "ventures", label: "Ventures", icon: Lightbulb },
     { id: "messages", label: "Messages", icon: MessageSquare },
   ];
-  const { totalUnread } = useMessages();
+  const { totalUnread, setTotalUnread } = useMessages();
   const { cartItems } = useCart();
   const cartCount = cartItems.length;
   const navigate = useNavigate();
+  const socket = io("http://localhost:5000");
 
   const handleNavClick = (id) => {
   if (id === "messages") {
@@ -46,8 +51,34 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   }
   };
   const { user } = useUser();
+ 
+    const fetchUnread = async () => {
+    try {
+      const res = await api.get("/conversations/buyer");
 
+      const total = res.data.conversations.reduce(
+        (sum, item) => sum + (item.unreadCountBuyer || 0),
+        0
+      );
 
+      setTotalUnread(total);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  useEffect(() => {
+    fetchUnread();
+  }, []);
+
+  useEffect(() => {
+  if (!socket) return;
+
+  socket.on("unread_update", fetchUnread);
+
+  return () => socket.off("unread_update", fetchUnread);
+}, [socket]);
+
+  
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-[var(--color-background)]">
       <div className="max-w-7xl mx-auto px-2 py-0">

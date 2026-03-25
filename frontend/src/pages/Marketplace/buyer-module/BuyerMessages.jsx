@@ -175,12 +175,32 @@ useEffect(() => {
        <div
   key={item._id}
   onClick={async () => {
+
+  navigate(`/marketplace/buyer/messages/${item._id}`);
+  const unread = item.unreadCountBuyer || 0;
+
+  // update list
+  setRequests((prev) =>
+    prev.map((conv) =>
+      conv._id === item._id
+        ? { ...conv, unreadCountBuyer: 0 }
+        : conv
+    )
+  );
+
+  // update navbar
+  setTotalUnread((prev) => Math.max(prev - unread, 0));
+
+  try {
     await api.post("/messages/mark-read", {
       conversationId: item._id,
     });
+  } catch (err) {
+    console.error(err);
+  }
 
-    navigate(`/marketplace/buyer/messages/${item._id}`);
-  }}
+  
+}}
   className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-muted"
 >
   {/* Avatar */}
