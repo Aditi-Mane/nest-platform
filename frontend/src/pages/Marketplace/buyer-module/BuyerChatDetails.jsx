@@ -71,6 +71,20 @@ const BuyerChatDetails = () => {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    const markAsRead = async () => {
+      try {
+        await api.patch(`/messages/${conversationId}/read`);
+      } catch (err) {
+        console.error("Mark as read failed:", err);
+      }
+    };
+
+    if (conversationId) {
+      markAsRead();
+    }
+  }, [conversationId]);
+
   // FETCH MESSAGES
   useEffect(() => {
     const fetchMessages = async () => {

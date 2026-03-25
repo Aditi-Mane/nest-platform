@@ -141,7 +141,7 @@ export const getMessages = async (req, res) => {
 export const markAsRead = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { conversationId } = req.body;
+    const { conversationId } = req.params;
 
     const conversation = await Conversation.findById(conversationId);
 

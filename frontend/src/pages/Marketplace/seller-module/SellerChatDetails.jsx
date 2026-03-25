@@ -60,6 +60,20 @@ const SellerChatDetails = () => {
     api.get("/users/me").then((res) => setCurrentUser(res.data));
   }, []);
 
+  useEffect(() => {
+    const markAsRead = async () => {
+      try {
+        await api.patch(`/messages/${conversationId}/read`);
+      } catch (err) {
+        console.error("Mark as read failed:", err);
+      }
+    };
+
+    if (conversationId) {
+      markAsRead();
+    }
+  }, [conversationId]);
+
   // FETCH MESSAGES
   useEffect(() => {
     api.get(`/messages/${conversationId}`).then((res) => {
