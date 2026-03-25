@@ -713,20 +713,22 @@ if (!product) {
                       {item.name}
                     </p>
                     {/* Rating */}
+                    <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-muted">
                         ⭐ {item.averageRating?.toFixed(1) || "0.0"}
                     </span>
-
+                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        Similar
+                      </span>
+                    </div>
                     {/* Price + subtle tag */}
-                    <div className="flex items-center justify-between mt-1">
+                   
                       <p className="text-sm text-primary font-semibold">
                         ₹{item.price}
                       </p>
 
-                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                        Similar
-                      </span>
-                    </div>
+                      
+                    
                   </div>
                 </div>
               ))}

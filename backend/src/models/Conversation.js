@@ -51,6 +51,10 @@ const conversationSchema =new mongoose.Schema(
       type: Number,
       default: 0
     },
+    unreadCountBuyer: {
+      type: Number,
+      default: 0,
+    },
 
     unreadCountBuyer: {
       type: Number,

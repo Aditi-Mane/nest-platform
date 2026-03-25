@@ -28,35 +28,52 @@ export default function Buying() {
   
   const [viewMode, setViewMode] = useState("grid");
 
-  const { products, favourites, toggleFavourite } = useOutletContext();
+  const { favourites, toggleFavourite } = useOutletContext();
 
-  // //Backend products state
-  // const [products, setProducts] = useState([]);
-
-  // //Loading state
-  // const [loading, setLoading] = useState(true);
+  const {addToCart} =useCart();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [product, setProduct] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState("recent");
+      
+ useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
 
-  const {addToCart} =useCart();
-  //Search filters logic
-  //Why useMemo?
-  // -> So filtering doesn’t run unnecessarily on every render.
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesCategory =
-        selectedCategory === "all" ||
-        product.category === selectedCategory;
+      const res = await api.get("/products", {
+        params: {
+          page,
+          limit: 9,
+          search: searchQuery,
+          category: selectedCategory,
+          sort: sortBy,
+        },
+      });
 
-      const matchesSearch =
-        product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      setProduct(res.data.products);
+      setTotalPages(res.data.totalPages);
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [products, searchQuery, selectedCategory]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  fetchProducts();
+}, [page, searchQuery, selectedCategory, sortBy]);
+
+useEffect(() => {
+  setPage(1);
+}, [searchQuery, selectedCategory, sortBy]);
+
+
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -87,11 +104,11 @@ export default function Buying() {
           />
 
             <div className="flex gap-2">
-              <Select defaultValue="recent">
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-45 rounded-xl">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-muted">
                   <SelectItem value="recent">Most Recent</SelectItem>
                   <SelectItem value="popular">Most Popular</SelectItem>
                   <SelectItem value="price-low">Price: Low to High</SelectItem>
@@ -126,13 +143,14 @@ export default function Buying() {
         </div>
 
         {/*Products Section */}
-        {products.length === 0 ?  (
+        {loading ? (
           <p className="text-center text-lg">Loading products...</p>
-        ) : filteredProducts.length === 0 ? (
+        ) : product.length === 0 ? (
           <p className="text-center text-lg text-gray-500">
             No products available right now.
           </p>
         ) : (
+          <>
           <div
             className={
               viewMode === "grid"
@@ -140,7 +158,7 @@ export default function Buying() {
                 : "space-y-4"
             }
           >
-            {filteredProducts.map((product) => (
+            {product.map((product) => (
               <ProductCard
                 key={product._id}
                 product={product}
@@ -152,8 +170,37 @@ export default function Buying() {
                 onAddToCart={addToCart}
               />
             ))}
+            
+        </div>
+
+        <div className="flex justify-center items-center gap-3 mt-10">
+          <Button
+            variant="outline"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Prev
+          </Button>
+
+          <span className="text-sm">
+            Page {page} of {totalPages}
+          </span>
+
+          <Button
+            variant="outline"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
           </div>
+        
+        </>
+          
+
+          
         )}
+
 
        
       </div>

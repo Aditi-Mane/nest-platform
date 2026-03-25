@@ -41,6 +41,15 @@ export const sendMessage = async (req, res) => {
       conversation.status = "negotiating";
     }
 
+    //Unread Messages 
+    if (senderId.toString() === conversation.buyerId.toString()) {
+      // Buyer sent → seller has unread
+      conversation.unreadCountSeller += 1;
+    } else {
+      // Seller sent → buyer has unread
+      conversation.unreadCountBuyer += 1;
+    }
+
     //Create message
     const message = await Message.create({
       conversationId,
@@ -70,11 +79,12 @@ export const sendMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate("senderId", "_id name");
 
-    io.to(conversationId).emit("receive_message", {
-      message: populatedMessage,
+    io.to(conversationId).emit("receive_message", populatedMessage);
+
+    io.to(conversationId).emit("unread_update", {
       conversationId,
-      unreadCountSeller: conversation.unreadCountSeller,
       unreadCountBuyer: conversation.unreadCountBuyer,
+      unreadCountSeller: conversation.unreadCountSeller,
     });
 
     return res.status(201).json({
@@ -132,11 +142,11 @@ export const getMessages = async (req, res) => {
   }
 };
 
-//MARK CONVERSATION AS READ
-export const markConversationAsRead = async (req, res) => {
+//MARK AS READ
+export const markAsRead = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { conversationId } = req.params;
+    const { conversationId } = req.body;
 
     const conversation = await Conversation.findById(conversationId);
 
@@ -144,73 +154,21 @@ export const markConversationAsRead = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // Check role
-    const isBuyer =
-      conversation.buyerId.toString() === userId.toString();
-
-    const isSeller =
-      conversation.sellerId.toString() === userId.toString();
-
-    if (!isBuyer && !isSeller) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    // Reset ONLY current user's unread count
-    if (isBuyer) {
+    if (userId.toString() === conversation.buyerId.toString()) {
       conversation.unreadCountBuyer = 0;
-    }
-
-    if (isSeller) {
+    } else {
       conversation.unreadCountSeller = 0;
     }
 
     await conversation.save();
 
     return res.status(200).json({
-      message: "Conversation marked as read",
-      unreadCountBuyer: conversation.unreadCountBuyer,
-      unreadCountSeller: conversation.unreadCountSeller,
+      message: "Marked as read",
     });
 
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
-      message: "Error marking conversation as read",
-    });
-  }
-};
-
-// GET TOTAL UNREAD COUNT
-export const getTotalUnreadCount = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    // Get all conversations where user is buyer or seller
-    const conversations = await Conversation.find({
-      $or: [
-        { buyerId: userId },
-        { sellerId: userId }
-      ]
-    });
-
-    let totalUnread = 0;
-
-    conversations.forEach((conv) => {
-      if (conv.buyerId.toString() === userId.toString()) {
-        totalUnread += conv.unreadCountBuyer;
-      } else if (conv.sellerId.toString() === userId.toString()) {
-        totalUnread += conv.unreadCountSeller;
-      }
-    });
-
-    return res.status(200).json({
-      totalUnread,
-    });
-
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      message: "Error fetching unread count",
+      message: "Error marking as read",
     });
   }
 };
