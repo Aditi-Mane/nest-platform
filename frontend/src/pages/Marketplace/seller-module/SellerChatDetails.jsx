@@ -133,7 +133,12 @@ const SellerChatDetails = () => {
   };
   const isSeller =
   currentUser && conversationInfo
-    ? String(currentUser._id) === String(conversationInfo.sellerId)
+    ? String(currentUser._id) ===
+      String(
+        typeof conversationInfo.sellerId === "object"
+          ? conversationInfo.sellerId._id
+          : conversationInfo.sellerId
+      )
     : false;
 return (
   <div className="bg-background flex items-center justify-center h-full px-6 py-6">
