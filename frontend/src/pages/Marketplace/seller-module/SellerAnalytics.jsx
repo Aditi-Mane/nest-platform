@@ -1,4 +1,5 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -24,55 +25,108 @@ import {
   Package,
   CheckCircle,
 } from "lucide-react";
-
-/* ---------------- DATA ---------------- */
-
-const revenueData = [
-  { name: "Mon", value: 150 },
-  { name: "Tue", value: 220 },
-  { name: "Wed", value: 180 },
-  { name: "Thu", value: 310 },
-  { name: "Fri", value: 280 },
-  { name: "Sat", value: 400 },
-  { name: "Sun", value: 240 },
-];
-
-const orderData = [
-  { name: "Mon", value: 8 },
-  { name: "Tue", value: 12 },
-  { name: "Wed", value: 9 },
-  { name: "Thu", value: 15 },
-  { name: "Fri", value: 14 },
-  { name: "Sat", value: 18 },
-  { name: "Sun", value: 11 },
-];
-
-const viewsData = [
-  { name: "Mon", value: 140 },
-  { name: "Tue", value: 180 },
-  { name: "Wed", value: 150 },
-  { name: "Thu", value: 230 },
-  { name: "Fri", value: 200 },
-  { name: "Sat", value: 280 },
-  { name: "Sun", value: 210 },
-];
-
-const pieData = [
-  { name: "Completed", value: 78, color: "#5E7C3A" },
-  { name: "Pending", value: 9, color: "#C96A2B" },
-  { name: "Cancelled", value: 5, color: "#6E7B5C" },
-];
-
-const conversationData = [
-  { name: "Replied", value: 240, color: "#5E7C3A" },
-  { name: "Pending", value: 80, color: "#C96A2B" },
-  { name: "Converted", value: 60, color: "#6E7B5C" },
-];
+import api from "../../../api/axios";
 
 /* ---------------- MAIN ---------------- */
 
 const SellerAnalytics = () => {
+  const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState("7d");
+
+  const [dashboard, setDashboard] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+
+        const res = await api.get("/analytics/dashboard", {
+          params: { range },
+        });
+
+        if (isMounted) {
+          setDashboard(res.data.data);
+        }
+
+      } catch (err) {
+        console.error("Analytics fetch error:", err);
+
+        if (isMounted) {
+          setDashboard(null);
+        }
+
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchAnalytics();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [range]);
+
+   if (loading || !dashboard) {
+    return <div className="p-10">Loading analytics...</div>;
+  }
+
+  const {
+    overview,
+    revenue,
+    orders,
+    funnel,
+    conversations,
+    topProducts
+  } = dashboard;
+
+  const rate =
+  conversations?.total > 0
+    ? (conversations.confirmed / conversations.total) * 100
+    : 0;
+
+  const pieData = [
+    {
+      name: "Pending",
+      value: funnel?.pending || 0,
+      color: "var(--color-primary)" 
+    },
+    {
+      name: "Completed",
+      value: funnel?.completed || 0,
+      color: "var(--color-secondary)"
+    },
+    {
+      name: "In Progress",
+      value: funnel?.inProgress || 0,
+      color: "var(--color-border)"
+    },
+  ];
+
+  const conversationData = [
+    {
+      name: "Active",
+      value: conversations?.active || 0,
+      color: "var(--color-primary)"
+    },
+    {
+      name: "Confirmed",
+      value: conversations?.confirmed || 0,
+      color: "var(--color-secondary)"
+    },
+    {
+      name: "Cancelled",
+      value: conversations?.cancelled || 0,
+      color: "var(--color-border)"
+    },
+  ];
+
   return (
+    
     <div className="min-h-screen bg-background text-text px-6 py-6">
 
       {/* HEADER */}
@@ -99,25 +153,44 @@ const SellerAnalytics = () => {
 
       {/* STATS */}
       <div className="grid grid-cols-4 gap-6 mb-10">
-        <StatCard icon={<DollarSign />} title="Total Revenue" value="$1,765" />
-        <StatCard icon={<ShoppingBag />} title="Total Orders" value="87" />
-        <StatCard icon={<Target />} title="Conversion Rate" value="6.2%" />
-        <StatCard icon={<TrendingUp />} title="Avg Order Value" value="$20" />
+        <StatCard
+          icon={<DollarSign />}
+          title="Total Revenue"
+          value={`₹${overview?.totalRevenue || 0}`}
+        />
+
+        <StatCard
+          icon={<ShoppingBag />}
+          title="Total Orders"
+          value={overview?.totalOrders || 0}
+        />
+
+        <StatCard
+          icon={<Target />}
+          title="Conversion Rate"
+          value={`${rate.toFixed(1)}%`}
+        />
+
+        <StatCard
+          icon={<TrendingUp />}
+          title="Avg Order Value"
+          value={`₹${overview?.avgOrderValue?.toFixed(2) || 0}`}
+        />
       </div>
 
       {/* CHARTS */}
       <div className="grid grid-cols-3 gap-6 mb-10">
 
         <ChartCard title="Revenue Trend">
-          <LineChartComponent data={revenueData} color="#C96A2B" />
+          <LineChartComponent data={revenue || []} color="#C96A2B" />
         </ChartCard>
 
         <ChartCard title="Orders Trend">
-          <BarChartComponent data={orderData} color="#5E7C3A" />
+          <BarChartComponent data={orders || []} color="#5E7C3A" />
         </ChartCard>
 
         <ChartCard title="Views Trend">
-          <LineChartComponent data={viewsData} color="#6E7B5C" />
+          <LineChartComponent data={revenue || []} color="#6E7B5C" />
         </ChartCard>
 
       </div>

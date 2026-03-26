@@ -17,6 +17,7 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
+import analyticsRoutes from "./routes/analyticsRoutes.js"
 import { initSocket } from "./config/socket.js"
 
 connectDB()
@@ -44,8 +45,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/orders", orderRoutes);
-
-
+app.use("/api/analytics", analyticsRoutes);
 
 app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")
