@@ -171,20 +171,20 @@ export const getTopProducts = async (req, res) => {
 
     const formatted = rawData.map((item, index) => ({
       id: item._id,
-      name: item.product?.name || "Unknown",
-      image: item.product?.images?.[0]?.url || "",
+      name: item.productName || "Unknown",
+      image: item.productImage || "",
       sales: item.totalSales,
       revenue: item.revenue,
       rank: index + 1,
     }));
 
-    res.json({
+    return res.status(200).json({
       success: true,
       data: formatted,
     });
   } catch (error) {
     console.error("Top Products Error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch top products",
     });

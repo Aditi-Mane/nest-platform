@@ -86,7 +86,7 @@ const SellerAnalytics = () => {
 
   const rate =
   conversations?.total > 0
-    ? (conversations.confirmed / conversations.total) * 100
+    ? (conversations.completed / conversations.total) * 100
     : 0;
 
   const pieData = [
@@ -320,12 +320,12 @@ const SellerAnalytics = () => {
 
       {/* PRODUCTS */}
       <div className="grid grid-cols-2 gap-6 mb-10">
-        <TopProducts />
+        <TopProducts products={topProducts} loading={loading} />
         <LowProducts />
       </div>
 
       {/* FUNNEL */}
-      <Funnel />
+      <Funnel funnel={funnel} />
 
       {/* InquiryAnalytics */}
       <InquiryAnalytics/>
@@ -377,50 +377,7 @@ const BarChartComponent = ({ data, color }) => (
 
 /* ---------------- EXTRA SECTIONS ---------------- */
 
-export const TopProducts = () => {
-  const products = [
-    {
-      id: 1,
-      name: "Vintage Desk Lamp",
-      sales: 26,
-      conv: "18.5%",
-      revenue: "$780",
-      img: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c",
-    },
-    {
-      id: 2,
-      name: "Calculus Textbook Set",
-      sales: 13,
-      conv: "22.4%",
-      revenue: "$520",
-      img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f",
-    },
-    {
-      id: 3,
-      name: "Mini Fridge",
-      sales: 5,
-      conv: "16.7%",
-      revenue: "$450",
-      img: "https://images.unsplash.com/photo-1586201375761-83865001e31c",
-    },
-    {
-      id: 4,
-      name: "Campus Bicycle",
-      sales: 3,
-      conv: "12%",
-      revenue: "$360",
-      img: "https://images.unsplash.com/photo-1485965120184-e220f721d03e",
-    },
-    {
-      id: 5,
-      name: "Coffee Maker",
-      sales: 8,
-      conv: "14.3%",
-      revenue: "$240",
-      img: "https://images.unsplash.com/photo-1511920170033-f8396924c348",
-    },
-  ];
-
+export const TopProducts = ({ products = [], loading = false }) => {
   return (
     <div className="bg-card border border-border rounded-2xl p-6">
       <h2 className="text-lg font-semibold">Top Performing Products</h2>
@@ -428,46 +385,51 @@ export const TopProducts = () => {
         Your best sellers this period
       </p>
 
-      <div className="space-y-4">
-        {products.map((p, i) => (
-          <div
-            key={p.id}
-            className="flex items-center justify-between bg-background rounded-xl px-4 py-3"
-          >
-            {/* LEFT */}
-            <div className="flex items-center gap-4">
-              {/* RANK */}
-              <div className="w-7 h-7 flex items-center justify-center bg-primary text-white text-xs rounded-full">
-                {i + 1}
+      {loading ? (
+        <p className="text-sm text-muted">Loading...</p>
+      ) : products.length === 0 ? (
+        <p className="text-sm text-muted">No data available</p>
+      ) : (
+        <div className="space-y-4">
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center justify-between bg-background rounded-xl px-4 py-3"
+            >
+              {/* LEFT */}
+              <div className="flex items-center gap-4">
+                {/* RANK */}
+                <div className="w-7 h-7 flex items-center justify-center bg-primary text-white text-xs rounded-full">
+                  {p.rank}
+                </div>
+
+                {/* IMAGE */}
+                <img
+                  src={p.image || "/placeholder.png"}
+                  alt={p.name}
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+
+                {/* TEXT */}
+                <div>
+                  <h3 className="font-medium">{p.name}</h3>
+                  <p className="text-sm text-muted">
+                    {p.sales} sales
+                  </p>
+                </div>
               </div>
 
-              {/* IMAGE */}
-              <img
-                src={p.img}
-                alt=""
-                className="w-12 h-12 rounded-lg object-cover"
-              />
-
-              {/* TEXT */}
-              <div>
-                <h3 className="font-medium">{p.name}</h3>
-                <p className="text-sm text-muted">
-                  {p.sales} sales •{" "}
-                  <span className="text-secondary font-medium">
-                    {p.conv} conv.
-                  </span>
+              {/* RIGHT */}
+              <div className="text-right">
+                <p className="text-primary font-semibold">
+                  ₹{p.revenue}
                 </p>
+                <p className="text-xs text-muted">revenue</p>
               </div>
             </div>
-
-            {/* RIGHT */}
-            <div className="text-right">
-              <p className="text-primary font-semibold">{p.revenue}</p>
-              <p className="text-xs text-muted">revenue</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -548,30 +510,70 @@ const FunnelItem = ({ icon, title, value, sub, drop }) => (
   </div>
 );
 
-const Arrow = () => <div className="text-border text-xl">›</div>;
+const Arrow = () => <div className="text-border text-5xl">›</div>;
 
-const Funnel = () => (
-  <div className="bg-card border border-border rounded-2xl p-8 mb-8">
-    <h2 className="text-lg font-semibold">Conversion Funnel</h2>
-    <p className="text-sm text-muted mb-8">
-      Track how buyers move through your sales process
-    </p>
+const Funnel = ({ funnel = {} }) => {
+  const views = funnel.views || 0;
+  const inquiries = funnel.inquiries || 0;
+  const orders = funnel.orders || 0;
+  const completed = funnel.completed || 0;
 
-    <div className="grid grid-cols-7 items-center text-center">
+  // percentages (safe)
+  const inquiryRate = views ? ((inquiries / views) * 100).toFixed(1) : 0;
+  const orderRate = views ? ((orders / views) * 100).toFixed(1) : 0;
+  const completedRate = views ? ((completed / views) * 100).toFixed(1) : 0;
 
-      <FunnelItem icon={<Eye size={26} />} title="Views" value="1,410" sub="100% of views" />
-      <Arrow />
+  // drop-offs
+  const drop1 = views ? (((views - inquiries) / views) * 100).toFixed(0) : 0;
+  const drop2 = inquiries ? (((inquiries - orders) / inquiries) * 100).toFixed(0) : 0;
+  const drop3 = orders ? (((orders - completed) / orders) * 100).toFixed(0) : 0;
 
-      <FunnelItem icon={<MessageSquare size={26} className="text-primary" />} title="Inquiries" value="287" sub="20.4% of views" drop="-80% drop" />
-      <Arrow />
+  return (
+    <div className="bg-card border border-border rounded-2xl p-8 mb-8">
+      <h2 className="text-lg font-semibold">Conversion Funnel</h2>
+      <p className="text-sm text-muted mb-8">
+        Track how buyers move through your sales process
+      </p>
 
-      <FunnelItem icon={<Package size={26} className="text-secondary" />} title="Orders" value="87" sub="6.2% of views" drop="-70% drop" />
-      <Arrow />
+      <div className="grid grid-cols-7 items-center text-center">
 
-      <FunnelItem icon={<CheckCircle size={26} className="text-secondary" />} title="Completed" value="78" sub="5.5% of views" drop="-10% drop" />
+        <FunnelItem
+          icon={<Eye size={26} />}
+          title="Views"
+          value={views}
+          sub="100% of views"
+        />
+        <Arrow />
+
+        <FunnelItem
+          icon={<MessageSquare size={26} className="text-primary" />}
+          title="Inquiries"
+          value={inquiries}
+          sub={`${inquiryRate}% of views`}
+          drop={`-${drop1}% drop`}
+        />
+        <Arrow />
+
+        <FunnelItem
+          icon={<Package size={26} className="text-secondary" />}
+          title="Orders"
+          value={orders}
+          sub={`${orderRate}% of views`}
+          drop={`-${drop2}% drop`}
+        />
+        <Arrow />
+
+        <FunnelItem
+          icon={<CheckCircle size={26} className="text-secondary" />}
+          title="Completed"
+          value={completed}
+          sub={`${completedRate}% of views`}
+          drop={`-${drop3}% drop`}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const InquiryAnalytics = () => (
   <div className="bg-card border border-border rounded-2xl p-8 mb-10">

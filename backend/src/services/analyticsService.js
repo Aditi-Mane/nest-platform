@@ -1,6 +1,7 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import Conversation from "../models/Conversation.js";
+import mongoose from "mongoose";
 
 const getDateFilter = (range) => {
   const now = new Date();
@@ -240,8 +241,13 @@ export const getConversationStats = async (sellerId) => {
 /* ---------------- TOP PRODUCTS ---------------- */
 
 export const getTopProducts = async (sellerId) => {
-  return Order.aggregate([
-    { $match: { sellerId } },
+  return await Order.aggregate([
+    {
+      $match: {
+        sellerId: new mongoose.Types.ObjectId(sellerId),
+        status: "otp_verified",
+      },
+    },
 
     {
       $group: {
@@ -256,13 +262,18 @@ export const getTopProducts = async (sellerId) => {
 
     {
       $lookup: {
-        from: "products", // Mongo collection name
+        from: "products",
         localField: "_id",
         foreignField: "_id",
         as: "product",
       },
     },
 
-    { $unwind: "$product" },
+    {
+      $unwind: {
+        path: "$product",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
   ]);
 };
