@@ -993,7 +993,7 @@ const SellerProducts = () => {
                   />
                 </div>
 
-                {existingImages.length > 0 && (
+                {(existingImages.length > 0 || formData.images.length > 0) && (
                 <div className="grid grid-cols-3 gap-4 mt-4">
 
                   {/* Existing Images */}
