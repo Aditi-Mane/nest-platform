@@ -1,5 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
+import { uploadToS3 } from "../utils/uploadToS3.js";
+import { deleteFromS3 } from "../utils/deleteFromS3.js";
 
 export const setUserRole = async (req, res) => {
   try {
