@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/generateToken.js";
 import { getTransporter } from "../utils/mailer.js";
+import { deleteFromS3 } from "../utils/deleteFromS3.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 
 export const signup = async (req, res) => {
   try {
@@ -159,7 +161,15 @@ export const verifyAccount = async (req, res) =>{
     }
 
     user.collegeId = normalizedId;
-    user.idCardImage = file.path;
+    // delete old ID card if re-uploaded
+    if (user.idCardImage) {
+      await deleteFromS3(user.idCardImage).catch(() => {});
+    }
+
+    // upload new image
+    const imageUrl = await uploadToS3(file);
+
+    user.idCardImage = imageUrl;
     user.verificationStatus = "under_review"
 
     await user.save();

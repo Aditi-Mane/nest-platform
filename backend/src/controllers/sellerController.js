@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import Review from "../models/Review.js";
 import { paginate } from "../utils/paginate.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";
+import { deleteFromS3 } from "../utils/deleteFromS3.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -39,7 +40,13 @@ export const setupSeller = async (req, res) => {
     user.payoutUPI = payoutUPI;
 
     if (req.file) {
-      user.storeLogo = `/uploads/${req.file.filename}`;
+      // delete old logo if exists
+      if (user.storeLogo) {
+        await deleteFromS3(user.storeLogo).catch(() => {});
+      }
+
+      const logoUrl = await uploadToS3(req.file);
+      user.storeLogo = logoUrl;
     }
 
     await user.save();
@@ -287,45 +294,52 @@ export const editProduct = async (req, res) => {
       }
     }
 
-    //image Handling
+    //normalize existingImages
+    let incomingImages = [];
 
-    let updatedImages = [];
-
-    //handle existing images (remaining ones)
     if (existingImages) {
-      let parsedExisting = existingImages;
-
-      if (!Array.isArray(parsedExisting)) {
-        parsedExisting = [parsedExisting];
-      }
-
-      updatedImages = parsedExisting.map((url) => ({ url }));
+      incomingImages = Array.isArray(existingImages)
+        ? existingImages
+        : [existingImages];
     }
 
-    //handle newly uploaded images
+    //old images from DB
+    const oldImages = product.images.map(img => img.url);
+
+    //find removed images
+    const imagesToDelete = oldImages.filter(
+      url => !incomingImages.includes(url)
+    );
+
+    //delete removed images from S3
+    await Promise.all(
+      imagesToDelete.map(url => deleteFromS3(url))
+    );
+
+    //upload new files
+    let newImageUrls = [];
+
     if (req.files && req.files.length > 0) {
-      const uploadedUrls = await Promise.all(
+      const uploaded = await Promise.all(
         req.files.map(file => uploadToS3(file))
       );
 
-      const newImages = uploadedUrls.map(url => ({ url }));
-
-      updatedImages = [...updatedImages, ...newImages];
+      newImageUrls = uploaded;
     }
 
-    //if no image changes sent → keep old images
-    if (!existingImages && (!req.files || req.files.length === 0)) {
-      updatedImages = product.images;
-    }
+    //final images
+    const finalImages = [
+      ...incomingImages.map(url => ({ url })),
+      ...newImageUrls.map(url => ({ url }))
+    ];
 
-    //ensure at least one image remains
-    if (!updatedImages || updatedImages.length === 0) {
+    if (finalImages.length === 0) {
       return res.status(400).json({
-        message: "At least one product image is required"
+        message: "At least one image is required"
       });
     }
 
-    product.images = updatedImages;
+    product.images = finalImages;
 
     await product.save();
 
@@ -362,6 +376,16 @@ export const deleteProduct = async (req, res) => {
         message: "Not authorized to delete this product",
       });
     }
+
+    await Promise.all(
+      product.images.map(img => {
+        const url = img.url || img;
+
+        return deleteFromS3(url).catch(err => {
+          console.error("Failed to delete:", url, err);
+        });
+      })
+    );
 
     await product.deleteOne();
 

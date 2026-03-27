@@ -100,7 +100,14 @@ export const updateProfile = async (req, res) => {
     if(payoutUPI) user.payoutUPI = payoutUPI;
 
     if (req.file) {
-      user.avatar = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+      // delete old avatar
+      if (user.avatar) {
+        await deleteFromS3(user.avatar).catch(() => {});
+      }
+
+      // upload new avatar
+      const avatarUrl = await uploadToS3(req.file);
+      user.avatar = avatarUrl;
     }
 
     await user.save();
@@ -140,7 +147,11 @@ export const updateStore = async (req, res) => {
     if(payoutUPI) user.payoutUPI = payoutUPI;
 
     if (req.file) {
-      user.storeLogo = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+      if (user.storeLogo) {
+        await deleteFromS3(user.storeLogo).catch(() => {});
+      }
+      const logoUrl = await uploadToS3(req.file);
+      user.storeLogo = logoUrl;
     }
 
     await user.save();
