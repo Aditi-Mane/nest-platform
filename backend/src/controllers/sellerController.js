@@ -8,6 +8,7 @@ import { getTransporter } from "../utils/mailer.js";
 import mongoose from "mongoose";
 import Review from "../models/Review.js";
 import { paginate } from "../utils/paginate.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -106,9 +107,15 @@ export const createProduct = async (req, res) => {
     }
 
     //handle uploaded images
-    const imageUrls = req.files?.map((file) => ({
-      url: `${req.protocol}://${req.get("host")}/${file.path}`,
-    })) || [];
+    let imageUrls = [];
+
+    if (req.files && req.files.length > 0) {
+      const uploadedUrls = await Promise.all(
+        req.files.map(file => uploadToS3(file))
+      );
+
+      imageUrls = uploadedUrls.map(url => ({ url }));
+    }
 
     if (imageUrls.length === 0) {
       return res.status(400).json({
@@ -297,9 +304,11 @@ export const editProduct = async (req, res) => {
 
     //handle newly uploaded images
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map((file) => ({
-        url: `${req.protocol}://${req.get("host")}/${file.path.replace(/\\/g, "/")}`
-      }));
+      const uploadedUrls = await Promise.all(
+        req.files.map(file => uploadToS3(file))
+      );
+
+      const newImages = uploadedUrls.map(url => ({ url }));
 
       updatedImages = [...updatedImages, ...newImages];
     }
