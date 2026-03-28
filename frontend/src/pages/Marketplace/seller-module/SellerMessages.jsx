@@ -236,16 +236,24 @@ const SellerMessages = () => {
                 style={{
                   width: "60px",
                   height: "60px",
-                  background: "#ddd2c2",
                   borderRadius: "16px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontWeight: "bold",
                   fontSize: "18px",
+                  overflow: "hidden"
                 }}
               >
-                {item.productId?.name?.[0].toUpperCase()}
+                <img
+                  src={item.productId.images[0].url}
+                  alt={item.productId.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
               </div>
               
             <div className="flex flex-col gap-1">
