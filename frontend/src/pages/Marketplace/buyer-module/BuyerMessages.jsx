@@ -8,8 +8,13 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Trophy
 } from "lucide-react";
 import api from "../../../api/axios.js";
+import { useMessages } from "@/context/MessageContext";
+import { useSocket } from "@/context/SocketContext";
+
+
 
 const BuyerMessages = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -23,7 +28,58 @@ const BuyerMessages = () => {
   const themeColor = "var(--color-primary)";
   const softBorder = "var(--color-border)";
 
+  const { setTotalUnread } = useMessages();
+
+ 
   const navigate = useNavigate();
+  const socket = useSocket();
+
+  const renderStatusBadge = (status) => {
+  const base =
+    "text-[10px] px-2 py-[1px] rounded-full flex items-center gap-[3px] font-medium whitespace-nowrap";
+
+  switch (status) {
+    case "initiated":
+      return (
+        <span className={`${base} bg-yellow-100 text-yellow-700`}>
+          <Clock size={10} /> Initiated
+        </span>
+      );
+
+    case "negotiating":
+      return (
+        <span className={`${base} bg-blue-100 text-blue-700`}>
+          <MessageSquare size={10} /> Negotiating
+        </span>
+      );
+
+    case "deal_confirmed":
+      return (
+        <span className={`${base} bg-green-100 text-green-700`}>
+          <CheckCircle size={10} /> Confirmed
+        </span>
+      );
+
+    case "completed":
+      return (
+      <span className={`${base} bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-sm`}>
+        <Trophy size={10} /> Completed
+      </span>
+    );
+
+    case "cancelled":
+      return (
+        <span className={`${base} bg-red-100 text-red-700`}>
+          <XCircle size={10} /> Cancelled
+        </span>
+      );
+
+    default:
+      return null;
+  }
+};
+ 
+
 
   const fetchBuyerConversations = async () => {
       try {
@@ -50,53 +106,43 @@ const BuyerMessages = () => {
     window.removeEventListener("focus", handleFocus);
   };
 }, []);
+useEffect(() => {
+  if (!socket) return;
 
-  //STATUS STYLE
-  const statusStyle = (status) => {
-    const base = {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      padding: "5px 12px",
-      borderRadius: "20px",
-      fontSize: "12px",
-      fontWeight: 500,
-    };
+  requests.forEach((conv) => {
+    socket.emit("join_conversation", conv._id);
+  });
+}, [socket, requests]);
+useEffect(() => {
+  if (!socket) return;
 
-    switch (status) {
-      case "negotiating":
-        return { ...base, background: "#e6f0ff", color: "#2563eb" };
-      case "deal_confirmed":
-        return { ...base, background: "#e6f7ed", color: "#15803d" };
-      case "initiated":
-        return { ...base, background: "#fff6db", color: "#a16207" };
-      case "cancelled":
-        return { ...base, background: "#fde8e8", color: "#b91c1c" };
-      default:
-        return base;
-    }
+  const handleUnreadUpdate = (data) => {
+    setRequests((prev) =>
+      prev.map((conv) =>
+        conv._id === data.conversationId
+          ? { ...conv, unreadCountBuyer: data.unreadCountBuyer }
+          : conv
+      )
+    );
   };
 
-  const formatStatus = (status) => {
-    return status
-      ?.replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  };
+  socket.on("unread_update", handleUnreadUpdate);
 
-  const renderIcon = (status) => {
-    switch (status) {
-      case "negotiating":
-        return <MessageSquare size={14} />;
-      case "deal_confirmed":
-        return <CheckCircle size={14} />;
-      case "initiated":
-        return <Clock size={14} />;
-      case "cancelled":
-        return <XCircle size={14} />;
-      default:
-        return null;
-    }
+  return () => {
+    socket.off("unread_update", handleUnreadUpdate);
   };
+}, [socket]);
+ useEffect(() => {
+  const total = requests.reduce(
+    (sum, item) => sum + (item.unreadCountBuyer || 0),
+    0
+  );
+
+  setTotalUnread(total);
+}, [requests]);
+
+ 
+  
 
   //FILTER
   const filteredRequests = requests.filter((item) => {
@@ -138,45 +184,87 @@ const BuyerMessages = () => {
     </div>
 
     {/* CONVERSATION LIST */}
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1.2 overflow-y-auto">
       {filteredRequests.map((item) => (
-        <div
-          key={item._id}
-          onClick={() =>
-            navigate(`/marketplace/buyer/messages/${item._id}`)
-          }
-          className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-muted transition-all duration-200 group"
-        >
-          {/* Avatar */}
-         <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden">
-            {item.sellerId?.avatar ? (
-              <img
-                src={item.sellerId.avatar}
-                alt="avatar"
-                className="w-full h-full object-cover rounded-full"
-              />
-            ) : (
-              item.sellerId?.name?.[0]
-            )}
-          </div>
+       <div
+  key={item._id}
+  onClick={async () => {
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-center">
-              <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-800 truncate">
-                {item.sellerId?.name}
-              </p>
-            </div>
+  navigate(`/marketplace/buyer/messages/${item._id}`);
+  const unread = item.unreadCountBuyer || 0;
 
-            <p className="text-xs text-primary group-hover:opacity-80 font-medium truncate mt-0.5">
-              {item.productId?.name}
-            </p>
+  // update list
+  setRequests((prev) =>
+    prev.map((conv) =>
+      conv._id === item._id
+        ? { ...conv, unreadCountBuyer: 0 }
+        : conv
+    )
+  );
 
-            <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate mt-1 leading-relaxed">
-              {item.lastMessage || "Start conversation"}
-            </p>
-          </div>
-        </div>
+  // update navbar
+  setTotalUnread((prev) => Math.max(prev - unread, 0));
+
+  try {
+    await api.patch(`/messages/${item._id}/read`);
+  } catch (err) {
+    console.error(err);
+  }
+
+  
+}}
+  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-muted"
+>
+  {/* Avatar */}
+  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden shrink-0">
+    {item.sellerId?.avatar ? (
+      <img
+        src={item.sellerId.avatar}
+        alt="avatar"
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      item.sellerId?.name?.[0]
+    )}
+  </div>
+
+  {/* Content */}
+  <div className="flex-1 min-w-0">
+    
+    {/* Top Row */}
+    <div className="flex items-center justify-between gap-2">
+      
+      {/* Name */}
+      <p className="text-sm font-semibold text-gray-900 truncate">
+        {item.sellerId?.name}
+      </p>
+
+      {/* Right Side (Status + Unread) */}
+      <div className="flex items-center gap-2 shrink-0">
+        
+        {/* Status */}
+        {renderStatusBadge(item.status)}
+
+        {/* Unread Badge */}
+        {item.unreadCountBuyer > 0 && (
+          <span className="bg-green-600 text-white text-[10px] px-2 py-[2px] rounded-full font-medium">
+            {item.unreadCountBuyer}
+          </span>
+        )}
+      </div>
+    </div>
+
+    {/* Product Name */}
+    <p className="text-xs text-primary font-medium truncate mt-1">
+      {item.productId?.name}
+    </p>
+
+    {/* Last Message */}
+    <p className="text-xs text-gray-500 truncate mt-1 leading-relaxed">
+      {item.lastMessage || "Start conversation"}
+    </p>
+  </div>
+</div>
       ))}
     </div>
   </div>

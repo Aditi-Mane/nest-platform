@@ -1,4 +1,7 @@
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
+import { uploadToS3 } from "../utils/uploadToS3.js";
+import { deleteFromS3 } from "../utils/deleteFromS3.js";
 
 export const setUserRole = async (req, res) => {
   try {
@@ -25,6 +28,10 @@ export const setUserRole = async (req, res) => {
       return res.status(404).json({
         message: "User not found"
       });
+    }
+
+    if (!user.availableRoles.includes("buyer")) {
+      user.availableRoles.push("buyer");
     }
 
     //add role to availableRoles if not already present
@@ -59,7 +66,9 @@ export const getCurrentUser = async (req, res) =>{
       })
     }
 
-    const user = await User.findById(req.user._id).select("verificationStatus activeRole sellerStatus availableRoles email name");
+    const user = await User.findById(req.user._id).select(
+      "verificationStatus activeRole sellerStatus availableRoles email name storeName storeDescription storeLocation storeLogo payoutUPI avatar collegeName"
+    );
     if(!user){
       return res.status(404).json({
         message: "User not found"
@@ -73,10 +82,8 @@ export const getCurrentUser = async (req, res) =>{
   }
 } 
 
-export const updateSellerSettings = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
-
-    console.log("Incoming Settings:", req.body);  // 👈 ADD THIS
 
     const user = await User.findById(req.user._id);
 
@@ -87,25 +94,28 @@ export const updateSellerSettings = async (req, res) => {
     }
 
     const {
-      avatar,
-      storeName,
-      storeDescription,
-      storeLocation,
       payoutUPI,
-      notifications
+      collegeName
     } = req.body;
 
-    if(avatar) user.avatar = avatar;
-    if(storeName) user.storeName = storeName;
-    if(storeDescription) user.storeDescription = storeDescription;
-    if(storeLocation) user.storeLocation = storeLocation;
+    if(collegeName) user.collegeName = collegeName;
     if(payoutUPI) user.payoutUPI = payoutUPI;
-    if(notifications) user.notifications = notifications;
+
+    if (req.file) {
+      // delete old avatar
+      if (user.avatar) {
+        await deleteFromS3(user.avatar).catch(() => {});
+      }
+
+      // upload new avatar
+      const avatarUrl = await uploadToS3(req.file);
+      user.avatar = avatarUrl;
+    }
 
     await user.save();
 
     res.json({
-      message:"Settings updated successfully",
+      message:"Profile updated successfully",
       user
     });
 
@@ -115,9 +125,50 @@ export const updateSellerSettings = async (req, res) => {
   }
 };
 
-// @desc   Update logged in user profile
-// @route  PUT /api/users/me
-// @access Private
+export const updateStore = async (req, res) => {
+  try {
+
+    const user = await User.findById(req.user._id);
+
+    if(!user){
+      return res.status(404).json({
+        message:"User not found"
+      });
+    }
+
+    const {
+      storeName,
+      storeDescription,
+      storeLocation,
+      payoutUPI,
+    } = req.body;
+
+    if(storeName) user.storeName = storeName;
+    if(storeDescription) user.storeDescription = storeDescription;
+    if(storeLocation) user.storeLocation = storeLocation;
+    if(payoutUPI) user.payoutUPI = payoutUPI;
+
+    if (req.file) {
+      if (user.storeLogo) {
+        await deleteFromS3(user.storeLogo).catch(() => {});
+      }
+      const logoUrl = await uploadToS3(req.file);
+      user.storeLogo = logoUrl;
+    }
+
+    await user.save();
+
+    res.json({
+      message:"Store updated successfully",
+      user
+    });
+
+  } catch(error){
+    console.log(error);
+    res.status(500).json({message:"Server error"});
+  }
+};
+
 export const updateMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -143,6 +194,124 @@ export const updateMe = async (req, res) => {
     res.status(500).json({
       message: "Server error",
     });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password || password.length < 6 || !/\d/.test(password)) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters and contain a number",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const saltRounds = 10;
+    user.password = await bcrypt.hash(password, saltRounds);
+
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.log("Change Password Error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const switchRole = async (req, res) => {
+  try {
+    const user = req.user;
+    const { role } = req.body;
+
+    //validate role
+    const allowedRoles = ["buyer", "seller"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role",
+      });
+    }
+
+    //ensure buyer always exists
+    if (!user.availableRoles.includes("buyer")) {
+      user.availableRoles.push("buyer");
+    }
+
+    //check permission
+    if (!user.availableRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Role not allowed",
+      });
+    }
+
+    //avoid unnecessary update
+    if (user.activeRole === role) {
+      return res.status(200).json({
+        message: "Already in this role",
+        role,
+      });
+    }
+
+    //switch role
+    user.activeRole = role;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Role switched",
+      role,
+    });
+
+  } catch (error) {
+    console.log("Switch role error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.name = "Deleted User";
+    user.email = `deleted_${user._id}@deleted.com`;
+    user.avatar = "";
+
+    user.collegeId = null;
+    user.idCardImage = null;
+    user.payoutUPI = null;
+
+    user.verificationStatus = "rejected";
+    user.storeName = "Deleted Store";
+    user.storeDescription = "";
+    user.storeLogo = "";
+    user.storeLocation = "";
+
+    user.sellerStatus = "none";
+
+    user.activeRole = null;
+    user.availableRoles = ["buyer"]; // safe fallback
+    user.isDeleted = true;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Account deleted successfully",
+    });
+
+  } catch (error) {
+    console.log("Delete account error:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

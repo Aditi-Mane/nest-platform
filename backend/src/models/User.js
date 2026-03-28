@@ -147,6 +147,11 @@ const userSchema = new mongoose.Schema(
 
     resetOtpExpiry: {
       type: Date
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false
     }
   },
   {

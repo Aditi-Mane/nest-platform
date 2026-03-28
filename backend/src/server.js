@@ -17,7 +17,13 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
+import analyticsRoutes from "./routes/analyticsRoutes.js"
 import { initSocket } from "./config/socket.js"
+import ventureRoutes      from "./routes/ventureRoutes.js";
+import applicationRoutes  from "./routes/applicationRoutes.js";   // only /mine
+import notificationRoutes from "./routes/notificationRoutes.js";
+ 
+
 
 connectDB()
 
@@ -31,8 +37,6 @@ app.use(cors({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
 
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
 app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/users", userRoutes);
@@ -44,8 +48,10 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/orders", orderRoutes);
-
-
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/ventures",      ventureRoutes);
+app.use("/api/applications",  applicationRoutes);   // separate prefix — fixes the /mine bug
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")

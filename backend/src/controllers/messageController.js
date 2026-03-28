@@ -22,10 +22,13 @@ export const sendMessage = async (req, res) => {
     }
 
     //Authorization check
-    if (
-      conversation.buyerId.toString() !== senderId.toString() &&
-      conversation.sellerId.toString() !== senderId.toString()
-    ) {
+    const isSenderBuyer =
+      conversation.buyerId.toString() === senderId.toString();
+
+    const isSenderSeller =
+      conversation.sellerId.toString() === senderId.toString();
+
+    if (!isSenderBuyer && !isSenderSeller) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -48,6 +51,16 @@ export const sendMessage = async (req, res) => {
     // Update conversation meta
     conversation.lastMessage = text;
     conversation.updatedAt = new Date();
+
+    // Update unread counts
+    if (isSenderBuyer) {
+      // Buyer sent → increment seller unread
+      conversation.unreadCountSeller += 1;
+    } else if (isSenderSeller) {
+      // Seller sent → increment buyer unread
+      conversation.unreadCountBuyer += 1;
+    }
+
     await conversation.save();
 
     //Emit via socket
@@ -59,9 +72,21 @@ export const sendMessage = async (req, res) => {
 
     io.to(conversationId).emit("receive_message", populatedMessage);
 
+    io.to(conversation.buyerId.toString()).emit("unread_update", {
+        conversationId,
+        unreadCountBuyer: conversation.unreadCountBuyer,
+      });
+
+    io.to(conversation.sellerId.toString()).emit("unread_update", {
+        conversationId,
+        unreadCountSeller: conversation.unreadCountSeller,
+      });
+
     return res.status(201).json({
       message: "Message sent successfully",
       data: populatedMessage,
+      unreadCountSeller: conversation.unreadCountSeller,
+      unreadCountBuyer: conversation.unreadCountBuyer,
     });
 
   } catch (error) {
@@ -72,8 +97,6 @@ export const sendMessage = async (req, res) => {
     });
   }
 };
-
-
 
 //GET MESSAGES
 export const getMessages = async (req, res) => {
@@ -110,6 +133,43 @@ export const getMessages = async (req, res) => {
 
     return res.status(500).json({
       message: "Server error while fetching messages",
+    });
+  }
+};
+
+//MARK AS READ
+export const markAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    if (userId.toString() === conversation.buyerId.toString()) {
+      conversation.unreadCountBuyer = 0;
+    } else {
+      conversation.unreadCountSeller = 0;
+    }
+
+    await conversation.save();
+    const io = getIO();
+
+    io.to(userId.toString()).emit("unread_update", {
+      conversationId,
+      unreadCountBuyer: conversation.unreadCountBuyer,
+      unreadCountSeller: conversation.unreadCountSeller,
+    });
+    return res.status(200).json({
+      message: "Marked as read",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error marking as read",
     });
   }
 };

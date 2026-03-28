@@ -159,18 +159,20 @@ export function ProfilePage() {
 
         {/* TABS */}
         <Tabs defaultValue="purchases">
-          <TabsList className="mb-6">
-            <TabsTrigger value="purchases">
-              <ShoppingBag className="h-4 w-4 mr-2" />
-              Purchases
-            </TabsTrigger>
-
-            <TabsTrigger value="orders">
-              <Package className="h-4 w-4 mr-2" />
-              Orders
-            </TabsTrigger>
-          </TabsList>
-
+          <TabsList className="inline-flex bg-muted p-1 rounded-xl mb-2 w-fit">
+            <TabsTrigger
+            value="purchases"
+            className="flex items-center gap-2 whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                      text-muted-foreground hover:text-foreground
+                      data-[state=active]:bg-white 
+                      data-[state=active]:text-foreground 
+                      data-[state=active]:shadow-sm"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            <span>Purchases</span>
+          </TabsTrigger>
+          
+        </TabsList>
           {/* PURCHASE HISTORY */}
           <TabsContent value="purchases">
             {purchaseHistory.length === 0 ? (
@@ -178,54 +180,93 @@ export function ProfilePage() {
                 No purchases yet.
               </div>
             ) : (
-              <div className="space-y-4">
+          <div className="space-y-4">
+        {purchaseHistory
+        .filter(order => order !== null)
+        .map((order) => (
+          <Card
+            key={order._id}
+            className="rounded-2xl px-2 transition-all hover:shadow-md"
+          >
+            <CardContent className="p-6">
 
-                {purchaseHistory.map((order) => (
-                  <Card key={order._id}>
-                    <CardContent className="p-6 flex justify-between">
+              <div className="flex items-center gap-5">
 
-                      <div>
-                        <h4 className="font-semibold">
-                          {order.productId?.name}
-                        </h4>
+                {/* PRODUCT IMAGE */}
+                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border">
+                  <img
+                    src={order.product?.images?.[0]?.url || "/placeholder.png"}
+                    alt={order.product?.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-                        <p className="text-sm text-muted">
-                          Seller: {order.sellerId?.name}
-                        </p>
+                {/* INFO */}
+                <div className="flex-1 space-y-1">
 
-                        <p className="text-sm text-muted">
-                          {formatDistanceToNow(
-                            new Date(order.updatedAt),
-                            { addSuffix: true }
-                          )}
-                        </p>
-                      </div>
+                  <h4 className="font-semibold text-base">
+                    {order.product?.name}
+                  </h4>
 
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          ₹{order.totalPrice}
-                        </p>
+                  <p className="text-sm text-muted-foreground">
+                    Seller: {" "}
+                    <span className="text-primary font-medium">
+                      {order.seller?.name}
+                    </span>
+                  </p>
 
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={order.reviewed}
-                          onClick={() => {
-                            setSelectedProduct(order.productId._id);
-                            setIsReviewModalOpen(true);
-                          }}
-                        >
-                          {order.reviewed ? "Reviewed" : "Leave Review"}
-                        </Button>
-                      </div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Qty: {order.quantity}
+                  </p>
 
-                    </CardContent>
-                  </Card>
-                ))}
+                  <div className="flex items-center gap-2.5 mt-2">
+
+                    <Badge className="bg-green-500 text-white rounded-xl">
+                      Delivered
+                    </Badge>
+
+                    <p className="text-xs text-muted">
+                      {order.createdAt
+                        ? formatDistanceToNow(new Date(order.createdAt), {
+                            addSuffix: true,
+                          })
+                        : "Recently"}
+                    </p>
+
+                  </div>
+
+                </div>
+
+                {/* PRICE + REVIEW */}
+                <div className="text-right flex flex-col items-end gap-2">
+
+                  <p className="text-xl font-semibold text-primary">
+                    ₹{order.totalPrice}
+                  </p>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={order.reviewed}
+                    onClick={() => {
+                      setSelectedProduct(order.product._id);
+                      setIsReviewModalOpen(true);
+                    }}
+                  >
+                    {order.reviewed ? "Reviewed" : "Leave a Review"}
+                  </Button>
+
+                </div>
 
               </div>
-            )}
-          </TabsContent>
+
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+         )}
+        </TabsContent>
+
         </Tabs>
       </div>
 

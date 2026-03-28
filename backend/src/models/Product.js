@@ -30,6 +30,11 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    views: {
+      type: Number,
+      default: 0,
+    },
+
     price: {
       type: Number,
       required: true,
@@ -101,6 +106,9 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+//Create a search index on name and description fields
+productSchema.index({ name: "text", description: "text" });
 
 const Product = mongoose.model("Product", productSchema);
 

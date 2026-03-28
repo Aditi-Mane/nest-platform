@@ -16,6 +16,13 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useCart } from "../context/CartContext.jsx";
+import { useMessages } from "@/context/MessageContext";
+
+
+
+
+
+
 
 export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   const navItems = [
@@ -23,9 +30,11 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
     { id: "ventures", label: "Ventures", icon: Lightbulb },
     { id: "messages", label: "Messages", icon: MessageSquare },
   ];
+  const { totalUnread } = useMessages();
   const { cartItems } = useCart();
   const cartCount = cartItems.length;
   const navigate = useNavigate();
+  
 
   const handleNavClick = (id) => {
   if (id === "messages") {
@@ -41,8 +50,12 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
   }
   };
   const { user } = useUser();
+ 
+    
+ 
 
-
+ 
+  
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="max-w-7xl mx-auto px-2 py-0">
@@ -73,7 +86,7 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
                   key={item.id}
                   variant="ghost"
                   onClick={() => handleNavClick(item.id)}
-                  className={`gap-4 rounded-xl px-4 transition-all
+                  className={`relative gap-4 rounded-xl px-4 transition-all
                     ${
                       isActive
                         ? "bg-primary text-white"
@@ -83,6 +96,12 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
+
+                   {item.id === "messages" && totalUnread > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-green-500 text-white text-xs px-1.5 rounded-full">
+                      {totalUnread > 9 ? "9+" : totalUnread}
+                    </span>
+                  )}
                 </Button>
               );
             })}

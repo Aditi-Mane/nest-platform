@@ -5,6 +5,7 @@ import { TfiPencilAlt } from "react-icons/tfi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import toast from "react-hot-toast";
 import { ChevronDown } from "lucide-react";
+import Pagination from "../../../components/Pagination.jsx";
 
 const SellerProducts = () => {
   // ORIGINAL LOGIC
@@ -128,20 +129,30 @@ const SellerProducts = () => {
     whatsIncluded: [] 
   });
 
+  const [productSearch, setProductSearch] = useState("");
+  const [productSort, setProductSort] = useState("latest");
+  const [productCategory, setProductCategory] = useState("all");
+
   const fileInputRef = useRef(null);
 
-  const avgRating = products.length > 0 ? products.reduce((a, b) => a + b.rating, 0) / products.length: 0;
-
   useEffect(() => {
-    const fetchMyProducts = async () => {
+    const fetchProducts = async () => {
       try {
         setFetchLoading(true);
-        const { data } = await api.get(
-          `/seller/my-products?page=${page}&limit=${limit}`
-        );
 
-        setProducts(data.products);
+        const { data } = await api.get("/seller/my-products", {
+          params: {
+            page,
+            limit: 6,
+            category: productCategory,
+            sort: productSort,
+            search: productSearch
+          }
+        });
+
+        setProducts(data.data); 
         setTotalPages(data.totalPages);
+
       } catch (error) {
         console.error("Failed to load products", error);
       } finally {
@@ -149,8 +160,12 @@ const SellerProducts = () => {
       }
     };
 
-    fetchMyProducts();
-  }, [page]);
+    fetchProducts();
+  }, [page, productCategory, productSort, productSearch]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [productCategory, productSort, productSearch]);
   
   // FORM CHANGE
   const handleChange = (e) => {
@@ -399,37 +414,86 @@ const SellerProducts = () => {
         </button>
       </div>
 
+      {/* SEARCH + SORT + CATEGORY */}
+      <div className="mb-6 flex flex-col lg:flex-row gap-4">
+        <input
+          type="text"
+          value={productSearch}
+          onChange={(e) => setProductSearch(e.target.value)}
+          placeholder="Search products by name or description..."
+          className="w-full lg:w-5/5 bg-card border border-border rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:border-primary transition"
+        />
+
+        <select
+          value={productCategory}
+          onChange={(e) => setProductCategory(e.target.value)}
+          className="w-full lg:w-1/5 md:w-1/5 bg-card border border-border rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:border-primary transition appearance-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>\")",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 14px center",
+            paddingRight: "36px",
+          }}
+        >
+          <option value="all">All Categories</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={productSort}
+          onChange={(e) => setProductSort(e.target.value)}
+          className="w-full lg:w-1/5 bg-card border border-border rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:border-primary transition appearance-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>\")",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 14px center",
+            paddingRight: "36px",
+          }}
+        >
+          <option value="latest">Latest</option>
+          <option value="rating">Highest Rating</option>
+          <option value="views">Most Viewed</option>
+          {/* <option value="sales">Best Selling</option> */}
+        </select>
+      </div>
+
       {/* STATS */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Total Products</p>
+          <p className="text-sm text-muted mb-2">Total Products</p>
           <h2 className="text-2xl font-bold">{products.length}</h2>
         </div>
 
         <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Total Revenue</p>
+          <p className="text-sm text-muted mb-2">Total Revenue</p>
           <h2 className="text-2xl font-bold">₹ {analytics?.totalRevenue || 0}</h2>
         </div>
 
         <div className="bg-card border border-border p-4 rounded-xl">
-          <p className="text-sm text-muted">Average Rating</p>
+          <p className="text-sm text-muted mb-2">Average Rating</p>
           <h2 className="text-2xl font-bold">⭐ {overallRating.toFixed(1)}</h2>
         </div>
       </div>
 
-      {fetchLoading && (
-        <p className="text-muted mb-4">Loading products...</p>
-      )}
-
       {/* PRODUCT GRID */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((p) => {
-
-          return (
-            <div
-              key={p._id}
-              className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition"
-            >
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {fetchLoading ? (
+          <p className="text-muted mb-4">Loading products...</p>
+        ) : products.length === 0 ? (
+          <p className="text-muted mb-4">No matching products found</p>
+        ) : (
+          products.map((p) => {
+            return (
+              <div
+                key={p._id}
+                className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition"
+              >
               <div className="relative h-44 bg-[#efe6d6] flex items-center justify-center overflow-hidden rounded-t-2xl">
 
                 {/* STATUS BADGE */}
@@ -556,7 +620,7 @@ const SellerProducts = () => {
 
                   <div>
                     <p className="text-muted">Views</p>
-                    <p className="font-semibold">0</p>
+                    <p className="font-semibold">{p.views}</p>
                   </div>
 
                 </div>
@@ -597,57 +661,15 @@ const SellerProducts = () => {
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-3 mt-10">
-
-            {/* PREVIOUS */}
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-              className="px-4 py-2 border border-border bg-card rounded-xl 
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        hover:bg-background transition"
-            >
-              ← Previous
-            </button>
-
-            {/* PAGE NUMBERS */}
-            {[...Array(totalPages)].map((_, index) => {
-              const pageNumber = index + 1;
-
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => setPage(pageNumber)}
-                  className={`w-10 h-10 rounded-xl border transition
-                    ${
-                      page === pageNumber
-                        ? "bg-primary text-white border-primary"
-                        : "bg-card border-border hover:bg-background"
-                    }`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
-
-            {/* NEXT */}
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="px-4 py-2 border border-border bg-card rounded-xl 
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        hover:bg-background transition"
-            >
-              Next →
-            </button>
-
-          </div>
-        )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
 
       {/* MODAL */}
       {showModal && (
@@ -971,7 +993,7 @@ const SellerProducts = () => {
                   />
                 </div>
 
-                {existingImages.length > 0 && (
+                {(existingImages.length > 0 || formData.images.length > 0) && (
                 <div className="grid grid-cols-3 gap-4 mt-4">
 
                   {/* Existing Images */}

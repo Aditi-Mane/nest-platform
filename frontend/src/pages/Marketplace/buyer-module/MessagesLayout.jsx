@@ -6,7 +6,7 @@ const MessagesLayout = () => {
     <div className="h-[calc(100vh-64px)] flex bg-background">
       
       {/* LEFT SIDEBAR */}
-      <div className="w-[360px] border-r border-border bg-card flex flex-col">
+      <div className="w-[390px] border-r border-border bg-card flex flex-col">
         <BuyerMessages />
       </div>
 
