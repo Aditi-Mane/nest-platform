@@ -1,70 +1,56 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import api from "../src/api/axios.js";
 
 const useUserResolver = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [destination, setDestination] = useState(null);
 
   useEffect(() => {
     resolveUser();
-  }, [])
-  
-  const resolveUser = async () =>{
+  }, []);
 
+  const resolveUser = async () => {
     try {
       const res = await api.get("/users/me");
-
       const user = res.data;
 
       if (user.verificationStatus === "pending_email") {
-        setDestination("/auth/verify-email-otp");
-        return;
+        return setDestination("/auth/verify-email-otp");
       }
 
       if (user.verificationStatus === "email_verified") {
-        setDestination("/auth/verify-account");
-        return;
+        return setDestination("/auth/verify-account");
       }
 
-      if (user.verificationStatus === "under_review") {
-        setDestination("/auth/verification-status");
-        return;
+      if (["under_review", "rejected"].includes(user.verificationStatus)) {
+        return setDestination("/auth/verification-status");
       }
 
-      if (user.verificationStatus === "rejected") {
-        setDestination("/auth/verification-status");
-        return;
-      }
-
-      // Only approved users continue
-
-      if(user.verificationStatus !== "approved"){
-        setDestination("/auth/verification-status");
-        return;
+      if (user.verificationStatus !== "approved") {
+        return setDestination("/auth/verification-status");
       }
 
       if (!user.activeRole) {
-        setDestination("/choose-role");
-        return;
+        return setDestination("/choose-role");
       }
 
       if (user.activeRole === "seller") {
-        if(user.sellerStatus === "active"){
-          setDestination("/marketplace/seller");
-        } else {
-          setDestination("/marketplace/seller/setup");
-        }
-      } else {
-        setDestination("/marketplace/buyer");
+        return setDestination(
+          user.sellerStatus === "active"
+            ? "/marketplace/seller"
+            : "/marketplace/seller/setup"
+        );
       }
-    } catch (error) {
-      setDestination("/auth/login")
+
+      setDestination("/marketplace/buyer");
+    } catch {
+      setDestination("/auth/login");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  return {loading, destination};
-}
+  return { loading, destination };
+};
 
-export default useUserResolver
+export default useUserResolver;

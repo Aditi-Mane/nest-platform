@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+
+
 
 @theme {
   --color-background: #F2E8D5;   /* warm autumn parchment */
