@@ -79,9 +79,11 @@ const SellerAnalytics = () => {
     overview,
     revenue,
     orders,
+    views,
     funnel,
     conversations,
-    topProducts
+    topProducts,
+    lowProducts
   } = dashboard;
 
   const rate =
@@ -138,7 +140,7 @@ const SellerAnalytics = () => {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        {/* <div className="flex gap-3">
           <button className="px-4 py-2 rounded-full bg-primary text-white">
             7 Days
           </button>
@@ -148,7 +150,26 @@ const SellerAnalytics = () => {
           <button className="px-4 py-2 rounded-full border border-border bg-card">
             Custom
           </button>
-        </div>
+        </div> */}
+        <div className="flex gap-3">
+        <button
+          onClick={() => setRange("7d")}
+          className={`px-4 py-2 rounded-full ${
+            range === "7d" ? "bg-primary text-white" : "bg-card"
+          }`}
+        >
+          7 Days
+        </button>
+
+        <button
+          onClick={() => setRange("30d")}
+          className={`px-4 py-2 rounded-full ${
+            range === "30d" ? "bg-primary text-white" : "bg-card"
+          }`}
+        >
+          30 Days
+        </button>
+      </div>
       </div>
 
       {/* STATS */}
@@ -190,7 +211,7 @@ const SellerAnalytics = () => {
         </ChartCard>
 
         <ChartCard title="Views Trend">
-          <LineChartComponent data={revenue || []} color="#6E7B5C" />
+          <LineChartComponent data={views || []} color="#6E7B5C" />
         </ChartCard>
 
       </div>
@@ -321,14 +342,11 @@ const SellerAnalytics = () => {
       {/* PRODUCTS */}
       <div className="grid grid-cols-2 gap-6 mb-10">
         <TopProducts products={topProducts} loading={loading} />
-        <LowProducts />
+        <LowProducts products={lowProducts}/>
       </div>
 
       {/* FUNNEL */}
       <Funnel funnel={funnel} />
-
-      {/* InquiryAnalytics */}
-      <InquiryAnalytics/>
 
     </div>
   );
@@ -436,59 +454,30 @@ export const TopProducts = ({ products = [], loading = false }) => {
 
 /* ---------------- LOW PRODUCTS ---------------- */
 
-export const LowProducts = () => {
-  const products = [
-    {
-      name: "Skyrock Cove Poster",
-      views: 234,
-      sales: 2,
-      rate: "0.9%",
-    },
-    {
-      name: "Study Planner",
-      views: 187,
-      sales: 3,
-      rate: "1.6%",
-    },
-  ];
+export const LowProducts = ({ products = [] }) => {
+  if (!products.length) {
+    return (
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h2 className="text-lg font-semibold">Low Performing Products</h2>
+        <p className="text-sm text-muted">No data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6">
       <h2 className="text-lg font-semibold">Low Performing Products</h2>
-      <p className="text-sm text-muted mb-5">
-        Products that need attention
-      </p>
 
-      <div className="space-y-5">
+      <div className="space-y-5 mt-4">
         {products.map((p, i) => (
-          <div
-            key={i}
-            className="border border-red-300 rounded-xl p-5"
-          >
-            {/* TOP ROW */}
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium">{p.name}</h3>
-
-              <span className="text-xs px-3 py-1 border border-border rounded-full">
-                {p.rate}
-              </span>
+          <div key={i} className="border border-red-300 rounded-xl p-5">
+            <div className="flex justify-between mb-2">
+              <h3>{p.name}</h3>
+              <span>{p.conversionRate?.toFixed(1)}%</span>
             </div>
-
-            {/* STATS */}
-            <p className="text-sm text-muted flex items-center gap-2 mb-3">
-              <Eye size={14} /> {p.views} views • {p.sales} sales
+            <p className="text-sm">
+              👁 {p.views} views • 🛒 {p.sales} sales
             </p>
-
-            {/* MESSAGE */}
-            <p className="text-sm text-muted mb-4">
-              High views but low conversions. Consider adjusting price or improving photos.
-            </p>
-
-            {/* BUTTON */}
-            <button className="w-full flex items-center justify-center gap-2 border border-border rounded-full py-2 hover:bg-background transition">
-              <Pencil size={14} />
-              Improve Product
-            </button>
           </div>
         ))}
       </div>
@@ -574,41 +563,3 @@ const Funnel = ({ funnel = {} }) => {
     </div>
   );
 };
-
-const InquiryAnalytics = () => (
-  <div className="bg-card border border-border rounded-2xl p-8 mb-10">
-    <h2 className="text-lg font-semibold">Inquiry Analytics</h2>
-    <p className="text-sm text-muted mb-8">
-      How you handle buyer messages
-    </p>
-
-    <div className="grid grid-cols-3 gap-6">
-
-      <div className="bg-background rounded-2xl p-6 text-center">
-        <MessageSquare className="mx-auto mb-3 text-primary" />
-        <p className="text-muted text-sm">Total Inquiries</p>
-        <h2 className="text-2xl font-bold">287</h2>
-        <p className="text-xs text-muted">Last 7 days</p>
-      </div>
-
-      <div className="bg-background rounded-2xl p-6 text-center">
-        <Clock className="mx-auto mb-3 text-secondary" />
-        <p className="text-muted text-sm">Avg Response Time</p>
-        <h2 className="text-2xl font-bold">4.2h</h2>
-        <span className="text-xs border border-border px-3 py-1 rounded-full">
-          28% slower than avg
-        </span>
-      </div>
-
-      <div className="bg-background rounded-2xl p-6 text-center">
-        <Target className="mx-auto mb-3 text-secondary" />
-        <p className="text-muted text-sm">Inquiry → Order</p>
-        <h2 className="text-2xl font-bold">30.3%</h2>
-        <span className="text-xs bg-secondary/20 text-secondary px-3 py-1 rounded-full">
-          +5% vs last week
-        </span>
-      </div>
-
-    </div>
-  </div>
-);

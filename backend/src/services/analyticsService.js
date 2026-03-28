@@ -277,3 +277,100 @@ export const getTopProducts = async (sellerId) => {
     },
   ]);
 };
+
+export const getViewsTrend = async (sellerId, range) => {
+  const dateFilter = getDateFilter(range);
+
+  const data = await Product.aggregate([
+    {
+      $match: {
+       createdBy: new mongoose.Types.ObjectId(String(sellerId)),
+        ...(range && { createdAt: dateFilter }),
+      },
+    },
+    {
+      $group: {
+        _id: {
+          day: {
+            $dayOfWeek: {
+              date: "$createdAt",
+              timezone: "Asia/Kolkata",
+            },
+          },
+        },
+        views: { $sum: { $ifNull: ["$views", 0] } },
+      },
+    },
+    { $sort: { "_id.day": 1 } },
+  ]);
+
+  const fullWeek = [1, 2, 3, 4, 5, 6, 7];
+
+  const map = {};
+  data.forEach((item) => {
+    map[item._id.day] = item.views;
+  });
+
+  return fullWeek.map((day) => ({
+    _id: { day },
+    views: map[day] || 0,
+  }));
+};
+
+export const getLowProducts = async (sellerId) => {
+  return await Product.aggregate([
+    {
+      $match: {
+        createdBy: new mongoose.Types.ObjectId(String(sellerId))
+      },
+    },
+    {
+      $lookup: {
+        from: "orders",
+        localField: "_id",
+        foreignField: "productId",
+        as: "orders",
+      },
+    },
+    {
+      $addFields: {
+        sales: {
+          $sum: {
+            $map: {
+              input: "$orders",
+              as: "o",
+              in: "$$o.quantity",
+            },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        conversionRate: {
+          $cond: [
+            { $gt: ["$views", 0] },
+            {
+              $multiply: [
+                { $divide: ["$sales", "$views"] },
+                100,
+              ],
+            },
+            0,
+          ],
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        images: 1,
+        views: { $ifNull: ["$views", 0] },
+        sales: 1,
+        conversionRate: 1,
+      },
+    },
+    { $sort: { conversionRate: 1 } },
+    { $limit: 5 },
+  ]);
+};
