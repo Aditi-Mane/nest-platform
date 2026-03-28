@@ -91,6 +91,35 @@ export const getOrdersTrend = async (req, res) => {
   }
 };
 
+export const getViewsTrend = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const { range = "7d" } = req.query;
+
+    const rawData = await analyticsService.getViewsTrend(
+      sellerId,
+      range
+    );
+
+    const formatted = rawData.map((item) => ({
+      name: daysMap[item._id.day - 1],
+      value: item.views,
+    }));
+
+    res.json({
+      success: true,
+      data: formatted,
+    });
+
+  } catch (error) {
+    console.error("Views Trend Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch views trend",
+    });
+  }
+};
+
 /* ---------------- CONVERSION FUNNEL ---------------- */
 
 export const getConversionFunnel = async (req, res) => {
@@ -191,7 +220,211 @@ export const getTopProducts = async (req, res) => {
   }
 };
 
+export const getLowProducts = async (sellerId) => {
+  return await Product.aggregate([
+    {
+      $match: {
+        createdBy: new mongoose.Types.ObjectId(sellerId),
+      },
+    },
+    {
+      $lookup: {
+        from: "orders",
+        localField: "_id",
+        foreignField: "productId",
+        as: "orders",
+      },
+    },
+    {
+      $addFields: {
+        sales: {
+          $sum: {
+            $map: {
+              input: "$orders",
+              as: "o",
+              in: "$$o.quantity",
+            },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        conversionRate: {
+          $cond: [
+            { $gt: ["$views", 0] },
+            {
+              $multiply: [
+                { $divide: ["$sales", "$views"] },
+                100,
+              ],
+            },
+            0,
+          ],
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        images: 1,
+        views: { $ifNull: ["$views", 0] },
+        sales: 1,
+        conversionRate: 1,
+      },
+    },
+    { $sort: { conversionRate: 1 } },
+    { $limit: 5 },
+  ]);
+};
+
 /* ---------------- OPTIONAL: DASHBOARD (ALL-IN-ONE) ---------------- */
+
+// export const getDashboard = async (req, res) => {
+//   try {
+//     const sellerId = req.user._id;
+//     const { range = "7d" } = req.query;
+
+//     const [
+//       overview,
+//       revenueRaw,
+//       ordersRaw,
+//       funnel,
+//       conversations,
+//       topProductsRaw,
+//     ] = await Promise.all([
+//       analyticsService.getOverviewStats(sellerId, range),
+//       analyticsService.getRevenueTrend(sellerId, range),
+//       analyticsService.getOrdersTrend(sellerId, range),
+//       analyticsService.getConversionFunnel(sellerId),
+//       analyticsService.getConversationStats(sellerId),
+//       analyticsService.getTopProducts(sellerId),
+//     ]);
+
+//     const revenue = revenueRaw.map((item) => ({
+//       name: daysMap[item._id.day - 1],
+//       value: item.revenue,
+//     }));
+
+//     const orders = ordersRaw.map((item) => ({
+//       name: daysMap[item._id.day - 1],
+//       value: item.count,
+//     }));
+
+//     const topProducts = topProductsRaw.map((item, index) => ({
+//       id: item._id,
+//       name: item.product?.name || "Unknown",
+//       image: item.product?.images?.[0]?.url || "",
+//       sales: item.totalSales,
+//       revenue: item.revenue,
+//       rank: index + 1,
+//     }));
+
+//     res.json({
+//       success: true,
+//       data: {
+//         overview,
+//         revenue,
+//         orders,
+//         funnel,
+//         conversations,
+//         topProducts,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Dashboard Error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch dashboard",
+//     });
+//   }
+// };
+
+// export const getDashboard = async (req, res) => {
+//   try {
+//     const sellerId = req.user._id;
+//     const { range = "7d" } = req.query;
+
+//     const [
+//       overview,
+//       revenueRaw,
+//       ordersRaw,
+//       viewsRaw,
+//       funnel,
+//       conversations,
+//       topProductsRaw,
+//       lowProductsRaw
+//     ] = await Promise.all([
+//       analyticsService.getOverviewStats(sellerId, range),
+//       analyticsService.getRevenueTrend(sellerId, range),
+//       analyticsService.getOrdersTrend(sellerId, range),
+//       analyticsService.getViewsTrend(sellerId, range),
+//       analyticsService.getConversionFunnel(sellerId),
+//       analyticsService.getConversationStats(sellerId),
+//       analyticsService.getTopProducts(sellerId),
+//       analyticsService.getLowProducts(sellerId)
+//     ]);
+
+//     /* ---------- FORMAT DATA ---------- */
+
+//     const revenue = revenueRaw.map((item) => ({
+//       name: daysMap[item._id.day - 1],
+//       value: item.revenue,
+//     }));
+
+//     const orders = ordersRaw.map((item) => ({
+//       name: daysMap[item._id.day - 1],
+//       value: item.count,
+//     }));
+
+//     const views = viewsRaw.map((item) => ({
+//       name: daysMap[item._id.day - 1],
+//       value: item.views,
+//     }));
+
+//     const topProducts = topProductsRaw.map((item, index) => ({
+//       id: item._id,
+//       name: item.product?.name || "Unknown",
+//       image: item.product?.images?.[0]?.url || "",
+//       sales: item.totalSales,
+//       revenue: item.revenue,
+//       rank: index + 1,
+//     }));
+
+//     const lowProducts = lowProductsRaw.map((item, index) => ({
+//       id: item._id,
+//       name: item.name || "Unknown",
+//       image: item.images?.[0]?.url || "",
+//       views: item.views || 0,
+//       sales: item.sales || 0,
+//       conversionRate: item.conversionRate || 0,
+//       rank: index + 1,
+//     }));
+
+//     /* ---------- RESPONSE ---------- */
+
+//     res.json({
+//       success: true,
+//       data: {
+//         overview,
+//         revenue,
+//         orders,
+//         views,
+//         funnel,
+//         conversations,
+//         topProducts,
+//         lowProducts   // ✅ FIXED HERE
+//       },
+//     });
+
+//   } catch (error) {
+//     console.error("Dashboard Error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch dashboard",
+//     });
+//   }
+// };
 
 export const getDashboard = async (req, res) => {
   try {
@@ -202,17 +435,23 @@ export const getDashboard = async (req, res) => {
       overview,
       revenueRaw,
       ordersRaw,
+      viewsRaw,
       funnel,
       conversations,
       topProductsRaw,
+      lowProductsRaw
     ] = await Promise.all([
       analyticsService.getOverviewStats(sellerId, range),
       analyticsService.getRevenueTrend(sellerId, range),
       analyticsService.getOrdersTrend(sellerId, range),
+      analyticsService.getViewsTrend(sellerId, range),
       analyticsService.getConversionFunnel(sellerId),
       analyticsService.getConversationStats(sellerId),
       analyticsService.getTopProducts(sellerId),
+      analyticsService.getLowProducts(sellerId)
     ]);
+
+    /* ---------- FORMAT DATA ---------- */
 
     const revenue = revenueRaw.map((item) => ({
       name: daysMap[item._id.day - 1],
@@ -224,6 +463,11 @@ export const getDashboard = async (req, res) => {
       value: item.count,
     }));
 
+    const views = viewsRaw.map((item) => ({
+      name: daysMap[item._id.day - 1],
+      value: item.views,
+    }));
+
     const topProducts = topProductsRaw.map((item, index) => ({
       id: item._id,
       name: item.product?.name || "Unknown",
@@ -233,17 +477,32 @@ export const getDashboard = async (req, res) => {
       rank: index + 1,
     }));
 
+    const lowProducts = lowProductsRaw.map((item, index) => ({
+      id: item._id,
+      name: item.name || "Unknown",
+      image: item.images?.[0]?.url || "",
+      views: item.views || 0,
+      sales: item.sales || 0,
+      conversionRate: item.conversionRate || 0,
+      rank: index + 1,
+    }));
+
+    /* ---------- RESPONSE ---------- */
+
     res.json({
       success: true,
       data: {
         overview,
         revenue,
         orders,
+        views,
         funnel,
         conversations,
         topProducts,
+        lowProducts   
       },
     });
+
   } catch (error) {
     console.error("Dashboard Error:", error);
     res.status(500).json({
