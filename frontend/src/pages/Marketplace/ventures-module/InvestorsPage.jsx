@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,30 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
-
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  ArrowLeft,
-  Search,
-  TrendingUp,
-  Building2,
-  DollarSign,
-  Mail,
-  Linkedin,
-  Send,
+  ArrowLeft, Search, TrendingUp, Building2, DollarSign, Mail, Linkedin, Send, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
-// -------------------------------------------------------------------
-// Mock data
-// -------------------------------------------------------------------
+// ── Mock data (replace with API call once Investor model is built) ─────────────
 const mockInvestors = [
   {
     id: "1",
@@ -103,22 +89,21 @@ const mockInvestors = [
 ];
 
 const typeConfig = {
-  "Angel Investor": "bg-purple-100 text-purple-700 border-purple-200",
+  "Angel Investor":  "bg-purple-100 text-purple-700 border-purple-200",
   "Venture Capital": "bg-blue-100 text-blue-700 border-blue-200",
-  Accelerator: "bg-green-100 text-green-700 border-green-200",
+  "Accelerator":     "bg-green-100 text-green-700 border-green-200",
   "University Fund": "bg-orange-100 text-orange-700 border-orange-200",
 };
 
-// -------------------------------------------------------------------
-// Component
-// -------------------------------------------------------------------
-export default function InvestorsPage({ onNavigate }) {
+export default function InvestorsPage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const [searchQuery, setSearchQuery]   = useState("");
   const [selectedType, setSelectedType] = useState("all");
-  const [pitchModal, setPitchModal] = useState(null); // investor | null
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const [pitchModal, setPitchModal]     = useState(null);
+  const [subject, setSubject]           = useState("");
+  const [message, setMessage]           = useState("");
+  const [sending, setSending]           = useState(false);
 
   const filtered = mockInvestors.filter((inv) => {
     const q = searchQuery.toLowerCase();
@@ -136,20 +121,30 @@ export default function InvestorsPage({ onNavigate }) {
     setMessage("");
   };
 
-  const sendPitch = () => {
+  const sendPitch = async () => {
     if (!subject.trim() || !message.trim()) {
       toast.error("Please fill in all fields.");
       return;
     }
-    toast.success(`Pitch sent to ${pitchModal.name}!`);
-    setPitchModal(null);
+    try {
+      setSending(true);
+      // TODO: replace with real API call once Investor model is built
+      // await api.post(`/investors/${pitchModal.id}/pitch`, { subject, message });
+      await new Promise((r) => setTimeout(r, 800)); // simulate network
+      toast.success(`Pitch sent to ${pitchModal.name}!`);
+      setPitchModal(null);
+    } catch {
+      toast.error("Failed to send pitch. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <Button variant="ghost" className="mb-6 gap-2" onClick={() => navigate("/marketplace/buyer/ventures")}>
           <ArrowLeft className="h-4 w-4" />
           Back to Ventures
@@ -165,7 +160,7 @@ export default function InvestorsPage({ onNavigate }) {
           </p>
         </div>
 
-        {/* ── Search & Filter ── */}
+        {/* Search & Filter */}
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1">
@@ -192,7 +187,7 @@ export default function InvestorsPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* ── Tips ── */}
+        {/* Tips */}
         <Card className="rounded-2xl border border-primary/20 bg-blue-50 mb-8 shadow-sm">
           <CardContent className="p-6">
             <h3 className="font-semibold mb-3">Before You Reach Out</h3>
@@ -206,7 +201,7 @@ export default function InvestorsPage({ onNavigate }) {
           </CardContent>
         </Card>
 
-        {/* ── Grid ── */}
+        {/* Grid */}
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filtered.map((inv) => (
@@ -215,7 +210,6 @@ export default function InvestorsPage({ onNavigate }) {
                 className="rounded-2xl shadow-sm border border-border hover:shadow-md transition-shadow"
               >
                 <CardContent className="p-6">
-                  {/* Avatar + name */}
                   <div className="flex items-start gap-4 mb-4">
                     <Avatar className="h-14 w-14">
                       <AvatarImage src={inv.avatar} />
@@ -224,64 +218,50 @@ export default function InvestorsPage({ onNavigate }) {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{inv.name}</p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-                        <Building2 className="h-3 w-3 shrink-0" />
-                        {inv.company}
+                        <Building2 className="h-3 w-3 shrink-0" />{inv.company}
                       </p>
-                      <span
-                        className={`mt-2 inline-block text-xs font-medium px-2.5 py-0.5 rounded-full border ${
-                          typeConfig[inv.type] ?? "bg-gray-100 text-gray-700"
-                        }`}
-                      >
+                      <span className={`mt-2 inline-block text-xs font-medium px-2.5 py-0.5 rounded-full border ${typeConfig[inv.type] ?? "bg-gray-100 text-gray-700"}`}>
                         {inv.type}
                       </span>
                     </div>
                   </div>
 
-                  {/* Bio */}
                   <p className="text-sm text-muted-foreground mb-4">{inv.bio}</p>
 
-                  {/* Focus */}
                   <div className="mb-4">
                     <p className="text-xs font-medium text-muted-foreground mb-1.5">Focus Areas</p>
                     <div className="flex flex-wrap gap-1.5">
                       {inv.focus.map((f) => (
-                        <Badge key={f} variant="secondary" className="rounded-full text-xs">
-                          {f}
-                        </Badge>
+                        <Badge key={f} variant="secondary" className="rounded-full text-xs">{f}</Badge>
                       ))}
                     </div>
                   </div>
 
-                  {/* Investment range */}
                   <div className="flex items-center gap-2 text-sm mb-4 pb-4 border-b border-border">
                     <DollarSign className="h-4 w-4 text-secondary shrink-0" />
                     <span className="text-muted-foreground">Investment Range:</span>
                     <span className="font-medium">{inv.investmentRange}</span>
                   </div>
 
-                  {/* Portfolio */}
                   <div className="mb-4">
                     <p className="text-xs font-medium text-muted-foreground mb-1">Portfolio</p>
                     <p className="text-sm text-muted-foreground">{inv.portfolio.join(", ")}</p>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex gap-2">
-                    <Button
-                      className="flex-1 rounded-xl gap-2"
-                      variant="default"
-                      onClick={() => openPitch(inv)}
-                    >
+                    <Button className="flex-1 rounded-xl gap-2" onClick={() => openPitch(inv)}>
                       <Send className="h-4 w-4" />
                       Send Pitch
                     </Button>
                     {inv.linkedIn && (
-                      <Button variant="outline" size="icon" className="rounded-xl">
+                      <Button variant="outline" size="icon" className="rounded-xl"
+                        onClick={() => window.open(`https://linkedin.com/in/${inv.linkedIn}`, "_blank")}>
                         <Linkedin className="h-4 w-4" />
                       </Button>
                     )}
                     {inv.email && (
-                      <Button variant="outline" size="icon" className="rounded-xl">
+                      <Button variant="outline" size="icon" className="rounded-xl"
+                        onClick={() => window.open(`mailto:${inv.email}`, "_blank")}>
                         <Mail className="h-4 w-4" />
                       </Button>
                     )}
@@ -301,7 +281,7 @@ export default function InvestorsPage({ onNavigate }) {
         )}
       </div>
 
-      {/* ── Pitch Modal ── */}
+      {/* Pitch Modal */}
       {pitchModal && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
@@ -314,9 +294,7 @@ export default function InvestorsPage({ onNavigate }) {
             <CardHeader className="border-b border-border pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Send Pitch to {pitchModal.name}</CardTitle>
-                <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => setPitchModal(null)}>
-                  ✕
-                </Button>
+                <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => setPitchModal(null)}>✕</Button>
               </div>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
@@ -343,12 +321,12 @@ export default function InvestorsPage({ onNavigate }) {
                 </p>
               </div>
               <div className="flex gap-3 pt-2">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setPitchModal(null)}>
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setPitchModal(null)} disabled={sending}>
                   Cancel
                 </Button>
-                <Button className="flex-1 rounded-xl gap-2" onClick={sendPitch}>
-                  <Send className="h-4 w-4" />
-                  Send Pitch
+                <Button className="flex-1 rounded-xl gap-2" onClick={sendPitch} disabled={sending}>
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {sending ? "Sending..." : "Send Pitch"}
                 </Button>
               </div>
             </CardContent>

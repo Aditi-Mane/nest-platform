@@ -159,18 +159,20 @@ export function ProfilePage() {
 
         {/* TABS */}
         <Tabs defaultValue="purchases">
-          <TabsList className="mb-6">
-            <TabsTrigger value="purchases">
-              <ShoppingBag className="h-4 w-4 mr-2" />
-              Purchases
-            </TabsTrigger>
-
-            <TabsTrigger value="orders">
-              <Package className="h-4 w-4 mr-2" />
-              Orders
-            </TabsTrigger>
-          </TabsList>
-
+          <TabsList className="inline-flex bg-muted p-1 rounded-xl mb-2 w-fit">
+            <TabsTrigger
+            value="purchases"
+            className="flex items-center gap-2 whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                      text-muted-foreground hover:text-foreground
+                      data-[state=active]:bg-white 
+                      data-[state=active]:text-foreground 
+                      data-[state=active]:shadow-sm"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            <span>Purchases</span>
+          </TabsTrigger>
+          
+        </TabsList>
           {/* PURCHASE HISTORY */}
           <TabsContent value="purchases">
             {purchaseHistory.length === 0 ? (
