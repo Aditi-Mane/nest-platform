@@ -415,7 +415,7 @@ export const confirmDeal = async (req, res) => {
         message: "Conversation not found",
       });
     }
-    if (["cancelled", "completed"].includes(conversation.status)) {
+    if (conversation.status === "completed") {
       return res.status(400).json({
         message: "This conversation is no longer active"
       });
