@@ -10,6 +10,7 @@ import Review from "../models/Review.js";
 import { paginate } from "../utils/paginate.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";
 import { deleteFromS3 } from "../utils/deleteFromS3.js";
+import ProductView from "../models/ProductView.js";
 
 export const setupSeller = async (req, res) => {
   try {
@@ -1233,6 +1234,17 @@ export const getTopProductThisWeek = async (req, res) => {
 export const incrementViews = async (req, res) => {
   try {
     const { productId } = req.params;
+
+    // normalize today's date (midnight)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // update day-wise views (atomic + upsert)
+    await ProductView.findOneAndUpdate(
+      { productId, date: today },
+      { $inc: { views: 1 } },
+      { upsert: true, new: true }
+    );
 
     await Product.findByIdAndUpdate(productId, {
       $inc: { views: 1 },

@@ -102,18 +102,18 @@ export const getViewsTrend = async (req, res) => {
     );
 
     const formatted = rawData.map((item) => ({
-      name: daysMap[item._id.day - 1],
+      name: daysMap[item._id.day - 1], // Sun-Sat mapping
       value: item.views,
     }));
 
-    res.json({
+    return res.json({
       success: true,
       data: formatted,
     });
 
   } catch (error) {
     console.error("Views Trend Error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch views trend",
     });

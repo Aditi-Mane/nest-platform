@@ -2,6 +2,7 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import Conversation from "../models/Conversation.js";
 import mongoose from "mongoose";
+import ProductView from "../models/ProductView.js";
 
 const getDateFilter = (range) => {
   const now = new Date();
@@ -281,11 +282,20 @@ export const getTopProducts = async (sellerId) => {
 export const getViewsTrend = async (sellerId, range) => {
   const dateFilter = getDateFilter(range);
 
-  const data = await Product.aggregate([
+  // get all seller products
+  const products = await Product.find(
+    { createdBy: sellerId },
+    { _id: 1 }
+  );
+
+  const productIds = products.map((p) => p._id);
+
+  // aggregate from ProductView
+  const data = await ProductView.aggregate([
     {
       $match: {
-       createdBy: new mongoose.Types.ObjectId(String(sellerId)),
-        ...(range && { createdAt: dateFilter }),
+        productId: { $in: productIds },
+        ...(range && { date: dateFilter }),
       },
     },
     {
@@ -293,17 +303,18 @@ export const getViewsTrend = async (sellerId, range) => {
         _id: {
           day: {
             $dayOfWeek: {
-              date: "$createdAt",
+              date: "$date",
               timezone: "Asia/Kolkata",
             },
           },
         },
-        views: { $sum: { $ifNull: ["$views", 0] } },
+        views: { $sum: "$views" },
       },
     },
     { $sort: { "_id.day": 1 } },
   ]);
 
+  // fill missing days
   const fullWeek = [1, 2, 3, 4, 5, 6, 7];
 
   const map = {};
@@ -321,7 +332,7 @@ export const getLowProducts = async (sellerId) => {
   return await Product.aggregate([
     {
       $match: {
-        createdBy: new mongoose.Types.ObjectId(String(sellerId))
+        createdBy: new mongoose.Types.ObjectId(String(sellerId)),
       },
     },
     {
@@ -334,6 +345,15 @@ export const getLowProducts = async (sellerId) => {
     },
     {
       $addFields: {
+        revenue: {
+          $sum: {
+            $map: {
+              input: "$orders",
+              as: "o",
+              in: "$$o.totalPrice", // KEY CHANGE
+            },
+          },
+        },
         sales: {
           $sum: {
             $map: {
@@ -345,32 +365,21 @@ export const getLowProducts = async (sellerId) => {
         },
       },
     },
-    {
-      $addFields: {
-        conversionRate: {
-          $cond: [
-            { $gt: ["$views", 0] },
-            {
-              $multiply: [
-                { $divide: ["$sales", "$views"] },
-                100,
-              ],
-            },
-            0,
-          ],
-        },
-      },
-    },
+    
     {
       $project: {
         name: 1,
         images: 1,
         views: { $ifNull: ["$views", 0] },
-        sales: 1,
-        conversionRate: 1,
+        sales: { $ifNull: ["$sales", 0] },
+        revenue: { $ifNull: ["$revenue", 0] },
       },
     },
-    { $sort: { conversionRate: 1 } },
+
+    {
+      $sort: { revenue: 1 },
+    },
+
     { $limit: 5 },
   ]);
 };
