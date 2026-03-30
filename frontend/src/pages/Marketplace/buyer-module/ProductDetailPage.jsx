@@ -362,7 +362,7 @@ if (!product) {
                  <Badge className="bg-secondary text-white">
                 {product.category}
                 </Badge>
-                  <Badge variant="outline">{product.condition}</Badge>
+                 { product.condition? <Badge variant="outline">{product.condition}</Badge> : ""}
                 </div>
 
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">

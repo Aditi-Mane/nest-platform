@@ -34,16 +34,75 @@ export const getVentures = async (req, res) => {
 
     const sortMap = {
       recent: { createdAt: -1 },
+
       popular: { "likes.length": -1 },
       views: { views: -1 },
     };
 
-    const ventures = await Venture.find(filter)
-      .sort(sortMap[sort] || { createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit))
-      .populate("creator", "name avatar major")
-      .select("-comments -updates -pitchDeckUrl -pitchDeckAccessList");
+  let query = Venture.find(filter)
+  .skip((page - 1) * limit)
+  .limit(Number(limit))
+  .populate("creator", "name email collegeName avatar")
+  .select("-comments -updates -pitchDeckUrl -pitchDeckAccessList");
+
+  if (sort === "popular") {
+   query = Venture.aggregate([
+  { $match: filter },
+
+  // Add likes count
+  { $addFields: { likesCount: { $size: "$likes" } } },
+
+  // Sort
+  { $sort: { likesCount: -1 } },
+
+  // Pagination
+  { $skip: (page - 1) * limit },
+  { $limit: Number(limit) },
+
+  // 🔥 JOIN creator
+  {
+    $lookup: {
+      from: "users", // collection name in MongoDB
+      localField: "creator",
+      foreignField: "_id",
+      as: "creator",
+    },
+  },
+
+  // Convert array → object
+  {
+    $unwind: "$creator",
+  },
+
+  // Select only needed fields
+  {
+    $project: {
+      title: 1,
+      description: 1,
+      category: 1,
+      stage: 1,
+      tags: 1,
+      likes: 1,
+      views: 1,
+      teamMembers: 1,
+      teamLimit: 1,
+      isRecruiting: 1,
+      createdAt: 1,
+      creator: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        collegeName: 1,
+        avatar: 1,
+      },
+    },
+  },
+]);
+  } else {
+    query = query.sort(sortMap[sort] || { createdAt: -1 });
+  }
+
+   const ventures = await query;
 
     const total = await Venture.countDocuments(filter);
 
@@ -63,6 +122,7 @@ export const getMyVentures = async (req, res) => {
     const ventures = await Venture.find({ creator: req.user._id })
       .sort({ createdAt: -1 })
       .select("-pitchDeckUrl -pitchDeckAccessList");
+      
 
     res.json({ ventures });
   } catch (err) {
@@ -77,8 +137,9 @@ export const getVentureById = async (req, res) => {
       { $inc: { views: 1 } },
       { new: true }
     )
-      .populate("creator", "name avatar major year")
-      .populate("teamMembers.user", "name avatar major")
+    
+      .populate("creator", "name email collegeName avatar")
+      .populate("teamMembers.user", "name email collegeName avatar")
       .populate("comments.user", "name avatar");
 
     if (!venture) return res.status(404).json({ message: "Venture not found" });

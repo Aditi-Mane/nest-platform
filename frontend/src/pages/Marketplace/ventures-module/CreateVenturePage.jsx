@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, X, Lightbulb, Users, TrendingUp, Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, X, Lightbulb, Users, TrendingUp, Loader2, AlertTriangle,Tag } from "lucide-react";
 import { toast } from "sonner";
 import { createVenture } from "@/api/venturesApi";
 
@@ -88,6 +88,16 @@ export default function CreateVenturePage() {
       setSubmitting(false);
     }
   };
+  const completedSteps = [
+  title,
+  description,
+  fullDescription,
+  category,
+  stage,
+  teamLimit,
+].filter(Boolean).length;
+
+const progress = Math.round((completedSteps / 6) * 100);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -138,13 +148,35 @@ export default function CreateVenturePage() {
             </CardContent>
           </Card>
         )}
+        <div className="mb-6">
+          <div className="flex justify-between text-xs text-muted mb-1">
+            <span>Progress</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="w-full h-2 bg-background rounded-full overflow-hidden border-border">
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* ── Basic Info ── */}
           <Card className="rounded-2xl shadow-sm border border-border">
             <CardHeader className="border-b border-border pb-4">
-              <CardTitle className="text-base">Basic Information</CardTitle>
+                          <div className="flex items-center gap-3 group">
+              <div className="p-2 rounded-xl bg-orange-100 text-orange-600 
+                              group-hover:rotate-6 transition">
+                <Lightbulb className="h-5 w-5" />
+              </div>
+
+              <CardTitle className="text-lg font-semibold 
+                                    group-hover:text-orange-600 transition">
+                Basic Information
+              </CardTitle>
+            </div>
             </CardHeader>
             <CardContent className="p-6 space-y-5">
               <div>
@@ -154,7 +186,7 @@ export default function CreateVenturePage() {
                   placeholder="e.g., EcoNote – Sustainable Study Materials"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1.5 rounded-xl"
+                  className="mt-1.5 rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   required
                 />
               </div>
@@ -167,7 +199,7 @@ export default function CreateVenturePage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value.slice(0, 300))}
                   rows={3}
-                  className="mt-1.5 rounded-xl"
+                  className="mt-2 rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">{description.length}/300 characters</p>
@@ -181,19 +213,19 @@ export default function CreateVenturePage() {
                   value={fullDescription}
                   onChange={(e) => setFullDescription(e.target.value)}
                   rows={8}
-                  className="mt-1.5 rounded-xl"
+                  className="mt-2 rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                 <div>
                   <Label>Category *</Label>
                   <Select value={category} onValueChange={setCategory} required>
-                    <SelectTrigger className="mt-1.5 rounded-xl">
+                    <SelectTrigger className="mt-2 rounded-xl">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted">
+                    <SelectContent className="bg-white">
                       {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -202,10 +234,10 @@ export default function CreateVenturePage() {
                 <div>
                   <Label>Current Stage *</Label>
                   <Select value={stage} onValueChange={setStage}>
-                    <SelectTrigger className="mt-1.5 rounded-xl">
+                    <SelectTrigger className="mt-2 rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted">
+                    <SelectContent className="bg-white">
                       <SelectItem value="ideation">Ideation – Just an idea</SelectItem>
                       <SelectItem value="building">Building – Actively developing</SelectItem>
                       <SelectItem value="ready-to-pitch">Ready to Pitch – Looking for investors</SelectItem>
@@ -220,13 +252,13 @@ export default function CreateVenturePage() {
                   id="isRecruiting"
                   checked={isRecruiting}
                   onChange={(e) => setIsRecruiting(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
+                  className="h-5 w-5 accent-primary"
                 />
                 <div>
                   <Label htmlFor="isRecruiting" className="cursor-pointer font-medium">
                     Actively Recruiting
                   </Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Enable this so students can submit join requests right away.
                   </p>
                 </div>
@@ -236,19 +268,29 @@ export default function CreateVenturePage() {
 
           {/* ── Tags ── */}
           <Card className="rounded-2xl shadow-sm border border-border">
-            <CardHeader className="border-b border-border pb-4">
-              <CardTitle className="text-base">Tags</CardTitle>
+            <CardHeader className="border-b border-border ">
+                            <div className="flex items-center gap-3 group">
+                <div className="p-2 rounded-xl bg-yellow-100 text-yellow-600 
+                                group-hover:scale-110 transition">
+                  <Tag className="h-5 w-5" />
+                </div>
+
+                <CardTitle className="text-lg font-semibold 
+                                      group-hover:text-yellow-600 transition">
+                  Tags
+                </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-4 space-y-4">
               <div>
                 <Label>Add relevant tags (max 5)</Label>
-                <div className="flex gap-2 mt-1.5">
+                <div className="flex gap-2 mt-4">
                   <Input
                     placeholder="e.g., AI, Sustainability, Education"
                     value={currentTag}
                     onChange={(e) => setCurrentTag(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                     disabled={tags.length >= 5}
                   />
                   <Button
@@ -279,13 +321,20 @@ export default function CreateVenturePage() {
 
           {/* ── Team & Roles ── */}
           <Card className="rounded-2xl shadow-sm border border-border">
-            <CardHeader className="border-b border-border pb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base">Team & Roles</CardTitle>
+            <CardHeader className="border-b border-border pb-2">
+                          <div className="flex items-center gap-3 group">
+              <div className="p-2 rounded-xl bg-blue-100 text-blue-600 
+                              group-hover:scale-110 transition">
+                <Users className="h-5 w-5" />
               </div>
+
+              <CardTitle className="text-lg font-semibold 
+                                    group-hover:text-blue-600 transition">
+                Team & Roles
+              </CardTitle>
+            </div>
             </CardHeader>
-            <CardContent className="p-6 space-y-5">
+            <CardContent className="p-4 space-y-5 space-x-4">
               <div>
                 <Label htmlFor="teamLimit">Maximum Team Size *</Label>
                 <Input
@@ -295,15 +344,15 @@ export default function CreateVenturePage() {
                   max="20"
                   value={teamLimit}
                   onChange={(e) => setTeamLimit(e.target.value)}
-                  className="mt-1.5 rounded-xl max-w-xs"
+                  className="mt-2 rounded-xl max-w-xs bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">Including yourself</p>
               </div>
 
-              <div>
+              <div className="mt-5">
                 <Label>Open Roles (Optional)</Label>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-xs text-muted/80 mb-3 mt-0.5">
                   Specify what kind of team members you're looking for.
                 </p>
                 <div className="space-y-2">
@@ -311,18 +360,18 @@ export default function CreateVenturePage() {
                     placeholder="Role title (e.g., UI/UX Designer)"
                     value={currentRole.title}
                     onChange={(e) => setCurrentRole({ ...currentRole, title: e.target.value })}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   <Input
                     placeholder="Required skills (comma-separated, e.g., Figma, Design Systems)"
                     value={currentRole.skills}
                     onChange={(e) => setCurrentRole({ ...currentRole, skills: e.target.value })}
-                    className="rounded-xl"
+                    className="rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full gap-2 rounded-xl"
+                    className="w-full gap-2 rounded-xl mt-3"
                     onClick={addRole}
                     disabled={!currentRole.title.trim() || !currentRole.skills.trim()}
                   >
