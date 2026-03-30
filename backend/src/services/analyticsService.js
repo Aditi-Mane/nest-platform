@@ -2,6 +2,7 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import Conversation from "../models/Conversation.js";
 import mongoose from "mongoose";
+import ProductView from "../models/ProductView.js";
 
 const getDateFilter = (range) => {
   const now = new Date();
@@ -275,5 +276,110 @@ export const getTopProducts = async (sellerId) => {
         preserveNullAndEmptyArrays: true,
       },
     },
+  ]);
+};
+
+export const getViewsTrend = async (sellerId, range) => {
+  const dateFilter = getDateFilter(range);
+
+  // get all seller products
+  const products = await Product.find(
+    { createdBy: sellerId },
+    { _id: 1 }
+  );
+
+  const productIds = products.map((p) => p._id);
+
+  // aggregate from ProductView
+  const data = await ProductView.aggregate([
+    {
+      $match: {
+        productId: { $in: productIds },
+        ...(range && { date: dateFilter }),
+      },
+    },
+    {
+      $group: {
+        _id: {
+          day: {
+            $dayOfWeek: {
+              date: "$date",
+              timezone: "Asia/Kolkata",
+            },
+          },
+        },
+        views: { $sum: "$views" },
+      },
+    },
+    { $sort: { "_id.day": 1 } },
+  ]);
+
+  // fill missing days
+  const fullWeek = [1, 2, 3, 4, 5, 6, 7];
+
+  const map = {};
+  data.forEach((item) => {
+    map[item._id.day] = item.views;
+  });
+
+  return fullWeek.map((day) => ({
+    _id: { day },
+    views: map[day] || 0,
+  }));
+};
+
+export const getLowProducts = async (sellerId) => {
+  return await Product.aggregate([
+    {
+      $match: {
+        createdBy: new mongoose.Types.ObjectId(String(sellerId)),
+      },
+    },
+    {
+      $lookup: {
+        from: "orders",
+        localField: "_id",
+        foreignField: "productId",
+        as: "orders",
+      },
+    },
+    {
+      $addFields: {
+        revenue: {
+          $sum: {
+            $map: {
+              input: "$orders",
+              as: "o",
+              in: "$$o.totalPrice", // KEY CHANGE
+            },
+          },
+        },
+        sales: {
+          $sum: {
+            $map: {
+              input: "$orders",
+              as: "o",
+              in: "$$o.quantity",
+            },
+          },
+        },
+      },
+    },
+    
+    {
+      $project: {
+        name: 1,
+        images: 1,
+        views: { $ifNull: ["$views", 0] },
+        sales: { $ifNull: ["$sales", 0] },
+        revenue: { $ifNull: ["$revenue", 0] },
+      },
+    },
+
+    {
+      $sort: { revenue: 1 },
+    },
+
+    { $limit: 5 },
   ]);
 };

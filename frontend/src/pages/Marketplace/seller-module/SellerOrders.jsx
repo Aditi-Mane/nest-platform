@@ -148,7 +148,16 @@ const SellerOrderHistory = () => {
             {/* LEFT SIDE */}
             <div className="flex items-center gap-5">
               <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center text-xl">
-                {order.productId?.name?.[0].toUpperCase()}
+                <img
+                  src={order.productId.images[0].url}
+                  alt={order.productId.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "10px"
+                  }}
+                />
               </div>
 
               <div>
