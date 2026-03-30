@@ -30,27 +30,6 @@ const products = [
   { name: "Notebook Set", score: 7.4, positive: 68, neutral: 22, negative: 10 },
 ];
 
-const keywords = [
-  { text: "beautiful", count: 156 },
-  { text: "quality", count: 142 },
-  { text: "fast", count: 128 },
-  { text: "love", count: 114 },
-  { text: "perfect", count: 98 },
-  { text: "unique", count: 92 },
-  { text: "cute", count: 86 },
-  { text: "amazing", count: 78 },
-  { text: "recommend", count: 71 },
-  { text: "worth", count: 65 },
-  { text: "delayed", count: 24, negative: true },
-  { text: "small", count: 18, negative: true },
-];
-
-const competitiveData = [
-  { name: "Overall Sentiment", you: 8.4, industry: 7.2 },
-  { name: "Response Rate", you: 94, industry: 76 },
-  { name: "Review Volume", you: 586, industry: 423 },
-  { name: "Positive %", you: 68, industry: 58 },
-];
 
 /* ---------------- MAIN ---------------- */
 
@@ -169,16 +148,16 @@ const SellerSentiment = () => {
         <div className="bg-card border border-border p-6 rounded-2xl">
           {/* <h2 className="text-lg font-semibold mb-1">❤️ What Customers Love</h2> */}
           <div className="flex items-center gap-2 mb-1">
-            <div className="p-2 rounded-full bg-primary/20">
-              <Heart
-                size={18}
-                className="text-primary"
-                fill="currentColor"
-              />
-            </div>
-
-            <h2 className="text-lg font-semibold">What Customers Love</h2>
+          <div className="p-2 rounded-full bg-primary/20">
+            <Heart
+              size={18}
+              className="text-primary"
+              fill="currentColor"
+            />
           </div>
+
+          <h2 className="text-lg font-semibold">What Customers Love</h2>
+        </div>
           <p className="text-sm text-muted mb-4">Top positive themes</p>
 
           {[
@@ -231,166 +210,6 @@ const SellerSentiment = () => {
         </div>
 
       </div>
-
-      {/* COMPETITIVE ANALYSIS */}
-      <div className="bg-card border border-border p-6 rounded-2xl mt-6">
-
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">Competitive Analysis</h2>
-            <p className="text-sm text-muted">
-              Your performance vs industry average
-            </p>
-          </div>
-
-          <span className="px-3 py-1 rounded-full bg-secondary/20 text-secondary text-sm">
-            Outperforming
-          </span>
-        </div>
-
-        {/* REAL GRAPH */}
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={competitiveData} barGap={10}>
-              
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-
-              <XAxis dataKey="name" tick={{ fill: "var(--color-muted)" }} />
-              <YAxis tick={{ fill: "var(--color-muted)" }} />
-
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--color-card)",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "10px",
-                }}
-              />
-
-              {/* YOUR DATA */}
-              <Bar
-                dataKey="you"
-                fill="var(--color-secondary)"
-                radius={[6, 6, 0, 0]}
-              />
-
-              {/* INDUSTRY */}
-              <Bar
-                dataKey="industry"
-                fill="var(--color-muted)"
-                radius={[6, 6, 0, 0]}
-              />
-
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* STATS BELOW GRAPH */}
-        <div className="grid grid-cols-4 gap-4 mt-6">
-          <MiniStat title="Overall Sentiment" value="8.4" sub="vs 7.2" />
-          <MiniStat title="Response Rate" value="94" sub="vs 76" />
-          <MiniStat title="Review Volume" value="586" sub="vs 423" />
-          <MiniStat title="Positive %" value="68%" sub="vs 58" />
-        </div>
-
-      </div>
-
-      {/* RECENT REVIEWS */}
-      <div className="bg-card border border-border p-6 rounded-2xl mt-6">
-        
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">Recent Reviews</h2>
-            <p className="text-sm text-muted">
-              Latest customer feedback with AI sentiment detection
-            </p>
-          </div>
-
-          <button className="px-4 py-2 rounded-full border border-border bg-background">
-            View All →
-          </button>
-        </div>
-
-        {[
-          {
-            name: "Emma W.",
-            product: "Ceramic Mug",
-            time: "2 hours ago",
-            text: "Absolutely beautiful! The craftsmanship is outstanding and it arrived so quickly.",
-            sentiment: "positive",
-          },
-          {
-            name: "James C.",
-            product: "Tote Bag",
-            time: "5 hours ago",
-            text: "Love the design and quality. Shipping was a bit slow but worth the wait.",
-            sentiment: "positive",
-          },
-          {
-            name: "Sarah M.",
-            product: "Notebook Set",
-            time: "1 day ago",
-            text: "Good quality but smaller than I expected. Add more size details to description.",
-            sentiment: "neutral",
-          },
-        ].map((r, i) => (
-          <div key={i} className="bg-background border border-border rounded-xl p-4 mb-4">
-
-            <div className="flex justify-between items-center mb-2">
-
-              {/* LEFT */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border">
-                  {r.name[0]}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{r.name}</p>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/20 text-secondary">
-                      Verified
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-muted">
-                    {r.product} • {r.time}
-                  </p>
-                </div>
-              </div>
-
-              {/* RIGHT */}
-              <div className="flex items-center gap-3">
-                <span className="text-secondary">★★★★★</span>
-
-                <span className={`px-3 py-1 rounded-full text-sm ${
-                  r.sentiment === "positive"
-                    ? "bg-secondary/20 text-secondary"
-                    : "bg-primary/20 text-primary"
-                }`}>
-                  {r.sentiment}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-sm">{r.text}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* KEYWORDS */}
-      <div className="bg-card border border-border p-6 rounded-2xl shadow-sm mt-8">
-        <h2 className="font-semibold text-lg">Trending Keywords</h2>
-
-        <div className="flex flex-wrap gap-3 mt-4">
-          {keywords.map((k, i) => (
-            <span key={i} className={`px-4 py-2 rounded-full text-sm ${
-              k.negative ? "bg-primary text-white" : "bg-background border border-border"
-            }`}>
-              {k.text} ({k.count})
-            </span>
-          ))}
-        </div>
-      </div>
-
     </div>
   );
 };
