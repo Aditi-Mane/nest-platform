@@ -22,8 +22,10 @@ import {
   addMilestone, updateMilestone, deleteMilestone,
   postUpdate, addComment,
   updateVenture, removeTeamMember,
+  getApplicationStatus,
 } from "@/api/venturesApi";
 import { useUser } from "@/context/UserContext";
+import api from "../../../api/axios";
 
 
 
@@ -53,14 +55,14 @@ function ApplyModal({ venture, onClose, onSuccess }) {
     if (!whyJoin.trim())      { toast.error("Please tell us why you want to join."); return; }
     try {
       setSubmitting(true);
-      await applyToVenture(venture._id, {
+      const { data } = await applyToVenture(venture._id, {
         roleAppliedFor: selectedRole,
         whyJoin,
         portfolioUrl: portfolioUrl || undefined,
         resumeUrl:    resumeUrl    || undefined,
       });
       setStep(3);
-      onSuccess();
+      onSuccess(data.application);
     } catch (err) {
       toast.error(err?.response?.data?.message ?? "Failed to send application.");
     } finally {
@@ -194,6 +196,25 @@ function ApplicationsTab({ ventureId }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [actionId, setActionId]         = useState(null);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await api.get(`/applications/${ventureId}/status`);
+        setStatus(res.data.status);
+      } catch (error) {
+        console.log("Error fetching status:", error);
+        setStatus(null); // means not applied or error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (ventureId) {
+      fetchStatus();
+    }
+  }, [ventureId]);
 
   useEffect(() => {
     const load = async () => {
@@ -733,6 +754,7 @@ export default function VentureDetailPage() {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [likeCount, setLikeCount]         = useState(0);
   const [endorseCount, setEndorseCount]   = useState(0);
+  const [userApplication, setUserApplication] = useState(null);
 
   const defaultTab = searchParams.get("tab") ?? "overview";
   const [activeTab, setActiveTab]         = useState(defaultTab);
@@ -751,6 +773,16 @@ export default function VentureDetailPage() {
           setHasLiked(v.likes?.includes(user._id) ?? false);
           setHasFollowed(v.followers?.includes(user._id) ?? false);
           setHasEndorsed(v.endorsements?.includes(user._id) ?? false);
+          // Fetch user's application status for this venture
+          try {
+            const { data } = await getApplicationStatus(id);
+            if (data.status) {
+              setUserApplication(data);
+              setHasApplied(true);
+            }
+          } catch (err) {
+            // Not applied or error
+          }
         }
       } catch {
         setError("Failed to load venture.");
@@ -1204,36 +1236,74 @@ export default function VentureDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Join Team (non-creator, spots available, recruiting) */}
-            {!isCreator && !hasApplied && spotsLeft > 0 && venture.isRecruiting && (
-              <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    <p className="font-semibold">Join This Team</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
-                  </p>
-                  <Button className="w-full rounded-xl" onClick={() => setShowApplyModal(true)}>
-                    Request to Join
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {!isCreator && hasApplied && (
-              <Card className="rounded-2xl shadow-sm border border-green-300 bg-green-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    <p className="font-semibold text-green-700">Application Sent!</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    The creator will review your request and get back to you soon.
-                  </p>
-                </CardContent>
-              </Card>
+            {/* Join Team Status (non-creator) */}
+            {!isCreator && (
+              <>
+                {userApplication?.status === 'pending' && (
+                  <Card className="rounded-2xl shadow-sm border border-yellow-300 bg-yellow-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-5 w-5 text-yellow-600" />
+                        <p className="font-semibold text-yellow-700">Application Pending</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Your application has been sent. The creator will review it soon.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                {userApplication?.status === 'accepted' && (
+                  <Card className="rounded-2xl shadow-sm border border-green-300 bg-green-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <p className="font-semibold text-green-700">Welcome to the Team!</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Congratulations! Your application has been accepted. Check the Team tab for details.
+                      </p>
+                      <Button className="w-full rounded-xl" variant="outline" onClick={() => setActiveTab("team")}>
+                        View Team
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {userApplication?.status === 'rejected' && (
+                  <Card className="rounded-2xl shadow-sm border border-red-300 bg-red-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <X className="h-5 w-5 text-red-600" />
+                        <p className="font-semibold text-red-700">Application Not Accepted</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Unfortunately, your application was not accepted at this time. You can try again if spots open up.
+                      </p>
+                      {userApplication.creatorNote && (
+                        <div className="p-3 bg-white rounded-lg border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Creator's Note:</p>
+                          <p className="text-sm">{userApplication.creatorNote}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+                {!userApplication && spotsLeft > 0 && venture.isRecruiting && (
+                  <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        <p className="font-semibold">Join This Team</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
+                      </p>
+                      <Button className="w-full rounded-xl" onClick={() => setShowApplyModal(true)}>
+                        Request to Join
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
 
             {/* Follow (non-creator, not recruiting) */}
@@ -1318,7 +1388,10 @@ export default function VentureDetailPage() {
         <ApplyModal
           venture={venture}
           onClose={() => setShowApplyModal(false)}
-          onSuccess={() => setHasApplied(true)}
+          onSuccess={(application) => {
+            setHasApplied(true);
+            setUserApplication(application);
+          }}
         />
       )}
     </div>

@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useContext } from "react";
-import { useUser } from "@/context/userContext"; 
+import { useUser } from "@/context/userContext";
+import JoinedVentures from "./JoinedVentures"; 
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -19,6 +20,7 @@ import { toast } from "sonner";
 import {
   fetchVentures, fetchMyVentures, deleteVenture,
   fetchNotifications, markNotificationRead, markAllNotificationsRead,
+  getAcceptedApplications,
 } from "@/api/venturesApi";
 
 // ── Stage config ──────────────────────────────────────────────────────────────
@@ -349,6 +351,38 @@ export default function VenturesPage() {
   
   const [totalUsers, setTotalUsers] = useState(0);
 
+  const [teams, setTeams] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTeams = async () => {
+      try {
+        const res = await getAcceptedApplications();
+
+        if (isMounted) {
+          setTeams(res.data.applications);
+        }
+      } catch (error) {
+        console.log("Error fetching teams:", error);
+
+        if (isMounted) {
+          setTeams([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTeams();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const { user } = useUser();
   const userId = user?._id;
   useEffect(() => {
@@ -484,6 +518,7 @@ export default function VenturesPage() {
           {[
             { key: "discover", label: "Discover" },
             { key: "mine",     label: "My Ventures" },
+            ...(teams.length > 0 ? [{ key: "joined", label: "Joined Teams" }] : []),
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -498,6 +533,11 @@ export default function VenturesPage() {
               {key === "mine" && myVentures.length > 0 && (
                 <span className="ml-2 text-xs bg-primary text-white rounded-full px-1.5 py-0.5">
                   {myVentures.length}
+                </span>
+              )}
+              {key === "joined" && teams.length > 0 && (
+                <span className="ml-2 text-xs bg-green-500 text-white rounded-full px-1.5 py-0.5">
+                  {teams.length}
                 </span>
               )}
             </button>
@@ -702,6 +742,11 @@ export default function VenturesPage() {
               </>
             )}
           </>
+        )}
+
+        {/* ════ JOINED VENTURES TAB ════ */}
+        {mainTab === "joined" && teams.length > 0 && (
+          <JoinedVentures teams={teams} />
         )}
       </div>
 

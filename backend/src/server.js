@@ -19,8 +19,8 @@ import messageRoutes from "./routes/messageRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
 import analyticsRoutes from "./routes/analyticsRoutes.js"
 import { initSocket } from "./config/socket.js"
-import ventureRoutes      from "./routes/ventureRoutes.js";
-import applicationRoutes  from "./routes/applicationRoutes.js";   // only /mine
+import ventureRoutes from "./routes/ventureRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";   
 import notificationRoutes from "./routes/notificationRoutes.js";
  
 

@@ -34,7 +34,9 @@ export const applyToVenture     = (id, data)           => api.post(`/ventures/${
 export const fetchApplications  = (id)                 => api.get(`/ventures/${id}/applications`);
 export const updateApplication  = (id, appId, data)   => api.patch(`/ventures/${id}/applications/${appId}`, data);
 export const withdrawApplication= (id, appId)         => api.patch(`/ventures/${id}/applications/${appId}/withdraw`);
-export const fetchMyApplications= ()                  => api.get("/ventures/mine");
+export const fetchMyApplications= ()                  => api.get("/applications/mine");
+export const getApplicationStatus = (ventureId) => api.get(`/applications/${ventureId}/status`);
+export const getAcceptedApplications = () => api.get(`/applications/accepted`);
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 export const fetchNotifications       = ()    => api.get("/notifications");

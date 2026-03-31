@@ -161,3 +161,60 @@ export const getMyApplications = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getApplicationStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { ventureId } = req.params;
+
+    const application = await Application.findOne({
+      venture: ventureId,
+      applicant: userId,
+    }).select("status creatorNote respondedAt roleAppliedFor");
+
+    if(!application) {
+      return res.status(404).json({
+        message: "No application found for this venture",
+        status: null,
+      });
+    }
+
+    res.status(200).json({
+      status: application.status,
+      roleAppliedFor: application.roleAppliedFor,
+      creatorNote: application.creatorNote,
+      respondedAt: application.respondedAt,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAcceptedApplications = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const applications = await Application.find({
+      applicant: userId,
+      status: "accepted",
+    })
+      .populate({
+        path: "venture",
+        select: "title description category stage creator teamMembers teamLimit",
+        populate: {
+          path: "creator",
+          select: "name avatar collegeName",
+        },
+      })
+      .select("venture roleAppliedFor respondedAt");
+
+    res.status(200).json({
+      count: applications.length,
+      applications,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
