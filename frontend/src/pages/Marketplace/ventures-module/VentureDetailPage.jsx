@@ -47,7 +47,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [resumeUrl, setResumeUrl]   = useState("");
   const [submitting, setSubmitting] = useState(false);
- s
+ 
   const selectedRole = role === "Other" ? customRole : role;
 
   const handleSubmit = async () => {
@@ -192,7 +192,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
 }
 
 // ── Applications Tab (creator only) ──────────────────────────────────────────
-function ApplicationsTab({ ventureId }) {
+function ApplicationsTab({ ventureId, onVentureUpdate }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [actionId, setActionId]         = useState(null);
@@ -239,6 +239,7 @@ function ApplicationsTab({ ventureId }) {
         prev.map((a) => (a._id === appId ? { ...a, status } : a))
       );
       toast.success(status === "accepted" ? "Application accepted!" : "Application rejected.");
+      if (onVentureUpdate) onVentureUpdate();
     } catch {
       toast.error("Failed to update application.");
     } finally {
@@ -793,6 +794,23 @@ export default function VentureDetailPage() {
     load();
   }, [id, user]);
 
+  const refetchVenture = async () => {
+    try {
+      const { data } = await fetchVentureById(id);
+      const v = data.venture;
+      setVenture(v);
+      setLikeCount(v.likes?.length ?? 0);
+      setEndorseCount(v.endorsements?.length ?? 0);
+      if (user) {
+        setHasLiked(v.likes?.includes(user._id) ?? false);
+        setHasFollowed(v.followers?.includes(user._id) ?? false);
+        setHasEndorsed(v.endorsements?.includes(user._id) ?? false);
+      }
+    } catch {
+      // Silent refetch error
+    }
+  };
+
   const isCreator = venture && user && (venture.creator?._id === user._id || venture.creator === user._id);
 
   const handleLike = async () => {
@@ -1078,15 +1096,20 @@ export default function VentureDetailPage() {
 
                   {/* Team */}
                   <TabsContent value="team" className="space-y-4">
-                    <h3 className="font-semibold">Current Team ({confirmedCount})</h3>
-                    {venture.teamMembers?.filter((m) => m.confirmed).map((member, i) => (
+                    <h3 className="font-semibold">Team Members ({venture.teamMembers?.length ?? 0})</h3>
+                    {venture.teamMembers?.map((member, i) => (
                       <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-border">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={member.user?.avatar} />
                           <AvatarFallback>{member.user?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm mb-0.4 text-primary">{member.user?.name}</p>
+                          <div className="flex items-center gap-2 mb-0.4">
+                            <p className="font-medium text-sm text-primary">{member.user?.name}</p>
+                            {!member.confirmed && (
+                              <Badge variant="outline" className="text-xs">Pending Confirmation</Badge>
+                            )}
+                          </div>
                           <p className="text-[12px] text-muted-foreground">{member.role}</p>
                           <p className="text-[10px] text-muted/80">{member.user?.collegeName}</p>
                         </div>
@@ -1102,8 +1125,8 @@ export default function VentureDetailPage() {
                         )}
                       </div>
                     ))}
-                    {confirmedCount === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-8">No confirmed team members yet.</p>
+                    {(!venture.teamMembers || venture.teamMembers.length === 0) && (
+                      <p className="text-sm text-muted-foreground text-center py-8">No team members yet.</p>
                     )}
                   </TabsContent>
 
@@ -1175,7 +1198,7 @@ export default function VentureDetailPage() {
                   {/* Applications (creator only) */}
                   {isCreator && (
                     <TabsContent value="applications">
-                      <ApplicationsTab ventureId={venture._id} />
+                      <ApplicationsTab ventureId={venture._id} onVentureUpdate={refetchVenture} />
                     </TabsContent>
                   )}
 

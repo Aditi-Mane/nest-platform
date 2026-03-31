@@ -99,7 +99,7 @@ export const respondToApplication = async (req, res) => {
         venture.teamMembers.push({
           user: application.applicant,
           role: application.roleAppliedFor,
-          confirmed: false,
+          confirmed: true,
           joinedAt: null,
         });
         await venture.save();

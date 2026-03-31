@@ -296,14 +296,17 @@ const JoinedVentures = ({ teams }) => {
       {/* Chat List */}
       <div className="w-80 border-r border-border flex flex-col">
         {/* Header */}
-        <div className="px-4 py-4 border-b border-border">
-          <h2 className="font-semibold flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            Team Chats
+        <div className="px-4 py-5 border-b border-border">
+          <h2 className="font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Team Chats
+            </span>
+
+            <span className="text-sm text-muted-foreground">
+              {teams.length} {teams.length === 1 ? "team" : "teams"}
+            </span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            {teams.length} team{teams.length !== 1 ? "s" : ""}
-          </p>
         </div>
 
         {/* Chat List */}
