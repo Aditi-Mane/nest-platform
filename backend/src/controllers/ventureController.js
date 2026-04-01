@@ -1,5 +1,6 @@
 import Venture from "../models/Venture.js";
 import Notification from "../models/Notification.js";
+import VentureMessage from "../models/VentureMessage.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPER
@@ -526,6 +527,39 @@ export const toggleEndorse = async (req, res) => {
     await venture.save();
     res.json({ endorsements: venture.endorsements.length, endorsed: idx === -1 });
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getMessages = async (req, res) => {
+  try {
+    const { ventureId } = req.params;
+
+    const messages = await VentureMessage.find({ venture: ventureId })
+      .populate("sender", "name avatar")
+      .sort({ createdAt: 1 });
+
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const sendMessage = async (req, res) => {
+  try {
+    const { ventureId } = req.params;
+    const { text } = req.body;
+
+    const message = await VentureMessage.create({
+      venture: ventureId,
+      sender: req.user._id,
+      text,
+    });
+
+    const populated = await message.populate("sender", "name avatar");
+
+    res.json(populated);
+  } catch (error) {
     res.status(500).json({ message: err.message });
   }
 };

@@ -1,6 +1,7 @@
 import Application from "../models/Application.js";
 import Venture from "../models/Venture.js";
 import Notification from "../models/Notification.js";
+import VentureMessage from "../models/VentureMessage.js";
 
 const notify = async ({ recipient, type, message, link, venture, application, triggeredBy }) => {
   await Notification.create({ recipient, type, message, link, venture, application, triggeredBy });
@@ -103,12 +104,23 @@ export const respondToApplication = async (req, res) => {
           joinedAt: null,
         });
         await venture.save();
+
+        await VentureMessage.create({
+          venture: venture._id,
+          sender: req.user._id, // creator
+          messageType: "system",
+          text: `You've been accepted to join "${venture.title}"! Welcome to the team.`,
+          meta: {
+            type: "USER_JOINED",
+            user: application.applicant,
+          },
+        });
       }
 
       await notify({
         recipient: application.applicant,
         type: "application_accepted",
-        message: `Your application for "${venture.title}" was accepted! Please confirm to join.`,
+        message: `Your application for "${venture.title}" was accepted!`,
         link: `/marketplace/buyer/ventures/${venture._id}`,
         venture: venture._id,
         application: application._id,

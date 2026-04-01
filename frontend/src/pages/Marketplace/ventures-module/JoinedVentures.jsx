@@ -1,58 +1,68 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MessageCircle, ChevronRight, X, Phone, Info
+import { useUser } from '@/context/UserContext';
+import { fetchVentureMessages, sendVentureMessage } from '@/api/venturesApi';
+import { toast } from 'sonner';
+import {
+  MessageCircle,
+  ChevronRight,
+  X,
+  Info,
+  Loader2,
 } from 'lucide-react';
 
 const stageConfig = {
-  ideation:         { label: "Ideation",        className: "bg-purple-100 text-purple-700" },
-  building:         { label: "Building",        className: "bg-blue-100 text-blue-700" },
-  "ready-to-pitch": { label: "Ready to Pitch",  className: "bg-green-100 text-green-700" },
-  active:           { label: "Active",          className: "bg-yellow-100 text-yellow-700" },
-  recruiting:       { label: "Recruiting",      className: "bg-orange-100 text-orange-700" },
+  ideation: { label: 'Ideation', className: 'bg-purple-100 text-purple-700' },
+  building: { label: 'Building', className: 'bg-blue-100 text-blue-700' },
+  'ready-to-pitch': { label: 'Ready to Pitch', className: 'bg-green-100 text-green-700' },
+  active: { label: 'Active', className: 'bg-yellow-100 text-yellow-700' },
+  recruiting: { label: 'Recruiting', className: 'bg-orange-100 text-orange-700' },
 };
 
-// WhatsApp-style chat list item
+function formatPreview(message, fallbackRole) {
+  if (!message) return `Accepted as ${fallbackRole}`;
+  if (message.messageType === 'system') return message.text;
+
+  const senderName = message.sender?.name || 'Someone';
+  return `${senderName}: ${message.text}`;
+}
+
 function ChatListItem({ application, isSelected, onClick }) {
   const venture = application.venture;
-  const lastMessageTime = new Date(application.respondedAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
+  const lastActivity = application.lastMessageAt || application.respondedAt;
+  const previewText = application.lastMessagePreview || `Accepted as ${application.roleAppliedFor}`;
+  const lastMessageTime = new Date(lastActivity).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
   });
 
   return (
     <div
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 border-b border-border cursor-pointer transition-colors ${
-        isSelected ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-muted/50"
+        isSelected ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-muted/50'
       }`}
     >
-      {/* Avatar */}
       <Avatar className="h-14 w-14 ring-2 ring-primary/10 shrink-0">
         <AvatarImage src={venture?.creator?.avatar} />
         <AvatarFallback>{venture?.creator?.name?.charAt(0)}</AvatarFallback>
       </Avatar>
 
-      {/* Chat info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-1">
           <p className="font-semibold text-sm truncate">{venture?.title}</p>
           <span className="text-xs text-muted-foreground shrink-0">{lastMessageTime}</span>
         </div>
-        <p className="text-xs text-muted-foreground truncate">
-          {venture?.creator?.name} • {application.roleAppliedFor}
-        </p>
+        <p className="text-xs text-muted-foreground truncate">{previewText}</p>
       </div>
 
-      {/* Indicator */}
       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
     </div>
   );
 }
 
-// Team info panel
 function TeamInfoPanel({ application, onClose }) {
   const venture = application.venture;
   const stage = stageConfig[venture?.stage] || stageConfig.ideation;
@@ -60,7 +70,6 @@ function TeamInfoPanel({ application, onClose }) {
 
   return (
     <div className="w-80 bg-white border-l border-border flex flex-col">
-      {/* Header */}
       <div className="px-4 py-4 border-b border-border flex items-center justify-between">
         <h3 className="font-semibold flex items-center gap-2">
           <Info className="h-4 w-4" /> Team Info
@@ -75,21 +84,15 @@ function TeamInfoPanel({ application, onClose }) {
         </Button>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-6">
-          {/* Venture Info */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Venture</p>
             <div className="space-y-2">
               <h4 className="font-semibold text-sm">{venture?.title}</h4>
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {venture?.description}
-              </p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{venture?.description}</p>
               <div className="flex gap-2 flex-wrap">
-                <Badge className={`text-xs rounded-full ${stage.className}`}>
-                  {stage.label}
-                </Badge>
+                <Badge className={`text-xs rounded-full ${stage.className}`}>{stage.label}</Badge>
                 <Badge variant="outline" className="text-xs rounded-full">
                   {venture?.category}
                 </Badge>
@@ -97,7 +100,6 @@ function TeamInfoPanel({ application, onClose }) {
             </div>
           </div>
 
-          {/* Your Role */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Your Role</p>
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -105,17 +107,16 @@ function TeamInfoPanel({ application, onClose }) {
             </div>
           </div>
 
-          {/* Team Members */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase">
               Team Members ({confirmedMembers}/{venture?.teamLimit})
             </p>
             <div className="space-y-2">
               {venture?.teamMembers
-                ?.filter((m) => m.confirmed)
+                ?.filter((member) => member.confirmed)
                 .slice(0, 5)
-                .map((member, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                .map((member, index) => (
+                  <div key={index} className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={member.user?.avatar} />
                       <AvatarFallback>{member.user?.name?.charAt(0)}</AvatarFallback>
@@ -127,14 +128,11 @@ function TeamInfoPanel({ application, onClose }) {
                   </div>
                 ))}
               {confirmedMembers > 5 && (
-                <p className="text-xs text-muted-foreground py-2">
-                  +{confirmedMembers - 5} more members
-                </p>
+                <p className="text-xs text-muted-foreground py-2">+{confirmedMembers - 5} more members</p>
               )}
             </div>
           </div>
 
-          {/* Creator */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Creator</p>
             <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
@@ -154,37 +152,76 @@ function TeamInfoPanel({ application, onClose }) {
   );
 }
 
-// Chat view
-function TeamChatView({ application, onClose, onInfoClick }) {
+function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
   const venture = application.venture;
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "system",
-      text: `You've been accepted to join "${venture.title}"! Welcome to the team.`,
-      timestamp: new Date(application.respondedAt),
-    },
-  ]);
-  const [newMessage, setNewMessage] = useState("");
+  const { user } = useUser();
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const messagesEndRef = useRef(null);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([
-        ...messages,
-        {
-          id: messages.length + 1,
-          sender: "user",
-          text: newMessage,
-          timestamp: new Date(),
-        },
-      ]);
-      setNewMessage("");
+  const currentUserId = user?._id;
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadMessages = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const { data } = await fetchVentureMessages(venture._id);
+
+        if (!isMounted) return;
+
+        const loadedMessages = Array.isArray(data) ? data : [];
+        setMessages(loadedMessages);
+
+        const lastMessage = loadedMessages[loadedMessages.length - 1];
+        if (lastMessage) {
+          onMessageSent?.(application._id, lastMessage);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err?.response?.data?.message || 'Failed to load chat messages.');
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadMessages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [application._id, venture._id]);
+
+  const handleSendMessage = async () => {
+    const trimmedMessage = newMessage.trim();
+    if (!trimmedMessage || sending) return;
+
+    try {
+      setSending(true);
+      const { data } = await sendVentureMessage(venture._id, { text: trimmedMessage });
+      setMessages((prev) => [...prev, data]);
+      onMessageSent?.(application._id, data);
+      setNewMessage('');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to send message.');
+    } finally {
+      setSending(false);
     }
   };
 
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* Header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
@@ -197,7 +234,6 @@ function TeamChatView({ application, onClose, onInfoClick }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          
           <Button
             variant="ghost"
             size="icon"
@@ -217,67 +253,162 @@ function TeamChatView({ application, onClose, onInfoClick }) {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-xs px-4 py-2 rounded-xl ${
-                  msg.sender === "user"
-                    ? "bg-primary text-white rounded-br-none"
-                    : "bg-background text-foreground rounded-bl-none"
-                }`}
-              >
-                <p className="text-sm">{msg.text}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    msg.sender === "user" ? "text-primary/80" : "text-muted-foreground"
-                  }`}
-                >
-                  {msg.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+      <div className="flex-1 overflow-y-auto px-4 py-4 bg-muted/20">
+        {loading ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-6">
+            <p className="text-sm text-muted-foreground mb-3">{error}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-sm text-muted-foreground">
+                  No messages yet. Start the conversation with your team.
                 </p>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+
+            {messages.map((msg) => {
+              const isSystem = msg.messageType === 'system';
+              const isOwnMessage = String(msg.sender?._id || msg.sender) === String(currentUserId);
+              const senderName = isOwnMessage ? 'You' : msg.sender?.name || 'Team Member';
+
+              if (isSystem) {
+                return (
+                  <div key={msg._id} className="flex justify-center">
+                    <div className="max-w-md rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-4 py-2 text-xs text-center">
+                      <p>{msg.text}</p>
+                      <p className="mt-1 text-[11px] text-amber-700/80">
+                        {new Date(msg.createdAt).toLocaleString([], {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={msg._id}
+                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-2xl ${
+                      isOwnMessage
+                        ? 'bg-primary text-white rounded-br-none'
+                        : 'bg-white text-foreground border border-border rounded-bl-none'
+                    }`}
+                  >
+                    <p
+                      className={`text-xs font-medium mb-1 ${
+                        isOwnMessage ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                      }`}
+                    >
+                      {senderName}
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                    <p
+                      className={`text-xs mt-1 ${
+                        isOwnMessage ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                      }`}
+                    >
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
 
-      {/* Input */}
       <div className="p-4 border-t border-border flex gap-2">
         <input
           type="text"
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-          className="flex-1 px-4 py-2 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSendMessage();
+            }
+          }}
+          disabled={loading || Boolean(error) || sending}
+          className="flex-1 px-4 py-2 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60"
         />
         <Button
           size="sm"
           className="rounded-xl px-4"
           onClick={handleSendMessage}
-          disabled={!newMessage.trim()}
+          disabled={!newMessage.trim() || loading || Boolean(error) || sending}
         >
-          Send
+          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send'}
         </Button>
       </div>
     </div>
   );
 }
 
-// Main component
 const JoinedVentures = ({ teams }) => {
-  const [selectedApplication, setSelectedApplication] = useState(null);
+  const hydratedTeams = useMemo(
+    () =>
+      [...(teams || [])].sort(
+        (a, b) =>
+          new Date(b.lastMessageAt || b.respondedAt).getTime() -
+          new Date(a.lastMessageAt || a.respondedAt).getTime()
+      ),
+    [teams]
+  );
+
+  const [teamStates, setTeamStates] = useState(hydratedTeams);
+  const [selectedApplication, setSelectedApplication] = useState(hydratedTeams[0] || null);
   const [showInfo, setShowInfo] = useState(false);
 
-  if (!teams || teams.length === 0) {
+  useEffect(() => {
+    setTeamStates(hydratedTeams);
+    setSelectedApplication((prevSelected) => {
+      if (!hydratedTeams.length) return null;
+      if (!prevSelected) return hydratedTeams[0];
+      return hydratedTeams.find((team) => team._id === prevSelected._id) || hydratedTeams[0];
+    });
+  }, [hydratedTeams]);
+
+  const handleMessageSent = useCallback((applicationId, message) => {
+    if (!message) return;
+
+    setTeamStates((prev) =>
+      [...prev]
+        .map((team) => {
+          if (team._id !== applicationId) return team;
+
+          return {
+            ...team,
+            lastMessageAt: message.createdAt,
+            lastMessagePreview: formatPreview(message, team.roleAppliedFor),
+          };
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.lastMessageAt || b.respondedAt).getTime() -
+            new Date(a.lastMessageAt || a.respondedAt).getTime()
+        )
+    );
+  }, []);
+
+  if (!teamStates.length) {
     return (
       <div className="text-center py-20">
         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
@@ -293,9 +424,7 @@ const JoinedVentures = ({ teams }) => {
 
   return (
     <div className="flex h-[600px] rounded-2xl border border-border overflow-hidden bg-white shadow-sm">
-      {/* Chat List */}
       <div className="w-80 border-r border-border flex flex-col">
-        {/* Header */}
         <div className="px-4 py-5 border-b border-border">
           <h2 className="font-semibold flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -304,14 +433,13 @@ const JoinedVentures = ({ teams }) => {
             </span>
 
             <span className="text-sm text-muted-foreground">
-              {teams.length} {teams.length === 1 ? "team" : "teams"}
+              {teamStates.length} {teamStates.length === 1 ? 'team' : 'teams'}
             </span>
           </h2>
         </div>
 
-        {/* Chat List */}
         <div className="flex-1 overflow-y-auto">
-          {teams.map((application) => (
+          {teamStates.map((application) => (
             <ChatListItem
               key={application._id}
               application={application}
@@ -325,7 +453,6 @@ const JoinedVentures = ({ teams }) => {
         </div>
       </div>
 
-      {/* Main area: Chat or empty state */}
       {selectedApplication ? (
         <>
           <TeamChatView
@@ -335,9 +462,9 @@ const JoinedVentures = ({ teams }) => {
               setShowInfo(false);
             }}
             onInfoClick={() => setShowInfo(!showInfo)}
+            onMessageSent={handleMessageSent}
           />
 
-          {/* Team Info Panel */}
           {showInfo && (
             <TeamInfoPanel
               application={selectedApplication}

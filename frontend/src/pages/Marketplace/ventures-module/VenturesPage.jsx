@@ -19,7 +19,6 @@ import {
 import { toast } from "sonner";
 import {
   fetchVentures, fetchMyVentures, deleteVenture,
-  fetchNotifications, markNotificationRead, markAllNotificationsRead,
   getAcceptedApplications,
 } from "@/api/venturesApi";
 

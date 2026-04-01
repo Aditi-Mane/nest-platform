@@ -6,6 +6,8 @@ import {
   addMilestone, updateMilestone, deleteMilestone,
   postUpdate, addComment,
   toggleLike, toggleFollow, toggleEndorse,
+  getMessages,
+  sendMessage,
 } from "../controllers/ventureController.js";
 import {
   applyToVenture, getApplications, respondToApplication, withdrawApplication,
@@ -45,5 +47,8 @@ router.post("/:id/apply",                         protect, applyToVenture);
 router.get("/:id/applications",                   protect, getApplications);
 router.patch("/:id/applications/:appId",          protect, respondToApplication);
 router.patch("/:id/applications/:appId/withdraw", protect, withdrawApplication);
+
+router.get("/:ventureId/messages", protect, getMessages);
+router.post("/:ventureId/messages", protect, sendMessage);
  
 export default router;
