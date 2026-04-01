@@ -46,6 +46,6 @@ export const sendVentureMessage = (ventureId, data) =>
   api.post(`/ventures/${ventureId}/messages`, data);
 
 // Notifications
-//export const fetchNotifications = () => api.get("/notifications");
+export const fetchNotifications = () => api.get("/notifications");
 export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`);
 export const markAllNotificationsRead = () => api.patch("/notifications/read-all");

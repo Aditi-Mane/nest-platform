@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useContext } from "react";
 import { useUser } from "@/context/userContext";
-import JoinedVentures from "./JoinedVentures"; 
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -19,7 +18,7 @@ import {
 import { toast } from "sonner";
 import {
   fetchVentures, fetchMyVentures, deleteVenture,
-  getAcceptedApplications,
+  fetchNotifications, markNotificationRead, markAllNotificationsRead,
 } from "@/api/venturesApi";
 
 // ── Stage config ──────────────────────────────────────────────────────────────
@@ -335,7 +334,6 @@ function ConfirmDeleteDialog({ title, onConfirm, onCancel, loading }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function VenturesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // ── Active main tab ────────────────────────────────────────────────────────
   const [mainTab, setMainTab] = useState("discover"); // "discover" | "mine"
@@ -363,51 +361,8 @@ export default function VenturesPage() {
   
   const [totalUsers, setTotalUsers] = useState(0);
 
-  const [teams, setTeams] = useState([]);
-  const [selectedJoinedVentureId, setSelectedJoinedVentureId] = useState(
-    location.state?.selectedVentureId || null
-  );
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchTeams = async () => {
-      try {
-        const res = await getAcceptedApplications();
-
-        if (isMounted) {
-          setTeams(res.data.applications);
-        }
-      } catch (error) {
-        console.log("Error fetching teams:", error);
-
-        if (isMounted) {
-          setTeams([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchTeams();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const { user } = useUser();
   const userId = user?._id;
-
-  useEffect(() => {
-    if (location.state?.openJoinedTab) {
-      setMainTab("joined");
-      setSelectedJoinedVentureId(location.state.selectedVentureId || null);
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
   const fetchUserCount = async () => {
@@ -475,8 +430,9 @@ export default function VenturesPage() {
   // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDeleteRequest = (id, title) => setDeleteTarget({ id, title });
   const handleOpenChatroom = (venture) => {
-    setMainTab("joined");
-    setSelectedJoinedVentureId(venture._id);
+    navigate("/marketplace/buyer/ventures/chats", {
+      state: { selectedVentureId: venture._id },
+    });
   };
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -493,25 +449,6 @@ export default function VenturesPage() {
     }
   };
 
-  const joinedVenturesData = useMemo(() => {
-    const ownerVentures = myVentures.map((venture) => ({
-      _id: `owner-${venture._id}`,
-      venture,
-      roleAppliedFor: "Founder",
-      respondedAt: venture.createdAt || new Date().toISOString(),
-      lastMessageAt: venture.createdAt || new Date().toISOString(),
-      lastMessagePreview: `Chatroom for ${venture.title}`,
-      isOwnerChat: true,
-    }));
-
-    const acceptedVentureIds = new Set(teams.map((team) => team.venture?._id));
-    const ownerOnlyVentures = ownerVentures.filter(
-      (team) => !acceptedVentureIds.has(team.venture?._id)
-    );
-
-    return [...ownerOnlyVentures, ...teams];
-  }, [myVentures, teams]);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -525,6 +462,14 @@ export default function VenturesPage() {
             </div>
             <div className="flex items-center gap-2">
               <NotificationBell />
+              <Button
+                variant="outline"
+                className="gap-2 rounded-xl"
+                onClick={() => navigate("/marketplace/buyer/ventures/chats")}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chat Teams
+              </Button>
               <Button
                 className="gap-2 rounded-xl"
                 onClick={() => navigate("/marketplace/buyer/ventures/create")}
@@ -565,7 +510,6 @@ export default function VenturesPage() {
           {[
             { key: "discover", label: "Discover" },
             { key: "mine",     label: "My Ventures" },
-            ...(joinedVenturesData.length > 0 ? [{ key: "joined", label: "Team Chats" }] : []),
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -580,11 +524,6 @@ export default function VenturesPage() {
               {key === "mine" && myVentures.length > 0 && (
                 <span className="ml-2 text-xs bg-primary text-white rounded-full px-1.5 py-0.5">
                   {myVentures.length}
-                </span>
-              )}
-              {key === "joined" && joinedVenturesData.length > 0 && (
-                <span className="ml-2 text-xs bg-green-500 text-white rounded-full px-1.5 py-0.5">
-                  {joinedVenturesData.length}
                 </span>
               )}
             </button>
@@ -793,12 +732,6 @@ export default function VenturesPage() {
         )}
 
         {/* ════ JOINED VENTURES TAB ════ */}
-        {mainTab === "joined" && joinedVenturesData.length > 0 && (
-          <JoinedVentures
-            teams={joinedVenturesData}
-            initialSelectedVentureId={selectedJoinedVentureId}
-          />
-        )}
       </div>
 
       {/* ── Delete confirm dialog ── */}

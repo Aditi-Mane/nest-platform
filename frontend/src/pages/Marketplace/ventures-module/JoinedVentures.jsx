@@ -361,9 +361,6 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
               const isSystem = msg.messageType === 'system';
               const senderId = msg.sender?._id || msg.sender;
               const isOwnMessage = String(senderId) === String(currentUserId);
-              const isFounderMessage =
-                String(venture.creator?._id || venture.creator) === String(senderId);
-              const isRightAligned = isOwnMessage || isFounderMessage;
               const senderRole = getSenderRole(msg.sender?._id || msg.sender, venture);
               const senderName = isOwnMessage ? 'You' : msg.sender?.name || 'Team Member';
               const senderLabel = senderRole ? `${senderName} • ${senderRole}` : senderName;
@@ -397,18 +394,18 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
               return (
                 <div
                   key={msg._id}
-                  className={`flex ${isRightAligned ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-xs px-4 py-2 rounded-2xl ${
-                      isRightAligned
+                      isOwnMessage
                         ? 'bg-primary text-white rounded-br-none'
                         : 'bg-white text-foreground border border-border rounded-bl-none'
                     }`}
                   >
                     <p
                       className={`text-xs font-medium mb-1 ${
-                        isRightAligned ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                        isOwnMessage ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       }`}
                     >
                       {senderLabel}
@@ -416,7 +413,7 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
                     <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                     <p
                       className={`text-xs mt-1 ${
-                        isRightAligned ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                        isOwnMessage ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       }`}
                     >
                       {new Date(msg.createdAt).toLocaleTimeString([], {
