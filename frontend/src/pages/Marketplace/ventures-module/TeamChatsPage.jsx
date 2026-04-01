@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import JoinedVentures from "./JoinedVentures";
 import { fetchMyVentures, getAcceptedApplications } from "@/api/venturesApi";
@@ -68,38 +67,20 @@ export default function TeamChatsPage() {
   }, [myVentures, teams]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            className="px-0 mb-3 gap-2"
-            onClick={() => navigate("/marketplace/buyer/ventures")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Ventures
-          </Button>
-
-          <div className="flex items-center gap-3">
-            <MessageCircle className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-4xl font-bold">Team Chats</h1>
-              <p className="text-muted-foreground mt-1">
-                Stay in sync with your ventures and team members in one place.
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <div className="h-[calc(100vh-72px)] overflow-hidden bg-gray-50">
+      <div className="max-w-7xl mx-auto h-full px-4 py-0 md:px-4 md:py-4">
         {loading ? (
-          <div className="flex justify-center items-center py-24">
+          <div className="flex h-full justify-center items-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <JoinedVentures
-            teams={joinedVenturesData}
-            initialSelectedVentureId={initialSelectedVentureId}
-          />
+          <div className="h-full">
+            <JoinedVentures
+              teams={joinedVenturesData}
+              initialSelectedVentureId={initialSelectedVentureId}
+              onBack={() => navigate("/marketplace/buyer/ventures")}
+            />
+          </div>
         )}
       </div>
     </div>

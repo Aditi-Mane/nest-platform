@@ -12,6 +12,7 @@ import {
   X,
   Info,
   Loader2,
+  ArrowLeft,
 } from 'lucide-react';
 
 const stageConfig = {
@@ -458,7 +459,7 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
   );
 }
 
-const JoinedVentures = ({ teams, initialSelectedVentureId = null }) => {
+const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null }) => {
   const hydratedTeams = useMemo(
     () =>
       [...(teams || [])].sort(
@@ -532,19 +533,31 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null }) => {
   }
 
   return (
-    <div className="flex h-[600px] rounded-2xl border border-border overflow-hidden bg-white shadow-sm">
+    <div className="flex h-full rounded-none border-0 overflow-hidden bg-white shadow-sm md:rounded-2xl md:border md:border-border">
       <div className="w-80 border-r border-border flex flex-col">
         <div className="px-4 py-5 border-b border-border">
-          <h2 className="font-semibold flex items-center justify-between">
-            <span className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="font-semibold flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               Team Chats
-            </span>
+            </h2>
 
             <span className="text-sm text-muted-foreground">
               {teamStates.length} {teamStates.length === 1 ? 'team' : 'teams'}
             </span>
-          </h2>
+          </div>
+
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 gap-2"
+              onClick={onBack}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Ventures
+            </Button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto">
