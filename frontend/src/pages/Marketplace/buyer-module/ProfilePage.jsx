@@ -3,34 +3,48 @@ import { MdEdit } from "react-icons/md";
 import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../context/UserContext";
+import ReviewModal from "../../../components/ReviewModal.jsx";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ShoppingBag } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => {
-  const isEditable = onEdit || isEditing;
+  const showEdit = onEdit || isEditing;
 
   return(
     <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">{title}</h2>
 
-        {isEditing ? (
-          <div className="flex gap-2">
-            <button onClick={onCancel} className="px-3 py-1 border rounded">
-              Cancel
+        {showEdit &&
+          (isEditing ? (
+            <div className="flex gap-2">
+              <button onClick={onCancel} className="px-3 py-1 border rounded">
+                Cancel
+              </button>
+              <button onClick={onSave} className="px-3 py-1 bg-primary text-white rounded">
+                Save
+              </button>
+            </div>
+          ) : (
+            <button onClick={onEdit}>
+              <MdEdit />
             </button>
-            <button onClick={onSave} className="px-3 py-1 bg-primary text-white rounded">
-              Save
-            </button>
-          </div>
-        ) : (
-          <button onClick={onEdit}>
-            <MdEdit />
-          </button>
-        )}
+          ))}
       </div>
 
       {children}
     </div>
-  )
+  );
 };
 
 const Input = ({ label, disabled, ...props }) => (
@@ -55,13 +69,16 @@ export const ProfilePage = () => {
   const [collegeName, setCollegeName] = useState("");
   const [avatar, setAvatar] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
-  const [orders, setOrders] = useState([]);
   const [profileImage, setProfileImage] = useState("");
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
 
   /* LOAD USER */
   useEffect(() => {
@@ -76,22 +93,27 @@ export const ProfilePage = () => {
       setProfileImage(u.avatar);
     };
 
-    const fetchOrders = async () => {
-      try {
-        const res = await api.get("/orders/purchases");
-
-        if (res.data.success) {
-          setOrders(res.data.orders);
-        }
-
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
     fetchUser();
-    fetchOrders();
   }, []);
+
+  /* FETCH PURCHASES */
+  async function fetchPurchases() {
+    try {
+      const res = await api.get("/orders/purchases");
+      setPurchaseHistory(res.data.orders);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  useEffect(() => {
+    fetchPurchases();
+  }, []);
+
+  /*  REVIEW */
+  const handleReviewSubmitted = () => {
+    setIsReviewModalOpen(false);
+    fetchPurchases(); // refresh orders after review
+  };
 
   /* SAVE PROFILE */
   const saveProfileChanges = async () => {
@@ -267,46 +289,75 @@ export const ProfilePage = () => {
 
         {/* ORDER */}
         <Section title="Orders">
-          <div className="space-y-4">
-            {orders.length === 0 ? (
-              <p className="text-sm text-muted">No orders yet</p>
-            ) : (
-              orders.map((order) => (
-                <div
-                  key={order._id}
-                  className="border border-border rounded-xl p-4 flex justify-between items-center"
-                >
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={order.product?.images?.[0]}
-                      className="w-14 h-14 object-cover rounded-lg"
-                    />
+          {purchaseHistory.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No orders yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {purchaseHistory
+                .filter(order => order !== null)
+                .map((order) => (
+                  <Card key={order._id} className="rounded-2xl hover:shadow-md">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-5">
 
-                    <div>
-                      <p className="font-medium">
-                        {order.product?.name}
-                      </p>
-                      <p className="text-sm text-muted">
-                        Seller: {order.seller?.name}
-                      </p>
-                      <p className="text-sm text-muted">
-                        Qty: {order.quantity}
-                      </p>
-                    </div>
-                  </div>
+                        {/* IMAGE */}
+                        <div className="w-20 h-20 rounded-xl overflow-hidden border">
+                          <img
+                            src={order.product?.images?.[0]?.url || "/placeholder.png"}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
 
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      ₹{order.totalPrice}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                        {/* INFO */}
+                        <div className="flex-1">
+                          <h4 className="font-semibold">
+                            {order.product?.name}
+                          </h4>
+
+                          <p className="text-sm text-muted-foreground">
+                            Seller: {order.seller?.name}
+                          </p>
+
+                          <p className="text-sm text-muted-foreground">
+                            Qty: {order.quantity}
+                          </p>
+
+                          <p className="text-xs text-muted mt-1">
+                            {order.createdAt
+                              ? formatDistanceToNow(new Date(order.createdAt), {
+                                  addSuffix: true,
+                                })
+                              : "Recently"}
+                          </p>
+                        </div>
+
+                        {/* PRICE */}
+                        <div className="text-right">
+                          <p className="text-lg font-semibold text-primary">
+                            ₹{order.totalPrice}
+                          </p>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={order.reviewed}
+                            onClick={() => {
+                              setSelectedProduct(order.product._id);
+                              setIsReviewModalOpen(true);
+                            }}
+                          >
+                            {order.reviewed ? "Reviewed" : "Leave Review"}
+                          </Button>
+                        </div>
+
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          )}
         </Section>
 
         {/* ACTIONS */}
@@ -332,43 +383,53 @@ export const ProfilePage = () => {
         </div>
 
       </div>
+
+      {/* PASSWORD MODAL */}
       {isPasswordModalOpen && (
-      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl p-6">
-          <h3 className="text-xl font-semibold mb-4">Change Password</h3>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6">
+            <h3 className="text-xl font-semibold mb-4">Change Password</h3>
 
-          <input
-            type={showPassword ? "text" : "password"}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
-            className="w-full px-4 py-3 border rounded-xl"
-          />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              className="w-full px-4 py-3 border rounded-xl"
+            />
 
-          {passwordError && (
-            <p className="text-red-500 text-sm mt-2">{passwordError}</p>
-          )}
-          {passwordSuccess && (
-            <p className="text-green-500 text-sm mt-2">{passwordSuccess}</p>
-          )}
+            {passwordError && (
+              <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <p className="text-green-500 text-sm mt-2">{passwordSuccess}</p>
+            )}
 
-          <div className="flex justify-end gap-3 mt-4">
-            <button
-              onClick={() => setIsPasswordModalOpen(false)}
-              className="px-4 py-2 border rounded"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handlePassChange}
-              className="px-4 py-2 bg-primary text-white rounded"
-            >
-              Save
-            </button>
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setIsPasswordModalOpen(false)}
+                className="px-4 py-2 border rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePassChange}
+                className="px-4 py-2 bg-primary text-white rounded"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
+
+      {/* REVIEW MODAL */}
+      {isReviewModalOpen && (
+        <ReviewModal
+          productId={selectedProduct}
+          onClose={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 };
