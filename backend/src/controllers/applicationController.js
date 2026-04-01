@@ -2,6 +2,7 @@ import Application from "../models/Application.js";
 import Venture from "../models/Venture.js";
 import Notification from "../models/Notification.js";
 import VentureMessage from "../models/VentureMessage.js";
+import { getIO } from "../config/socket.js";
 
 const notify = async ({ recipient, type, message, link, venture, application, triggeredBy }) => {
   await Notification.create({ recipient, type, message, link, venture, application, triggeredBy });
@@ -105,7 +106,7 @@ export const respondToApplication = async (req, res) => {
         });
         await venture.save();
 
-        await VentureMessage.create({
+        const ventureMessage = await VentureMessage.create({
           venture: venture._id,
           sender: req.user._id, // creator
           messageType: "system",
@@ -115,6 +116,10 @@ export const respondToApplication = async (req, res) => {
             user: application.applicant,
           },
         });
+
+        const populatedMessage = await ventureMessage.populate("sender", "name avatar");
+        const io = getIO();
+        io.to(`venture:${venture._id}`).emit("receive_venture_message", populatedMessage);
       }
 
       await notify({

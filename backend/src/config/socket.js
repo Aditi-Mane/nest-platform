@@ -27,6 +27,16 @@ export const initSocket = (server) => {
       socket.join(conversationId);
     });
 
+    socket.on("join_venture_room", (ventureId) => {
+      if (!ventureId) return;
+      socket.join(`venture:${ventureId}`);
+    });
+
+    socket.on("leave_venture_room", (ventureId) => {
+      if (!ventureId) return;
+      socket.leave(`venture:${ventureId}`);
+    });
+
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
     });

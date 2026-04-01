@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useUser } from '@/context/UserContext';
+import { useSocket } from '@/context/SocketContext';
 import { fetchVentureMessages, sendVentureMessage } from '@/api/venturesApi';
 import { toast } from 'sonner';
 import {
@@ -27,6 +28,50 @@ function formatPreview(message, fallbackRole) {
 
   const senderName = message.sender?.name || 'Someone';
   return `${senderName}: ${message.text}`;
+}
+
+function getMetaMessageDetails(message, venture) {
+  const metaType = message?.meta?.type;
+
+  if (!metaType) {
+    return {
+      title: 'Team Update',
+      body: message?.text || 'A team update was posted.',
+    };
+  }
+
+  if (metaType === 'USER_JOINED') {
+    const joinedUserId = String(message?.meta?.user || '');
+    const joinedMember = venture?.teamMembers?.find(
+      (member) => String(member.user?._id || member.user) === joinedUserId
+    );
+
+    return {
+      title: 'New Member Joined',
+      body: joinedMember?.user?.name
+        ? `${joinedMember.user.name} joined the venture as ${joinedMember.role}.`
+        : message?.text || 'A new member joined the venture.',
+    };
+  }
+
+  return {
+    title: metaType.replaceAll('_', ' '),
+    body: message?.text || 'A team update was posted.',
+  };
+}
+
+function getSenderRole(senderId, venture) {
+  if (!senderId || !venture) return '';
+
+  if (String(venture.creator?._id || venture.creator) === String(senderId)) {
+    return 'Founder';
+  }
+
+  const member = venture.teamMembers?.find(
+    (teamMember) => String(teamMember.user?._id || teamMember.user) === String(senderId)
+  );
+
+  return member?.role || '';
 }
 
 function ChatListItem({ application, isSelected, onClick }) {
@@ -155,6 +200,7 @@ function TeamInfoPanel({ application, onClose }) {
 function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
   const venture = application.venture;
   const { user } = useUser();
+  const socket = useSocket();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -203,6 +249,41 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
     };
   }, [application._id, venture._id]);
 
+  useEffect(() => {
+    if (!socket || !venture?._id) return;
+
+    const roomId = venture._id;
+    const handleConnect = () => {
+      socket.emit('join_venture_room', roomId);
+    };
+
+    const handleIncomingMessage = (incomingMessage) => {
+      if (String(incomingMessage?.venture) !== String(roomId)) return;
+
+      setMessages((prev) => {
+        const alreadyExists = prev.some((message) => message._id === incomingMessage._id);
+        if (alreadyExists) return prev;
+        return [...prev, incomingMessage];
+      });
+
+      onMessageSent?.(application._id, incomingMessage);
+    };
+
+    if (socket.connected) {
+      handleConnect();
+    }
+
+    socket.on('connect', handleConnect);
+
+    socket.on('receive_venture_message', handleIncomingMessage);
+
+    return () => {
+      socket.emit('leave_venture_room', roomId);
+      socket.off('connect', handleConnect);
+      socket.off('receive_venture_message', handleIncomingMessage);
+    };
+  }, [application._id, onMessageSent, socket, venture?._id]);
+
   const handleSendMessage = async () => {
     const trimmedMessage = newMessage.trim();
     if (!trimmedMessage || sending) return;
@@ -210,7 +291,11 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
     try {
       setSending(true);
       const { data } = await sendVentureMessage(venture._id, { text: trimmedMessage });
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        const alreadyExists = prev.some((message) => message._id === data._id);
+        if (alreadyExists) return prev;
+        return [...prev, data];
+      });
       onMessageSent?.(application._id, data);
       setNewMessage('');
     } catch (err) {
@@ -275,14 +360,24 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
             {messages.map((msg) => {
               const isSystem = msg.messageType === 'system';
               const isOwnMessage = String(msg.sender?._id || msg.sender) === String(currentUserId);
+              const senderRole = getSenderRole(msg.sender?._id || msg.sender, venture);
               const senderName = isOwnMessage ? 'You' : msg.sender?.name || 'Team Member';
+              const senderLabel = senderRole ? `${senderName} • ${senderRole}` : senderName;
 
               if (isSystem) {
+                const metaDetails = getMetaMessageDetails(msg, venture);
+
                 return (
                   <div key={msg._id} className="flex justify-center">
-                    <div className="max-w-md rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-4 py-2 text-xs text-center">
-                      <p>{msg.text}</p>
-                      <p className="mt-1 text-[11px] text-amber-700/80">
+                    <div className="max-w-md rounded-2xl bg-amber-50 text-amber-900 border border-amber-200 px-4 py-3 text-center shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                        {metaDetails.title}
+                      </p>
+                      <p className="mt-1 text-sm">{metaDetails.body}</p>
+                      {msg.text && msg.text !== metaDetails.body && (
+                        <p className="mt-1 text-xs text-amber-800/80">{msg.text}</p>
+                      )}
+                      <p className="mt-2 text-[11px] text-amber-700/80">
                         {new Date(msg.createdAt).toLocaleString([], {
                           month: 'short',
                           day: 'numeric',
@@ -312,7 +407,7 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
                         isOwnMessage ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       }`}
                     >
-                      {senderName}
+                      {senderLabel}
                     </p>
                     <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                     <p
@@ -362,7 +457,7 @@ function TeamChatView({ application, onClose, onInfoClick, onMessageSent }) {
   );
 }
 
-const JoinedVentures = ({ teams }) => {
+const JoinedVentures = ({ teams, initialSelectedVentureId = null }) => {
   const hydratedTeams = useMemo(
     () =>
       [...(teams || [])].sort(
@@ -385,6 +480,19 @@ const JoinedVentures = ({ teams }) => {
       return hydratedTeams.find((team) => team._id === prevSelected._id) || hydratedTeams[0];
     });
   }, [hydratedTeams]);
+
+  useEffect(() => {
+    if (!initialSelectedVentureId || !hydratedTeams.length) return;
+
+    const matchingTeam = hydratedTeams.find(
+      (team) => team.venture?._id === initialSelectedVentureId
+    );
+
+    if (matchingTeam) {
+      setSelectedApplication(matchingTeam);
+      setShowInfo(false);
+    }
+  }, [hydratedTeams, initialSelectedVentureId]);
 
   const handleMessageSent = useCallback((applicationId, message) => {
     if (!message) return;

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   Lightbulb, Users, TrendingUp, Search, Plus, Loader2,
-  Bell, CheckCheck, Settings, Eye, Heart, Bookmark,
+  Bell, CheckCheck, Settings, Eye, Heart, Bookmark, MessageCircle,
   Clock, Pencil, Trash2, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -140,7 +140,7 @@ function NotificationBell() {
 }
 
 // ── Venture Card ──────────────────────────────────────────────────────────────
-function VentureCard({ idea, onNavigate, isOwner = false, onDelete }) {
+function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatroom }) {
   const stage = stageConfig[idea.stage] ?? stageConfig.ideation;
   const confirmedMembers = idea.teamMembers?.filter((m) => m.confirmed).length ?? 0;
   const isFull = confirmedMembers >= idea.teamLimit;
@@ -276,16 +276,28 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete }) {
       )}
 
       {isOwner && (
-        <Button
-          variant="outline"
-          className="w-full mt-4 rounded-xl text-sm gap-2 hover:bg-muted transition"
-          onClick={(e) => {
-            e.stopPropagation();
-            onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
-          }}
-        >
-          <Settings className="h-4 w-4" /> Manage
-        </Button>
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <Button
+            variant="outline"
+            className="rounded-xl text-sm gap-2 hover:bg-muted transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenChatroom(idea);
+            }}
+          >
+            <MessageCircle className="h-4 w-4" /> Chatroom
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-xl text-sm gap-2 hover:bg-muted transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
+            }}
+          >
+            <Settings className="h-4 w-4" /> Manage
+          </Button>
+        </div>
       )}
     </Card>
   );
@@ -323,6 +335,7 @@ function ConfirmDeleteDialog({ title, onConfirm, onCancel, loading }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function VenturesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // ── Active main tab ────────────────────────────────────────────────────────
   const [mainTab, setMainTab] = useState("discover"); // "discover" | "mine"
@@ -351,6 +364,9 @@ export default function VenturesPage() {
   const [totalUsers, setTotalUsers] = useState(0);
 
   const [teams, setTeams] = useState([]);
+  const [selectedJoinedVentureId, setSelectedJoinedVentureId] = useState(
+    location.state?.selectedVentureId || null
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -384,6 +400,15 @@ export default function VenturesPage() {
 
   const { user } = useUser();
   const userId = user?._id;
+
+  useEffect(() => {
+    if (location.state?.openJoinedTab) {
+      setMainTab("joined");
+      setSelectedJoinedVentureId(location.state.selectedVentureId || null);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
+
   useEffect(() => {
   const fetchUserCount = async () => {
     try {
@@ -449,6 +474,10 @@ export default function VenturesPage() {
 
   // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDeleteRequest = (id, title) => setDeleteTarget({ id, title });
+  const handleOpenChatroom = (venture) => {
+    setMainTab("joined");
+    setSelectedJoinedVentureId(venture._id);
+  };
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     try {
@@ -463,6 +492,25 @@ export default function VenturesPage() {
       setDeleting(false);
     }
   };
+
+  const joinedVenturesData = useMemo(() => {
+    const ownerVentures = myVentures.map((venture) => ({
+      _id: `owner-${venture._id}`,
+      venture,
+      roleAppliedFor: "Founder",
+      respondedAt: venture.createdAt || new Date().toISOString(),
+      lastMessageAt: venture.createdAt || new Date().toISOString(),
+      lastMessagePreview: `Chatroom for ${venture.title}`,
+      isOwnerChat: true,
+    }));
+
+    const acceptedVentureIds = new Set(teams.map((team) => team.venture?._id));
+    const ownerOnlyVentures = ownerVentures.filter(
+      (team) => !acceptedVentureIds.has(team.venture?._id)
+    );
+
+    return [...ownerOnlyVentures, ...teams];
+  }, [myVentures, teams]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -517,7 +565,7 @@ export default function VenturesPage() {
           {[
             { key: "discover", label: "Discover" },
             { key: "mine",     label: "My Ventures" },
-            ...(teams.length > 0 ? [{ key: "joined", label: "Joined Teams" }] : []),
+            ...(joinedVenturesData.length > 0 ? [{ key: "joined", label: "Team Chats" }] : []),
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -534,9 +582,9 @@ export default function VenturesPage() {
                   {myVentures.length}
                 </span>
               )}
-              {key === "joined" && teams.length > 0 && (
+              {key === "joined" && joinedVenturesData.length > 0 && (
                 <span className="ml-2 text-xs bg-green-500 text-white rounded-full px-1.5 py-0.5">
-                  {teams.length}
+                  {joinedVenturesData.length}
                 </span>
               )}
             </button>
@@ -735,6 +783,7 @@ export default function VenturesPage() {
                       onNavigate={navigate}
                       isOwner
                       onDelete={handleDeleteRequest}
+                      onOpenChatroom={handleOpenChatroom}
                     />
                   ))}
                 </div>
@@ -744,8 +793,11 @@ export default function VenturesPage() {
         )}
 
         {/* ════ JOINED VENTURES TAB ════ */}
-        {mainTab === "joined" && teams.length > 0 && (
-          <JoinedVentures teams={teams} />
+        {mainTab === "joined" && joinedVenturesData.length > 0 && (
+          <JoinedVentures
+            teams={joinedVenturesData}
+            initialSelectedVentureId={selectedJoinedVentureId}
+          />
         )}
       </div>
 
