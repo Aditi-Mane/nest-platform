@@ -2,10 +2,54 @@ import Product from "../models/Product.js";
 import Review from "../models/Review.js";
 import axios from "axios";
 
+const SENTIMENT_SERVICE_URL =
+  process.env.SENTIMENT_SERVICE_URL || "http://localhost:8000/predict-sentiment";
+
+const analyzeSentiment = async (text) => {
+  try {
+    const sentimentRes = await axios.post(
+      SENTIMENT_SERVICE_URL,
+      { text },
+      { timeout: 5000 }
+    );
+
+    return {
+      sentiment: sentimentRes.data?.sentiment ?? null,
+      confidence: sentimentRes.data?.confidence ?? null,
+    };
+  } catch (error) {
+    console.warn(
+      "Sentiment service unavailable. Saving review without sentiment analysis.",
+      error.message
+    );
+
+    return {
+      sentiment: null,
+      confidence: null,
+    };
+  }
+};
+
 export const createReview =async (req,res)=>{
 try{
-   const userId =req.user._id;
-   const {productId, starRating, text} =req.body;
+   const userId = req.user?._id;
+   const { productId, starRating, text } = req.body;
+
+   if (!userId) {
+    return res.status(401).json({ message: "Not authorized" });
+   }
+
+   if (!productId || !text?.trim()) {
+    return res.status(400).json({
+      message: "Product and review text are required",
+    });
+   }
+
+   if (!Number.isInteger(starRating) || starRating < 1 || starRating > 5) {
+    return res.status(400).json({
+      message: "Star rating must be an integer between 1 and 5",
+    });
+   }
 
    const product =await Product.findById(productId);
     
@@ -23,19 +67,12 @@ try{
       });
     }
 
-    //call ML sentiment API
-    const sentimentRes =await axios.post(
-      "http://localhost:8000/predict-sentiment",
-      { text }
-    );
-
-    const sentiment = sentimentRes.data.sentiment;
-    const confidence = sentimentRes.data.confidence;
+    const { sentiment, confidence } = await analyzeSentiment(text.trim());
 
     const review =await Review.create({
       product: productId,
        user: userId,
-      text,
+      text: text.trim(),
       starRating,
       sentiment,
       confidence,
