@@ -30,6 +30,7 @@ import InvestorsPage from "./marketplace/ventures-module/InvestorsPage.jsx";
 import CreateVenturePage from "./marketplace/ventures-module/CreateVenturePage.jsx";
 import CreateStartupPage from "./marketplace/ventures-module/CreateStartupPage.jsx";
 import TeamChatsPage from "./marketplace/ventures-module/TeamChatsPage.jsx";
+import RoleProtectedRoute from "../routes/RoleProtectedRoute.jsx";
 
 
 
@@ -37,9 +38,23 @@ function Marketplace() {
   
   return (
     <Routes>
-      <Route path="seller/setup" element={<SellerSetup />}/>
+      <Route
+        path="seller/setup"
+        element={
+          <RoleProtectedRoute allowedRole="seller">
+            <SellerSetup />
+          </RoleProtectedRoute>
+        }
+      />
 
-      <Route path="seller" element={<SellerPanel />}>
+      <Route
+        path="seller"
+        element={
+          <RoleProtectedRoute allowedRole="seller">
+            <SellerPanel />
+          </RoleProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<SellerDashboard />} />
         <Route path="products" element={<SellerProducts />} />
@@ -53,7 +68,14 @@ function Marketplace() {
         <Route path="settings" element={<SellerSettings />} />
       </Route>
 
-      <Route path="buyer" element={<BuyerLayout />}>
+      <Route
+        path="buyer"
+        element={
+          <RoleProtectedRoute allowedRole="buyer">
+            <BuyerLayout />
+          </RoleProtectedRoute>
+        }
+      >
       <Route index element={<BuyerMarketPlace />} />
       <Route path="product/:id" element={<ProductDetailPage />} />
       <Route path="cart" element={<CartPage />} />

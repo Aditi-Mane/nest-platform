@@ -19,6 +19,14 @@ const formatDate = (date) =>
     month: "short",
   });
 
+const escapeCsvValue = (value) => {
+  const stringValue = String(value ?? "");
+  if (/[",\n]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
 const COLORS = {
   positive: "var(--color-secondary)",
   neutral: "#9BAA88",
@@ -89,8 +97,6 @@ const SellerSentiment = () => {
 
   useEffect(() => {
     fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -102,6 +108,100 @@ const SellerSentiment = () => {
     fetchAnalytics();
     fetchProductSentiment();
     fetchInsights();
+  };
+
+  const handleExport = () => {
+    const exportSections = [];
+
+    exportSections.push("Seller Sentiment Report");
+    exportSections.push(
+      `Generated At,${escapeCsvValue(new Date().toLocaleString("en-IN"))}`
+    );
+    exportSections.push("");
+
+    exportSections.push("Overview");
+    exportSections.push("Metric,Value,Note");
+    exportSections.push(
+      `Overall Score,${escapeCsvValue(data?.overallScore || 0)} / 10,Monthly summary`
+    );
+    exportSections.push(
+      `Positive Rate,${escapeCsvValue(data?.positiveRate || 0)}%,Review sentiment share`
+    );
+    exportSections.push("Response Rate,94%,Static UI metric");
+    exportSections.push(
+      `Total Reviews,${escapeCsvValue(data?.totalReviews || 0)},Last 6 months`
+    );
+    exportSections.push("");
+
+    exportSections.push("Sentiment Distribution");
+    exportSections.push("Type,Value");
+    exportSections.push(
+      `Positive,${escapeCsvValue(sentimentDistribution.positive)}`
+    );
+    exportSections.push(
+      `Neutral,${escapeCsvValue(sentimentDistribution.neutral)}`
+    );
+    exportSections.push(
+      `Negative,${escapeCsvValue(sentimentDistribution.negative)}`
+    );
+    exportSections.push("");
+
+    exportSections.push("Trend");
+    exportSections.push("Date,Score");
+    (data?.trend || []).forEach((point) => {
+      exportSections.push(
+        `${escapeCsvValue(formatDate(point?.name))},${escapeCsvValue(
+          point?.value
+        )}`
+      );
+    });
+    exportSections.push("");
+
+    exportSections.push("Product Sentiment");
+    exportSections.push(
+      "Product,Reviews Analyzed,Positive %,Neutral %,Negative %,Sentiment Score"
+    );
+    products.forEach((product) => {
+      exportSections.push(
+        [
+          escapeCsvValue(product?.name),
+          escapeCsvValue(product?.totalReviews),
+          escapeCsvValue(product?.positive),
+          escapeCsvValue(product?.neutral),
+          escapeCsvValue(product?.negative),
+          escapeCsvValue(product?.score),
+        ].join(",")
+      );
+    });
+    exportSections.push("");
+
+    exportSections.push("What Customers Love");
+    exportSections.push("Rank,Theme");
+    insights.positive.forEach((item, index) => {
+      exportSections.push(`${index + 1},${escapeCsvValue(item)}`);
+    });
+    exportSections.push("");
+
+    exportSections.push("Areas for Improvement");
+    exportSections.push("Rank,Theme");
+    insights.negative.forEach((item, index) => {
+      exportSections.push(`${index + 1},${escapeCsvValue(item)}`);
+    });
+
+    const csvContent = exportSections.join("\n");
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStamp = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.setAttribute("download", `seller-sentiment-${dateStamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const sentimentDistribution = data?.sentimentDistribution || {
@@ -128,6 +228,12 @@ const SellerSentiment = () => {
     },
   ];
 
+  const totalSentimentCount = donutData.reduce(
+    (sum, item) => sum + (item.value || 0),
+    0
+  );
+  const leadingSentiment = [...donutData].sort((a, b) => b.value - a.value)[0];
+
   return (
     <div className="p-6 min-h-screen bg-background text-text space-y-6">
       <div className="flex justify-between items-center">
@@ -145,7 +251,11 @@ const SellerSentiment = () => {
           >
             <RefreshCcw size={16} /> Refresh
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card">
+          <button
+            onClick={handleExport}
+            disabled={loadingAnalytics || loadingProducts || loadingInsights}
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             <Download size={16} /> Export
           </button>
         </div>
@@ -175,11 +285,11 @@ const SellerSentiment = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm h-full">
               <h2 className="font-semibold text-lg">Sentiment Distribution</h2>
 
-              <div className="flex flex-col items-center mt-6">
-                <div className="w-44 h-44">
+              <div className="mt-6 flex items-center gap-6 h-[240px]">
+                <div className="relative w-56 h-56 shrink-0">
                   <ResponsiveContainer>
                     <PieChart>
                       <Pie
@@ -195,21 +305,48 @@ const SellerSentiment = () => {
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
+
+                  <div className="absolute inset-0 m-auto bg-card w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold">
+                    {data?.overallScore || 0}
+                  </div>
                 </div>
 
-                <div className="-mt-28 mb-20 bg-card w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold">
-                  {data?.overallScore || 0}
-                </div>
+                <div className="flex-1 space-y-3">
+                  <div className="rounded-xl border border-border bg-background px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted">
+                      Quick Summary
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-text">
+                      {leadingSentiment?.name || "No"} sentiment is leading with{" "}
+                      {totalSentimentCount
+                        ? `${Math.round(
+                            ((leadingSentiment?.value || 0) /
+                              totalSentimentCount) *
+                              100
+                          )}%`
+                        : "0%"}{" "}
+                      of review signals.
+                    </p>
+                  </div>
 
-                <div className="w-full mt-2 space-y-3">
-                  <Row label="Positive" value={sentimentDistribution.positive} />
-                  <Row label="Neutral" value={sentimentDistribution.neutral} />
-                  <Row label="Negative" value={sentimentDistribution.negative} />
+                  {donutData.map((item) => (
+                    <Row
+                      key={item.name}
+                      label={item.name}
+                      value={item.value}
+                      percent={
+                        totalSentimentCount
+                          ? Math.round((item.value / totalSentimentCount) * 100)
+                          : 0
+                      }
+                      color={item.color}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm h-full">
               <h2 className="font-semibold text-lg">Customer Happiness Trend</h2>
 
               <div className="h-60 mt-4">
@@ -244,10 +381,6 @@ const SellerSentiment = () => {
               Customer satisfaction by product
             </p>
           </div>
-
-          <button className="px-4 py-2 rounded-full border border-border">
-            Filter
-          </button>
         </div>
 
         {loadingProducts ? (
@@ -379,10 +512,24 @@ const Stat = ({ title, value, sub }) => (
   </div>
 );
 
-const Row = ({ label, value }) => (
-  <div className="flex justify-between bg-background p-3 rounded-lg border border-border">
-    <span>{label}</span>
-    <span>{value}</span>
+const Row = ({ label, value, percent, color }) => (
+  <div className="bg-background p-3 rounded-lg border border-border">
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <span
+          className="mt-1 h-2.5 w-2.5 rounded-full shrink-0"
+          style={{ backgroundColor: color }}
+        ></span>
+        <div>
+          <p className="font-medium text-text">{label}</p>
+        </div>
+      </div>
+
+      <div className="text-right shrink-0">
+        <p className="font-semibold text-text">{percent}%</p>
+        <p className="text-xs text-muted">{value} reviews</p>
+      </div>
+    </div>
   </div>
 );
 
