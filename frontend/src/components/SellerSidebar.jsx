@@ -12,6 +12,7 @@ import { MdReplay } from "react-icons/md";
 import { SiGoogleanalytics } from "react-icons/si";
 import { IoPeople } from "react-icons/io5";
 import { useMessages } from "@/context/MessageContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useEffect } from "react";
 import api from "../api/axios.js";
@@ -42,6 +43,11 @@ const SellerSidebar = () => {
     "text-[var(--color-muted)] hover:bg-[#f4ecdd] hover:text-[var(--color-primary)]";
 
   const { totalUnread } = useMessages();
+  const avatarSrc = user?.avatar
+    ? user.avatar.startsWith("http")
+      ? user.avatar
+      : `http://localhost:5000${user.avatar}`
+    : undefined;
 
   return (
     <div className="w-72 h-screen bg-card border-r border-border flex flex-col justify-between">
@@ -183,9 +189,12 @@ const SellerSidebar = () => {
       {/* PROFILE */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl">
-          <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
-            {user?.name?.[0]}
-          </div>
+          <Avatar className="size-10 border border-border">
+            <AvatarImage src={avatarSrc} alt={user?.name || "Seller avatar"} />
+            <AvatarFallback className="bg-primary text-white font-semibold">
+              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <p className="font-medium text-sm">{user.name}</p>
             <p className="text-xs text-muted">

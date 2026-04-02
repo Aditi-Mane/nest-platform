@@ -100,7 +100,7 @@ const productSchema = new mongoose.Schema(
     // Product status lifecycle (after order placed logic)
     status: {
       type: String,
-      enum: ["available", "sold", "reserved"],
+      enum: ["available", "sold", "reserved", "deleted"],
       default: "available",
     },
   },
