@@ -25,7 +25,7 @@ try{
 
     //call ML sentiment API
     const sentimentRes =await axios.post(
-      "http://localhost:8000/predict-sentiment",
+      "http://localhost:8001/predict-sentiment",
       { text }
     );
 
