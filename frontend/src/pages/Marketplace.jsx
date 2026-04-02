@@ -29,6 +29,7 @@ import VentureDetailPage from "./marketplace/ventures-module/VentureDetailPage.j
 import InvestorsPage from "./marketplace/ventures-module/InvestorsPage.jsx";
 import CreateVenturePage from "./marketplace/ventures-module/CreateVenturePage.jsx";
 import CreateStartupPage from "./marketplace/ventures-module/CreateStartupPage.jsx";
+import TeamChatsPage from "./marketplace/ventures-module/TeamChatsPage.jsx";
 
 
 
@@ -61,6 +62,7 @@ function Marketplace() {
       {/* ── Ventures Module ── */}
       <Route path="ventures" element={<VenturesPage />} />
       <Route path="ventures/:id" element={<VentureDetailPage />} />
+      <Route path="ventures/chats" element={<TeamChatsPage />} />
       <Route path="ventures/create" element={<CreateVenturePage />} />
       <Route path="ventures/investors" element={<InvestorsPage />} />
       <Route path="ventures/create-startup" element={<CreateStartupPage />} />

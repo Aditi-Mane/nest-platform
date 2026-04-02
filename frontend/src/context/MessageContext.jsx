@@ -9,6 +9,8 @@ export const MessageProvider = ({ children }) => {
   const [unreadMap, setUnreadMap] = useState({});
   const socket = useSocket();
 
+  
+
   //  detect role ONCE
   const isSeller = window.location.pathname.includes("seller");
 
@@ -51,11 +53,13 @@ export const MessageProvider = ({ children }) => {
         ? data.unreadCountSeller ?? 0
         : data.unreadCountBuyer ?? 0;
 
+    const activeConversationId = window.location.pathname.split("/").pop();
+
       setUnreadMap((prev) => {
-        const updated = {
-          ...prev,
-          [data.conversationId]: count,
-        };
+         const updated = { ...prev };
+        updated[data.conversationId] = count;
+        
+
 
         const total = Object.values(updated).reduce(
           (sum, val) => sum + val,
