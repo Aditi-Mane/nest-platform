@@ -11,6 +11,7 @@ import { IoSettingsSharp } from "react-icons/io5";
 import { MdReplay } from "react-icons/md";
 import { SiGoogleanalytics } from "react-icons/si";
 import { IoPeople } from "react-icons/io5";
+import { FaPeopleGroup } from "react-icons/fa6";
 import { useMessages } from "@/context/MessageContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -129,6 +130,16 @@ const SellerSidebar = () => {
           >
             <SiGoogleanalytics size={20}/>
             Analytics
+          </NavLink>
+
+          <NavLink
+            to="/marketplace/buyer/ventures"
+            className={({ isActive }) =>
+              `${baseLink} ${isActive ? activeLink : normalLink}`
+            }
+          >
+            <FaPeopleGroup size={20} />
+            Ventures
           </NavLink>
 
           {/* AI SECTION */}

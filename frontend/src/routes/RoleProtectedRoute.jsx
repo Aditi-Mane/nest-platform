@@ -1,12 +1,16 @@
 import { Navigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 
-const getFallbackPath = (user, allowedRole) => {
+const getFallbackPath = (user, allowedRoles) => {
+  const normalizedRoles = Array.isArray(allowedRoles)
+    ? allowedRoles
+    : [allowedRoles];
+
   if (!user?.activeRole) {
     return "/choose-role";
   }
 
-  if (allowedRole === "seller") {
+  if (normalizedRoles.includes("seller") && !normalizedRoles.includes("buyer")) {
     return user.activeRole === "buyer"
       ? "/marketplace/buyer"
       : user.sellerStatus === "active"
@@ -14,7 +18,7 @@ const getFallbackPath = (user, allowedRole) => {
         : "/marketplace/seller/setup";
   }
 
-  if (allowedRole === "buyer") {
+  if (normalizedRoles.includes("buyer") && !normalizedRoles.includes("seller")) {
     return user.activeRole === "seller"
       ? user.sellerStatus === "active"
         ? "/marketplace/seller/dashboard"
@@ -25,8 +29,12 @@ const getFallbackPath = (user, allowedRole) => {
   return "/resolve";
 };
 
-const RoleProtectedRoute = ({ allowedRole, children }) => {
+const RoleProtectedRoute = ({ allowedRole, allowedRoles, children }) => {
   const { user, loading } = useUser();
+  const permittedRoles = allowedRoles || allowedRole;
+  const normalizedRoles = Array.isArray(permittedRoles)
+    ? permittedRoles
+    : [permittedRoles];
 
   if (loading) {
     return (
@@ -40,11 +48,11 @@ const RoleProtectedRoute = ({ allowedRole, children }) => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  if (user.activeRole !== allowedRole) {
-    return <Navigate to={getFallbackPath(user, allowedRole)} replace />;
+  if (!normalizedRoles.includes(user.activeRole)) {
+    return <Navigate to={getFallbackPath(user, permittedRoles)} replace />;
   }
 
-  if (allowedRole === "seller" && user.sellerStatus !== "active") {
+  if (normalizedRoles.includes("seller") && user.activeRole === "seller" && user.sellerStatus !== "active") {
     return <Navigate to="/marketplace/seller/setup" replace />;
   }
 
