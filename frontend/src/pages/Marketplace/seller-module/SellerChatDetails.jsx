@@ -39,13 +39,18 @@ const SellerChatDetails = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceive = (msg) => {
+    const handleReceive = async (msg) => {
       if (!msg || !msg._id) return; 
 
       setMessages((prev) => {
         if (prev.some((m) => m?._id === msg._id)) return prev;
         return [...prev, msg];
       });
+      try {
+        await api.patch(`/messages/${conversationId}/read`);
+      } catch (err) {
+        console.error("Mark as read failed:", err);
+      }
     };
 
     socket.on("receive_message", handleReceive);

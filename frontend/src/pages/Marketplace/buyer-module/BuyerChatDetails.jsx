@@ -40,16 +40,24 @@ const BuyerChatDetails = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceive = (msg) => {
-      if (!msg || !msg._id) return;
+          const handleReceive = async (msg) => {
+        if (!msg || !msg._id) return;
 
-      if (String(msg.conversationId) !== String(conversationId)) return;
+        if (String(msg.conversationId) !== String(conversationId)) return;
 
-      setMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
-    };
+        // Add message to UI
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+
+        // NEW: mark as read instantly
+        try {
+          await api.patch(`/messages/${conversationId}/read`);
+        } catch (err) {
+          console.error("Mark as read failed:", err);
+        }
+      };
 
     socket.on("receive_message", handleReceive);
 

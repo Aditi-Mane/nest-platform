@@ -353,3 +353,11 @@ export const updateAvatar = async (req, res) => {
     });
   }
 };
+export const getUserCount = async (req, res) => {
+  try {
+    const count = await User.countDocuments();
+    res.status(200).json({ totalUsers: count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

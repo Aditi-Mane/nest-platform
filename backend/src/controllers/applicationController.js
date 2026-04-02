@@ -1,6 +1,8 @@
 import Application from "../models/Application.js";
 import Venture from "../models/Venture.js";
 import Notification from "../models/Notification.js";
+import VentureMessage from "../models/VentureMessage.js";
+import { getIO } from "../config/socket.js";
 
 const notify = async ({ recipient, type, message, link, venture, application, triggeredBy }) => {
   await Notification.create({ recipient, type, message, link, venture, application, triggeredBy });
@@ -99,16 +101,31 @@ export const respondToApplication = async (req, res) => {
         venture.teamMembers.push({
           user: application.applicant,
           role: application.roleAppliedFor,
-          confirmed: false,
+          confirmed: true,
           joinedAt: null,
         });
         await venture.save();
+
+        const ventureMessage = await VentureMessage.create({
+          venture: venture._id,
+          sender: req.user._id, // creator
+          messageType: "system",
+          text: `You've been accepted to join "${venture.title}"! Welcome to the team.`,
+          meta: {
+            type: "USER_JOINED",
+            user: application.applicant,
+          },
+        });
+
+        const populatedMessage = await ventureMessage.populate("sender", "name avatar");
+        const io = getIO();
+        io.to(`venture:${venture._id}`).emit("receive_venture_message", populatedMessage);
       }
 
       await notify({
         recipient: application.applicant,
         type: "application_accepted",
-        message: `Your application for "${venture.title}" was accepted! Please confirm to join.`,
+        message: `Your application for "${venture.title}" was accepted!`,
         link: `/marketplace/buyer/ventures/${venture._id}`,
         venture: venture._id,
         application: application._id,
@@ -159,5 +176,62 @@ export const getMyApplications = async (req, res) => {
     res.json({ applications });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const getApplicationStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { ventureId } = req.params;
+
+    const application = await Application.findOne({
+      venture: ventureId,
+      applicant: userId,
+    }).select("status creatorNote respondedAt roleAppliedFor");
+
+    if(!application) {
+      return res.status(404).json({
+        message: "No application found for this venture",
+        status: null,
+      });
+    }
+
+    res.status(200).json({
+      status: application.status,
+      roleAppliedFor: application.roleAppliedFor,
+      creatorNote: application.creatorNote,
+      respondedAt: application.respondedAt,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAcceptedApplications = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const applications = await Application.find({
+      applicant: userId,
+      status: "accepted",
+    })
+      .populate({
+        path: "venture",
+        select: "title description category stage creator teamMembers teamLimit",
+        populate: {
+          path: "creator",
+          select: "name avatar collegeName",
+        },
+      })
+      .select("venture roleAppliedFor respondedAt");
+
+    res.status(200).json({
+      count: applications.length,
+      applications,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
   }
 };

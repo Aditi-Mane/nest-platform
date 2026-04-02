@@ -22,8 +22,10 @@ import {
   addMilestone, updateMilestone, deleteMilestone,
   postUpdate, addComment,
   updateVenture, removeTeamMember,
+  getApplicationStatus,
 } from "@/api/venturesApi";
 import { useUser } from "@/context/UserContext";
+import api from "../../../api/axios";
 
 
 
@@ -45,7 +47,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [resumeUrl, setResumeUrl]   = useState("");
   const [submitting, setSubmitting] = useState(false);
- s
+ 
   const selectedRole = role === "Other" ? customRole : role;
 
   const handleSubmit = async () => {
@@ -53,14 +55,14 @@ function ApplyModal({ venture, onClose, onSuccess }) {
     if (!whyJoin.trim())      { toast.error("Please tell us why you want to join."); return; }
     try {
       setSubmitting(true);
-      await applyToVenture(venture._id, {
+      const { data } = await applyToVenture(venture._id, {
         roleAppliedFor: selectedRole,
         whyJoin,
         portfolioUrl: portfolioUrl || undefined,
         resumeUrl:    resumeUrl    || undefined,
       });
       setStep(3);
-      onSuccess();
+      onSuccess(data.application);
     } catch (err) {
       toast.error(err?.response?.data?.message ?? "Failed to send application.");
     } finally {
@@ -190,10 +192,29 @@ function ApplyModal({ venture, onClose, onSuccess }) {
 }
 
 // ── Applications Tab (creator only) ──────────────────────────────────────────
-function ApplicationsTab({ ventureId }) {
+function ApplicationsTab({ ventureId, onVentureUpdate }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [actionId, setActionId]         = useState(null);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await api.get(`/applications/${ventureId}/status`);
+        setStatus(res.data.status);
+      } catch (error) {
+        console.log("Error fetching status:", error);
+        setStatus(null); // means not applied or error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (ventureId) {
+      fetchStatus();
+    }
+  }, [ventureId]);
 
   useEffect(() => {
     const load = async () => {
@@ -218,6 +239,7 @@ function ApplicationsTab({ ventureId }) {
         prev.map((a) => (a._id === appId ? { ...a, status } : a))
       );
       toast.success(status === "accepted" ? "Application accepted!" : "Application rejected.");
+      if (onVentureUpdate) onVentureUpdate();
     } catch {
       toast.error("Failed to update application.");
     } finally {
@@ -733,6 +755,7 @@ export default function VentureDetailPage() {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [likeCount, setLikeCount]         = useState(0);
   const [endorseCount, setEndorseCount]   = useState(0);
+  const [userApplication, setUserApplication] = useState(null);
 
   const defaultTab = searchParams.get("tab") ?? "overview";
   const [activeTab, setActiveTab]         = useState(defaultTab);
@@ -751,6 +774,16 @@ export default function VentureDetailPage() {
           setHasLiked(v.likes?.includes(user._id) ?? false);
           setHasFollowed(v.followers?.includes(user._id) ?? false);
           setHasEndorsed(v.endorsements?.includes(user._id) ?? false);
+          // Fetch user's application status for this venture
+          try {
+            const { data } = await getApplicationStatus(id);
+            if (data.status) {
+              setUserApplication(data);
+              setHasApplied(true);
+            }
+          } catch (err) {
+            // Not applied or error
+          }
         }
       } catch {
         setError("Failed to load venture.");
@@ -760,6 +793,23 @@ export default function VentureDetailPage() {
     };
     load();
   }, [id, user]);
+
+  const refetchVenture = async () => {
+    try {
+      const { data } = await fetchVentureById(id);
+      const v = data.venture;
+      setVenture(v);
+      setLikeCount(v.likes?.length ?? 0);
+      setEndorseCount(v.endorsements?.length ?? 0);
+      if (user) {
+        setHasLiked(v.likes?.includes(user._id) ?? false);
+        setHasFollowed(v.followers?.includes(user._id) ?? false);
+        setHasEndorsed(v.endorsements?.includes(user._id) ?? false);
+      }
+    } catch {
+      // Silent refetch error
+    }
+  };
 
   const isCreator = venture && user && (venture.creator?._id === user._id || venture.creator === user._id);
 
@@ -847,85 +897,148 @@ export default function VentureDetailPage() {
           {/* ════ MAIN ════ */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Header Card */}
-            <Card className="rounded-2xl shadow-sm border border-border">
-              <CardContent className="p-8">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex gap-2 flex-wrap">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${stage.className}`}>
-                      {stage.label}
-                    </span>
-                    <Badge variant="outline">{venture.category}</Badge>
-                    {venture.isRecruiting && (
-                      <Badge className="bg-orange-100 text-orange-700 border-orange-200 rounded-full text-xs border">
-                        Actively Recruiting
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className={`rounded-xl ${hasLiked ? "text-red-500 border-red-300" : ""}`}
-                      onClick={handleLike}
-                      title="Like"
-                    >
-                      <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className={`rounded-xl ${hasEndorsed ? "text-yellow-500 border-yellow-400" : ""}`}
-                      onClick={handleEndorse}
-                      title="Endorse"
-                    >
-                      <Award className={`h-4 w-4 ${hasEndorsed ? "fill-current" : ""}`} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className={`rounded-xl ${hasFollowed ? "text-primary border-primary/40" : ""}`}
-                      onClick={handleFollow}
-                      title={hasFollowed ? "Unfollow" : "Follow for updates"}
-                    >
-                      <TrendingUp className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="rounded-xl" onClick={handleShare} title="Share">
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+  <Card className="rounded-2xl shadow-md border border-border/60 bg-card/50">
+  <CardContent className="p-8">
 
-                <h1 className="text-3xl font-bold mb-3">{venture.title}</h1>
-                <p className="text-muted-foreground leading-relaxed mb-6">{venture.description}</p>
+    {/* ── Top Section ── */}
+    <div className="flex items-start justify-between mb-5">
+      
+      {/* Left */}
+      <div className="flex gap-2 flex-wrap items-center">
 
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {venture.tags?.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="rounded-full">{tag}</Badge>
-                  ))}
-                </div>
+        {/* Stage */}
+        <span
+          className={`text-xs font-medium px-3 py-1 rounded-full border 
+                      flex items-center justify-center ${stage.className}`}
+        >
+          {stage.label}
+        </span>
 
-                <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-6 border-t border-border">
-                  <span className="flex items-center gap-1.5">
-                    <Users className="h-4 w-4" />
-                    {confirmedCount}/{venture.teamLimit} members
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="h-4 w-4" />
-                    {likeCount} likes
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Award className="h-4 w-4" />
-                    {endorseCount} endorsements
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    Started {new Date(venture.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Category */}
+        <span
+          className="text-xs font-medium px-3 py-1 rounded-full border 
+                    bg-card text-gray-700 border-primary/70
+                    flex items-center justify-center"
+        >
+          {venture.category}
+        </span>
 
+        {/* Hiring */}
+        {venture.isRecruiting && (
+          <span
+            className="text-xs font-medium px-3 py-1 rounded-full border 
+                      bg-orange-100 text-orange-700 border-orange-200 
+                      flex items-center gap-1"
+          >
+            🚀 Hiring
+          </span>
+        )}
+
+      </div>
+
+      {/* Right Actions */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className={`rounded-xl transition-all hover:scale-105 ${
+            hasLiked ? "text-red-500 border-red-300 bg-red-50" : ""
+          }`}
+          onClick={handleLike}
+        >
+          <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className={`rounded-xl transition-all hover:scale-105 ${
+            hasEndorsed ? "text-yellow-500 border-yellow-400 bg-yellow-50" : ""
+          }`}
+          onClick={handleEndorse}
+        >
+          <Award className={`h-4 w-4 ${hasEndorsed ? "fill-current" : ""}`} />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className={`rounded-xl transition-all hover:scale-105 ${
+            hasFollowed ? "text-primary border-primary/40 bg-primary/10" : ""
+          }`}
+          onClick={handleFollow}
+        >
+          <TrendingUp className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-xl hover:scale-105 transition-all"
+          onClick={handleShare}
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+
+    {/* ── Title ── */}
+    <h1 className="text-3xl md:text-4xl font-bold mb-3 leading-tight tracking-tight">
+      {venture.title}
+    </h1>
+
+    {/* ── Description ── */}
+    <p className="text-muted-foreground text-[15px] leading-relaxed mb-6 max-w-3xl">
+      {venture.description}
+    </p>
+
+    {/* ── Tags ── */}
+    <div className="flex flex-wrap gap-2 mb-6">
+      {venture.tags?.map((tag) => (
+        <span
+          key={tag}
+          className="text-xs px-3 py-1 rounded-full 
+                     bg-primary/10 text-primary hover:bg-primary/20 transition"
+        >
+          #{tag}
+        </span>
+      ))}
+    </div>
+
+    {/* ── Stats Section ── */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-border">
+
+      <div className="flex items-center gap-2 text-sm">
+        <Users className="h-4 w-4 text-primary" />
+        <span className="font-medium">
+          {confirmedCount}/{venture.teamLimit}
+        </span>
+        <span className="text-muted-foreground text-xs">Members</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        <Heart className="h-4 w-4 text-red-500" />
+        <span className="font-medium">{likeCount}</span>
+        <span className="text-muted-foreground text-xs">Likes</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        <Award className="h-4 w-4 text-yellow-500" />
+        <span className="font-medium">{endorseCount}</span>
+        <span className="text-muted-foreground text-xs">Endorsements</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        <Clock className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs">
+          {new Date(venture.createdAt).toLocaleDateString()}
+        </span>
+      </div>
+
+    </div>
+
+  </CardContent>
+</Card>
             {/* Tabs */}
             <Card className="rounded-2xl shadow-sm border border-border">
               <CardContent className="p-6">
@@ -965,7 +1078,7 @@ export default function VentureDetailPage() {
                             <div key={role._id} className="p-4 bg-gray-50 rounded-xl border border-border">
                               <div className="flex items-center justify-between mb-2">
                                 <p className="font-medium text-sm">{role.title}</p>
-                                <Badge variant="secondary" className="rounded-full">
+                                <Badge variant="secondary" className="rounded-lg !text-white">
                                   {role.spots} spot{role.spots > 1 ? "s" : ""}
                                 </Badge>
                               </div>
@@ -983,17 +1096,22 @@ export default function VentureDetailPage() {
 
                   {/* Team */}
                   <TabsContent value="team" className="space-y-4">
-                    <h3 className="font-semibold">Current Team ({confirmedCount})</h3>
-                    {venture.teamMembers?.filter((m) => m.confirmed).map((member, i) => (
+                    <h3 className="font-semibold">Team Members ({venture.teamMembers?.length ?? 0})</h3>
+                    {venture.teamMembers?.map((member, i) => (
                       <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-border">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={member.user?.avatar} />
                           <AvatarFallback>{member.user?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{member.user?.name}</p>
-                          <p className="text-xs text-muted-foreground">{member.role}</p>
-                          <p className="text-xs text-muted-foreground">{member.user?.major}</p>
+                          <div className="flex items-center gap-2 mb-0.4">
+                            <p className="font-medium text-sm text-primary">{member.user?.name}</p>
+                            {!member.confirmed && (
+                              <Badge variant="outline" className="text-xs">Pending Confirmation</Badge>
+                            )}
+                          </div>
+                          <p className="text-[12px] text-muted-foreground">{member.role}</p>
+                          <p className="text-[10px] text-muted/80">{member.user?.collegeName}</p>
                         </div>
                         {isCreator && member.user?._id !== user?._id && (
                           <Button
@@ -1007,8 +1125,8 @@ export default function VentureDetailPage() {
                         )}
                       </div>
                     ))}
-                    {confirmedCount === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-8">No confirmed team members yet.</p>
+                    {(!venture.teamMembers || venture.teamMembers.length === 0) && (
+                      <p className="text-sm text-muted-foreground text-center py-8">No team members yet.</p>
                     )}
                   </TabsContent>
 
@@ -1080,7 +1198,7 @@ export default function VentureDetailPage() {
                   {/* Applications (creator only) */}
                   {isCreator && (
                     <TabsContent value="applications">
-                      <ApplicationsTab ventureId={venture._id} />
+                      <ApplicationsTab ventureId={venture._id} onVentureUpdate={refetchVenture} />
                     </TabsContent>
                   )}
 
@@ -1141,36 +1259,74 @@ export default function VentureDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Join Team (non-creator, spots available, recruiting) */}
-            {!isCreator && !hasApplied && spotsLeft > 0 && venture.isRecruiting && (
-              <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    <p className="font-semibold">Join This Team</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
-                  </p>
-                  <Button className="w-full rounded-xl" onClick={() => setShowApplyModal(true)}>
-                    Request to Join
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {!isCreator && hasApplied && (
-              <Card className="rounded-2xl shadow-sm border border-green-300 bg-green-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    <p className="font-semibold text-green-700">Application Sent!</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    The creator will review your request and get back to you soon.
-                  </p>
-                </CardContent>
-              </Card>
+            {/* Join Team Status (non-creator) */}
+            {!isCreator && (
+              <>
+                {userApplication?.status === 'pending' && (
+                  <Card className="rounded-2xl shadow-sm border border-yellow-300 bg-yellow-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-5 w-5 text-yellow-600" />
+                        <p className="font-semibold text-yellow-700">Application Pending</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Your application has been sent. The creator will review it soon.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                {userApplication?.status === 'accepted' && (
+                  <Card className="rounded-2xl shadow-sm border border-green-300 bg-green-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <p className="font-semibold text-green-700">Welcome to the Team!</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Congratulations! Your application has been accepted. Check the Team tab for details.
+                      </p>
+                      <Button className="w-full rounded-xl" variant="outline" onClick={() => setActiveTab("team")}>
+                        View Team
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {userApplication?.status === 'rejected' && (
+                  <Card className="rounded-2xl shadow-sm border border-red-300 bg-red-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <X className="h-5 w-5 text-red-600" />
+                        <p className="font-semibold text-red-700">Application Not Accepted</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Unfortunately, your application was not accepted at this time. You can try again if spots open up.
+                      </p>
+                      {userApplication.creatorNote && (
+                        <div className="p-3 bg-white rounded-lg border">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Creator's Note:</p>
+                          <p className="text-sm">{userApplication.creatorNote}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+                {!userApplication && spotsLeft > 0 && venture.isRecruiting && (
+                  <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        <p className="font-semibold">Join This Team</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
+                      </p>
+                      <Button className="w-full rounded-xl" onClick={() => setShowApplyModal(true)}>
+                        Request to Join
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
 
             {/* Follow (non-creator, not recruiting) */}
@@ -1255,7 +1411,10 @@ export default function VentureDetailPage() {
         <ApplyModal
           venture={venture}
           onClose={() => setShowApplyModal(false)}
-          onSuccess={() => setHasApplied(true)}
+          onSuccess={(application) => {
+            setHasApplied(true);
+            setUserApplication(application);
+          }}
         />
       )}
     </div>
