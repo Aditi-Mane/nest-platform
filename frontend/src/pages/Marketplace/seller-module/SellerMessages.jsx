@@ -246,8 +246,8 @@ const SellerMessages = () => {
                 }}
               >
                 <img
-                  src={item.productId.images[0].url}
-                  alt={item.productId.name}
+                  src={item.productId?.images[0].url || "/placeholder.png"}
+                  alt={item.productId?.name || "Product"}
                   style={{
                     width: "100%",
                     height: "100%",

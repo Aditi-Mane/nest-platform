@@ -149,8 +149,8 @@ const SellerOrderHistory = () => {
             <div className="flex items-center gap-5">
               <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center text-xl">
                 <img
-                  src={order.productId.images[0].url}
-                  alt={order.productId.name}
+                  src={order?.productId?.images?.[0]?.url || "/placeholder.png"}
+                  alt={order?.productId?.name || "Product"}
                   style={{
                     width: "100%",
                     height: "100%",
