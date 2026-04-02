@@ -1,4 +1,4 @@
-
+import { Search, X } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { SlidersHorizontal, Grid3x3, List, ShoppingBag } from "lucide-react";
 
@@ -88,27 +88,39 @@ useEffect(() => {
             Discover books, notes, and handcrafts from fellow students
           </p>
         </div>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-8">
 
-        {/* Search Filters */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <Input
-          placeholder="Search for books, notes, handcrafts..."
-          value={searchQuery}
-          onChange={(e)=> setSearchQuery(e.target.value)}
-          className="rounded-xl border border-border 
-                    focus:border-secondary 
-                    focus:outline-none 
-                    focus-visible:ring-2 
-                    focus-visible:ring-secondary"
-          />
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
 
-            <div className="flex gap-2">
+            {/* Search */}
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+
+              <Input
+                placeholder="Search books, notes, electronics..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10 rounded-xl border border-gray-300 bg-gray-50 focus:bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition"
+              />
+
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort + Grid/List */}
+            <div className="flex items-center gap-3 lg:ml-auto">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-45 rounded-xl">
+                <SelectTrigger className="w-[180px] rounded-xl border-gray-300">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent className="bg-muted">
+
+                <SelectContent className="bg-white border rounded-lg shadow-md">
                   <SelectItem value="recent">Most Recent</SelectItem>
                   <SelectItem value="popular">Most Popular</SelectItem>
                   <SelectItem value="price-low">Price: Low to High</SelectItem>
@@ -117,11 +129,12 @@ useEffect(() => {
               </Select>
 
               <Tabs value={viewMode} onValueChange={setViewMode}>
-                <TabsList>
-                  <TabsTrigger value="grid">
+                <TabsList className="bg-gray-100">
+                  <TabsTrigger value="grid" >
                     <Grid3x3 className="h-4 w-4" />
                   </TabsTrigger>
-                  <TabsTrigger value="list">
+
+                  <TabsTrigger value="list" >
                     <List className="h-4 w-4" />
                   </TabsTrigger>
                 </TabsList>
@@ -129,19 +142,22 @@ useEffect(() => {
             </div>
           </div>
 
+          {/* Category + Filters */}
           <div className="flex justify-between items-center">
             <CategoryFilter
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
             />
 
-            <Button variant="outline" className="gap-2 rounded-xl">
+            <Button
+              variant="outline"
+              className="rounded-xl flex items-center gap-2 border-gray-300 hover:bg-gray-100"
+            >
               <SlidersHorizontal className="h-4 w-4" />
-              More Filters
+              Filters
             </Button>
           </div>
         </div>
-
         {/*Products Section */}
         {loading ? (
           <p className="text-center text-lg">Loading products...</p>
