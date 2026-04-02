@@ -3,7 +3,7 @@ import Review from "../models/Review.js";
 import axios from "axios";
 
 const SENTIMENT_SERVICE_URL =
-  process.env.SENTIMENT_SERVICE_URL || "http://localhost:8000/predict-sentiment";
+  process.env.SENTIMENT_SERVICE_URL || "http://localhost:8001/predict-sentiment";
 
 const analyzeSentiment = async (text) => {
   try {

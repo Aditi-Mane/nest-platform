@@ -205,7 +205,7 @@ export const ProfilePage = () => {
   if (!user) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-background text-text">
+    <div className="min-h-screen bg-white text-text">
       <div className="p-6 space-y-8">
 
         {/* HEADER */}
