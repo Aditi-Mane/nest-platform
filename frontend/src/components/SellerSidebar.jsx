@@ -20,6 +20,7 @@ import api from "../api/axios.js";
 const SellerSidebar = () => {
   const [openAI, setOpenAI] = useState(true);
   const [user, setUser] = useState({});
+  const [userLoading, setUserLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -28,6 +29,8 @@ const SellerSidebar = () => {
         setUser(data);
       } catch (error) {
         console.error(error);
+      } finally {
+        setUserLoading(false);
       }
     };
     fetchUser();
@@ -188,20 +191,30 @@ const SellerSidebar = () => {
 
       {/* PROFILE */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl">
-          <Avatar className="size-10 border border-border">
-            <AvatarImage src={avatarSrc} alt={user?.name || "Seller avatar"} />
-            <AvatarFallback className="bg-primary text-white font-semibold">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-medium text-sm">{user.name}</p>
-            <p className="text-xs text-muted">
-              {user.email}
-            </p>
+        {userLoading ? (
+          <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl animate-pulse">
+            <div className="size-10 rounded-full bg-white/70" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-24 rounded bg-white/70" />
+              <div className="h-2.5 w-36 rounded bg-white/50" />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl">
+            <Avatar className="size-10 border border-border">
+              <AvatarImage src={avatarSrc} alt={user?.name || "Seller avatar"} />
+              <AvatarFallback className="bg-primary text-white font-semibold">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium text-sm">{user.name}</p>
+              <p className="text-xs text-muted">
+                {user.email}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

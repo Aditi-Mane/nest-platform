@@ -484,7 +484,9 @@ const SellerProducts = () => {
       {/* PRODUCT GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {fetchLoading ? (
-          <p className="text-muted mb-4">Loading products...</p>
+          Array.from({ length: 6 }).map((_, index) => (
+            <ProductCardSkeleton key={index} />
+          ))
         ) : products.length === 0 ? (
           <p className="text-muted mb-4">No matching products found</p>
         ) : (
@@ -1244,3 +1246,36 @@ const SellerProducts = () => {
 };
 
 export default SellerProducts;
+
+const ProductCardSkeleton = () => (
+  <div className="bg-card border border-border rounded-2xl shadow-sm animate-pulse">
+    <div className="h-44 bg-[#efe6d6] rounded-t-2xl" />
+    <div className="p-6 space-y-4">
+      <div className="h-6 w-2/3 rounded bg-background" />
+      <div className="space-y-2">
+        <div className="h-4 w-full rounded bg-background" />
+        <div className="h-4 w-5/6 rounded bg-background" />
+      </div>
+      <div className="flex gap-3">
+        <div className="h-7 w-24 rounded-full bg-background" />
+        <div className="h-7 w-20 rounded-full bg-background" />
+      </div>
+      <div className="grid grid-cols-3 gap-4 rounded-xl bg-[#efe6d6] border border-border p-3">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="space-y-2">
+            <div className="h-3 w-12 rounded bg-white/70" />
+            <div className="h-4 w-14 rounded bg-white" />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-20 rounded bg-background" />
+        <div className="h-5 w-16 rounded bg-background" />
+      </div>
+      <div className="flex gap-3 pt-2">
+        <div className="h-10 flex-1 rounded-xl bg-background" />
+        <div className="h-10 flex-1 rounded-xl bg-background" />
+      </div>
+    </div>
+  </div>
+);

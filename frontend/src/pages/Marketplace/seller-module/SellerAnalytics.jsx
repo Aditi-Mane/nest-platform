@@ -66,10 +66,6 @@ const SellerAnalytics = () => {
     };
   }, [range]);
 
-  if (loading || !dashboard) {
-    return <div className="p-10">Loading analytics...</div>;
-  }
-
   const {
     overview,
     revenue,
@@ -79,7 +75,7 @@ const SellerAnalytics = () => {
     conversations,
     topProducts,
     lowProducts,
-  } = dashboard;
+  } = dashboard || {};
 
   const totalRangeOrders = (orders || []).reduce(
     (sum, item) => sum + (item?.value || 0),
@@ -159,73 +155,149 @@ const SellerAnalytics = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="grid grid-cols-4 gap-6">
-          <StatCard
-            icon={<DollarSign />}
-            title="Total Revenue"
-            value={formatCurrency(overview?.totalRevenue || 0)}
-          />
+      {loading || !dashboard ? (
+        <AnalyticsSkeletonContent />
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-4 gap-6">
+            <StatCard
+              icon={<DollarSign />}
+              title="Total Revenue"
+              value={formatCurrency(overview?.totalRevenue || 0)}
+            />
 
-          <StatCard
-            icon={<ShoppingBag />}
-            title="Total Orders"
-            value={overview?.totalOrders || 0}
-          />
+            <StatCard
+              icon={<ShoppingBag />}
+              title="Total Orders"
+              value={overview?.totalOrders || 0}
+            />
 
-          <StatCard
-            icon={<Target />}
-            title="Conversion Rate"
-            value={`${rate.toFixed(1)}%`}
-          />
+            <StatCard
+              icon={<Target />}
+              title="Conversion Rate"
+              value={`${rate.toFixed(1)}%`}
+            />
 
-          <StatCard
-            icon={<TrendingUp />}
-            title="Avg Order Value"
-            value={formatCurrency(overview?.avgOrderValue?.toFixed(2) || 0)}
-          />
+            <StatCard
+              icon={<TrendingUp />}
+              title="Avg Order Value"
+              value={formatCurrency(overview?.avgOrderValue?.toFixed(2) || 0)}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-6">
+            <ChartCard title="Revenue Trend">
+              <LineChartComponent data={revenue || []} color="#C96A2B" />
+            </ChartCard>
+
+            <ChartCard title="Orders Trend">
+              <BarChartComponent data={orders || []} color="#5E7C3A" />
+            </ChartCard>
+
+            <ChartCard title="Views Trend">
+              <LineChartComponent data={views || []} color="#6E7B5C" />
+            </ChartCard>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <BreakdownCard
+              title="Orders Breakdown"
+              subtitle="Order status distribution"
+              data={pieData}
+            />
+
+            <BreakdownCard
+              title="Conversation Breakdown"
+              subtitle="Message flow distribution"
+              data={conversationData}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <TopProducts products={topProducts} loading={loading} />
+            <LowProducts products={lowProducts} loading={loading} />
+          </div>
+
+          <Funnel funnel={funnel} />
         </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          <ChartCard title="Revenue Trend">
-            <LineChartComponent data={revenue || []} color="#C96A2B" />
-          </ChartCard>
-
-          <ChartCard title="Orders Trend">
-            <BarChartComponent data={orders || []} color="#5E7C3A" />
-          </ChartCard>
-
-          <ChartCard title="Views Trend">
-            <LineChartComponent data={views || []} color="#6E7B5C" />
-          </ChartCard>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <BreakdownCard
-            title="Orders Breakdown"
-            subtitle="Order status distribution"
-            data={pieData}
-          />
-
-          <BreakdownCard
-            title="Conversation Breakdown"
-            subtitle="Message flow distribution"
-            data={conversationData}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <TopProducts products={topProducts} loading={loading} />
-          <LowProducts products={lowProducts} loading={loading} />
-        </div>
-
-        <Funnel funnel={funnel} />
-      </div>
+      )}
     </div>
   );
 };
 
 export default SellerAnalytics;
+
+const AnalyticsSkeletonContent = () => (
+  <div className="space-y-6">
+      <div className="grid grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((item) => (
+          <div
+            key={item}
+            className="bg-card border border-border rounded-2xl p-6 animate-pulse"
+          >
+            <div className="mb-4 h-10 w-10 rounded-xl bg-background" />
+            <div className="h-4 w-24 rounded bg-background mb-3" />
+            <div className="h-8 w-28 rounded bg-background" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        {[1, 2, 3].map((item) => (
+          <div
+            key={item}
+            className="bg-card border border-border rounded-2xl p-6 h-[300px] animate-pulse"
+          >
+            <div className="h-5 w-32 rounded bg-background mb-5" />
+            <div className="h-[220px] rounded-xl bg-background" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        {[1, 2].map((item) => (
+          <div
+            key={item}
+            className="bg-card border border-border rounded-2xl p-6 animate-pulse"
+          >
+            <div className="h-5 w-40 rounded bg-background mb-2" />
+            <div className="h-4 w-52 rounded bg-background mb-6" />
+            <div className="flex items-center gap-6">
+              <div className="w-[220px] h-[220px] rounded-full bg-background" />
+              <div className="flex-1 space-y-4">
+                {[1, 2, 3].map((line) => (
+                  <div key={line} className="h-16 rounded-xl bg-background" />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        {[1, 2].map((item) => (
+          <div
+            key={item}
+            className="bg-card border border-border rounded-2xl p-6 animate-pulse"
+          >
+            <div className="h-5 w-40 rounded bg-background mb-2" />
+            <div className="h-4 w-48 rounded bg-background mb-5" />
+            <div className="space-y-4">
+              {[1, 2, 3].map((row) => (
+                <div key={row} className="h-18 rounded-xl bg-background" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-8 animate-pulse">
+        <div className="h-5 w-40 rounded bg-background mb-2" />
+        <div className="h-4 w-60 rounded bg-background mb-8" />
+        <div className="h-48 rounded-xl bg-background" />
+      </div>
+  </div>
+);
 
 const StatCard = ({ icon, title, value }) => (
   <div className="bg-card border border-border rounded-2xl p-6">

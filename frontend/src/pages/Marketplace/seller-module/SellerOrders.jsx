@@ -135,7 +135,9 @@ const SellerOrderHistory = () => {
       {/* ORDER CARDS */}
       <div className="space-y-5">
         {loading ? (
-          <p className="text-muted mb-4">Loading orders...</p>
+          Array.from({ length: 4 }).map((_, index) => (
+            <OrderCardSkeleton key={index} />
+          ))
         ) : orders.length === 0 ? (
           <p className="text-muted mb-4">No orders yet</p>
         ) : (
@@ -261,3 +263,26 @@ const SellerOrderHistory = () => {
 };
 
 export default SellerOrderHistory;
+
+const OrderCardSkeleton = () => (
+  <div className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)] animate-pulse">
+    <div className="flex items-center gap-5">
+      <div className="w-14 h-14 rounded-lg bg-background" />
+      <div className="space-y-2">
+        <div className="h-5 w-48 rounded bg-background" />
+        <div className="h-3 w-36 rounded bg-background" />
+      </div>
+    </div>
+
+    <div className="flex items-start gap-8">
+      <div className="space-y-2">
+        <div className="h-4 w-16 rounded bg-background" />
+        <div className="h-7 w-24 rounded bg-background" />
+      </div>
+      <div className="space-y-3 flex flex-col items-end">
+        <div className="h-7 w-28 rounded-full bg-background" />
+        <div className="h-10 w-28 rounded-xl bg-background" />
+      </div>
+    </div>
+  </div>
+);
