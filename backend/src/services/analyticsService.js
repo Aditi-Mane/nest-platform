@@ -4,6 +4,8 @@ import Conversation from "../models/Conversation.js";
 import mongoose from "mongoose";
 import ProductView from "../models/ProductView.js";
 
+const IST_TIMEZONE = "Asia/Kolkata";
+
 const getDateFilter = (range) => {
   const now = new Date();
 
@@ -20,6 +22,40 @@ const getDateFilter = (range) => {
   }
 
   return {}; // default → all time
+};
+
+const buildDailySeries = (range, valueKey) => {
+  const now = new Date();
+  const totalDays = range === "30d" ? 30 : 7;
+  const start = new Date(now);
+
+  start.setDate(now.getDate() - (totalDays - 1));
+  start.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: totalDays }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+
+    return {
+      _id: {
+        date: date.toLocaleDateString("en-CA", {
+          timeZone: IST_TIMEZONE,
+        }),
+      },
+      [valueKey]: 0,
+    };
+  });
+};
+
+const mergeDailySeries = (series, data, valueKey) => {
+  const valuesByDate = new Map(
+    data.map((item) => [item._id.date, item[valueKey] || 0])
+  );
+
+  return series.map((item) => ({
+    ...item,
+    [valueKey]: valuesByDate.get(item._id.date) || 0,
+  }));
 };
 
 export const getOverviewStats = async (sellerId, range) => {
@@ -80,32 +116,21 @@ export const getRevenueTrend = async (sellerId, range) => {
     {
       $group: {
         _id: {
-          day: {
-            $dayOfWeek: {
+          date: {
+            $dateToString: {
+              format: "%Y-%m-%d",
               date: "$createdAt",
-              timezone: "Asia/Kolkata", 
+              timezone: IST_TIMEZONE,
             },
           },
         },
         revenue: { $sum: "$totalPrice" },
       },
     },
-    { $sort: { "_id.day": 1 } },
+    { $sort: { "_id.date": 1 } },
   ]);
 
-  const fullWeek = [1, 2, 3, 4, 5, 6, 7];
-
-  const revenueMap = {};
-  data.forEach((item) => {
-    revenueMap[item._id.day] = item.revenue;
-  });
-
-  const result = fullWeek.map((day) => ({
-    _id: { day },
-    revenue: revenueMap[day] || 0,
-  }));
-
-  return result;
+  return mergeDailySeries(buildDailySeries(range, "revenue"), data, "revenue");
 };
 
 export const getOrdersTrend = async (sellerId, range) => {
@@ -121,32 +146,21 @@ export const getOrdersTrend = async (sellerId, range) => {
     {
       $group: {
         _id: {
-          day: {
-            $dayOfWeek: {
+          date: {
+            $dateToString: {
+              format: "%Y-%m-%d",
               date: "$createdAt",
-              timezone: "Asia/Kolkata",
+              timezone: IST_TIMEZONE,
             },
           },
         },
         count: { $sum: 1 },
       },
     },
-    { $sort: { "_id.day": 1 } },
+    { $sort: { "_id.date": 1 } },
   ]);
 
-  const fullWeek = [1, 2, 3, 4, 5, 6, 7];
-
-  const countMap = {};
-  data.forEach((item) => {
-    countMap[item._id.day] = item.count;
-  });
-
-  const result = fullWeek.map((day) => ({
-    _id: { day },
-    count: countMap[day] || 0,
-  }));
-
-  return result;
+  return mergeDailySeries(buildDailySeries(range, "count"), data, "count");
 };
 
 /* ---------------- CONVERSION FUNNEL ---------------- */
@@ -301,31 +315,21 @@ export const getViewsTrend = async (sellerId, range) => {
     {
       $group: {
         _id: {
-          day: {
-            $dayOfWeek: {
+          date: {
+            $dateToString: {
+              format: "%Y-%m-%d",
               date: "$date",
-              timezone: "Asia/Kolkata",
+              timezone: IST_TIMEZONE,
             },
           },
         },
         views: { $sum: "$views" },
       },
     },
-    { $sort: { "_id.day": 1 } },
+    { $sort: { "_id.date": 1 } },
   ]);
 
-  // fill missing days
-  const fullWeek = [1, 2, 3, 4, 5, 6, 7];
-
-  const map = {};
-  data.forEach((item) => {
-    map[item._id.day] = item.views;
-  });
-
-  return fullWeek.map((day) => ({
-    _id: { day },
-    views: map[day] || 0,
-  }));
+  return mergeDailySeries(buildDailySeries(range, "views"), data, "views");
 };
 
 export const getLowProducts = async (sellerId) => {
@@ -345,19 +349,30 @@ export const getLowProducts = async (sellerId) => {
     },
     {
       $addFields: {
+        verifiedOrders: {
+          $filter: {
+            input: "$orders",
+            as: "order",
+            cond: { $eq: ["$$order.status", "otp_verified"] },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
         revenue: {
           $sum: {
             $map: {
-              input: "$orders",
+              input: "$verifiedOrders",
               as: "o",
-              in: "$$o.totalPrice", // KEY CHANGE
+              in: "$$o.totalPrice",
             },
           },
         },
         sales: {
           $sum: {
             $map: {
-              input: "$orders",
+              input: "$verifiedOrders",
               as: "o",
               in: "$$o.quantity",
             },
@@ -370,7 +385,6 @@ export const getLowProducts = async (sellerId) => {
       $project: {
         name: 1,
         images: 1,
-        views: { $ifNull: ["$views", 0] },
         sales: { $ifNull: ["$sales", 0] },
         revenue: { $ifNull: ["$revenue", 0] },
       },
