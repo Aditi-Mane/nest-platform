@@ -1,6 +1,12 @@
 import { Search, X } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import { SlidersHorizontal, Grid3x3, List, ShoppingBag } from "lucide-react";
+import {
+  SlidersHorizontal,
+  Grid3x3,
+  List,
+  ShoppingBag,
+  ShieldCheck,
+} from "lucide-react";
 
 import { ProductCard } from "@/components/ProductCard.jsx";
 import { CategoryFilter } from "@/components/CategoryFilter.jsx";
@@ -21,9 +27,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import axios from "axios";
 import {useCart} from "../../../context/CartContext.jsx";
+import { useUser } from "../../../context/UserContext.jsx";
 
 export default function Buying() {
   const navigate = useNavigate();
+  const { user } = useUser();
 
   
   const [viewMode, setViewMode] = useState("grid");
@@ -79,14 +87,27 @@ useEffect(() => {
       <div className="max-w-7xl mx-auto px-4 py-8">
 
         {/* Header */}
-        <div className="mb-8">
-         <div className="flex items-center gap-3">
-            <ShoppingBag className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">Marketplace</h1>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <ShoppingBag className="h-8 w-8 text-primary" />
+              <h1 className="text-4xl font-bold">Marketplace</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Discover books, notes, and handcrafts from fellow students
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Discover books, notes, and handcrafts from fellow students
-          </p>
+
+          {user?.availableRoles?.includes("admin") && (
+            <Button
+              onClick={() => navigate("/admin")}
+              variant="outline"
+              className="rounded-full border-border bg-card text-text hover:bg-background"
+            >
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Admin Dashboard
+            </Button>
+          )}
         </div>
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-8">
 

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken"
 import User from "../models/User.js"
+import { syncAdminRole } from "../utils/adminRoles.js";
 
 export const protect = async (req, res, next) =>{
   try {
@@ -21,6 +22,16 @@ export const protect = async (req, res, next) =>{
 
     //get user from db
     req.user = await User.findById(decoded.id).select("-password"); //do not include password info
+
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Not authorized, user not found"
+      });
+    }
+
+    if (syncAdminRole(req.user)) {
+      await req.user.save();
+    }
 
     next();
   } catch (error) {

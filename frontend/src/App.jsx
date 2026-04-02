@@ -4,6 +4,7 @@ import AuthPage from "./pages/AuthPage.jsx"
 import Marketplace from "./pages/Marketplace.jsx"
 import AdminDashboard from "./pages/AdminDashboard.jsx"
 import ProtectedRoute from "./routes/ProtectedRoute.jsx"
+import AdminProtectedRoute from "./routes/AdminProtectedRoute.jsx"
 import ChooseRole from "./pages/ChooseRole.jsx"
 import AuthResolver from "./pages/AuthResolver.jsx"
 import { Navigate } from "react-router-dom"
@@ -62,7 +63,14 @@ function App() {
             }
           />
 
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
           <Route path="/choose-role" element={<ChooseRole />} />
         </Routes>
       

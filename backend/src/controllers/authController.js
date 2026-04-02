@@ -4,6 +4,7 @@ import { generateToken } from "../utils/generateToken.js";
 import { getTransporter } from "../utils/mailer.js";
 import { deleteFromS3 } from "../utils/deleteFromS3.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";
+import { syncAdminRole } from "../utils/adminRoles.js";
 
 export const signup = async (req, res) => {
   try {
@@ -58,6 +59,8 @@ export const signup = async (req, res) => {
       availableRoles: [],
       activeRole: null,
     })
+
+    syncAdminRole(user);
 
     const otp = Math.floor(100000 + Math.random() * 900000);
     const otpExpiry = Date.now() + 10 * 60 * 1000;
@@ -256,7 +259,8 @@ export const login = async (req, res) => {
     }
 
     //find user by email
-    const user = await User.findOne({ email }).select("+password");
+    const normalizedEmail = email.toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
     if (!user) {
       return res.status(401).json({
@@ -277,6 +281,10 @@ export const login = async (req, res) => {
       return res.status(401).json({
         message: "Invalid credentials"
       });
+    }
+
+    if (syncAdminRole(user)) {
+      await user.save();
     }
 
     //generate token

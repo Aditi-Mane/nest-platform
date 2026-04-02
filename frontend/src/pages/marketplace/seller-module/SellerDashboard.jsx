@@ -1,7 +1,7 @@
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
-import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles } from "lucide-react";
+import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
@@ -294,6 +294,17 @@ export function SellerDashboard() {
             </p>
           </div>
           <div className="flex gap-3">
+            {user?.availableRoles?.includes("admin") && (
+              <Link to="/admin">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 border-border bg-card text-text hover:bg-background"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Admin Dashboard
+                </Button>
+              </Link>
+            )}
             <Link to="/marketplace/seller/products">
               <Button className="flex items-center bg-primary gap-2 text-card">
                 <Plus className="w-4 h-4" />
