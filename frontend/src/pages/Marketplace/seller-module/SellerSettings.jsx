@@ -75,6 +75,7 @@ const TextArea = ({ label, disabled, ...props }) => (
 );
 
 const SellerSettings = () => {
+  const [loading, setLoading] = useState(true);
 
   const [profileImage, setProfileImage] = useState(
     "https://i.pravatar.cc/150?img=12"
@@ -172,7 +173,6 @@ const SellerSettings = () => {
       setPasswordError("");
       const res = await api.put("/users/updatePassword", { password: newPassword });
 
-      setPasswordSuccess(res.data.message || "Password updated successfully");
       setNewPassword("");
       setTimeout(() => {
         setIsPasswordModalOpen(false);
@@ -204,6 +204,7 @@ const SellerSettings = () => {
 
     const fetchUserSettings = async () => {
       try {
+        setLoading(true);
         const res = await api.get("/users/me");
 
         const user = res.data;
@@ -233,6 +234,8 @@ const SellerSettings = () => {
 
       } catch (error) {
         console.log("Error loading settings:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -337,198 +340,178 @@ const SellerSettings = () => {
           </div>
         </div>
 
+        {loading ? (
+          <SettingsSkeleton />
+        ) : (
+          <>
+            <Section
+              title="Store Information"
+              onEdit={startEditingStore}
+              isEditing={editingStore}
+              onSave={saveStoreChanges}
+              onCancel={cancelEditingStore}
+            >
+              <div className="flex items-center gap-6 pb-4 border-b border-border">
+                <div className="relative group">
+                  <img
+                    src={storeLogo || "https://via.placeholder.com/100x100?text=Logo"}
+                    alt="Store Logo"
+                    className="w-24 h-24 object-cover rounded-full border-2 border-border shadow-sm"
+                  />
 
-        {/* STORE INFORMATION */}
-        <Section
-          title="Store Information"
-          onEdit={startEditingStore}
-          isEditing={editingStore}
-          onSave={saveStoreChanges}
-          onCancel={cancelEditingStore}
-        >
-
-          {/* Logo */}
-          <div className="flex items-center gap-6 pb-4 border-b border-border">
-            <div className="relative group">
-              <img
-                src={storeLogo || "https://via.placeholder.com/100x100?text=Logo"}
-                alt="Store Logo"
-                className="w-24 h-24 object-cover rounded-full border-2 border-border shadow-sm"
-              />
-
-              {editingStore && (
-                <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
-                  Change
+                  {editingStore && (
+                    <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
+                      Change
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted">Store Logo</p>
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-muted">Store Logo</p>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setStoreLogo(URL.createObjectURL(file));
-                    setStoreLogoFile(file);
-                  }
-                }}
-                disabled={!editingStore}
-                className="text-xs text-muted file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-full file:text-sm file:bg-background hover:file:bg-card transition"
-              />
-            </div>
-          </div>
-
-          {/* Store Name + Location */}
-          <div className="grid grid-cols-2 gap-6">
-            <Input
-              label="Store Name"
-              value={storeName}
-              onChange={(e) => setStoreName(e.target.value)}
-              disabled={!editingStore}
-            />
-
-            <Input
-              label="Store Location"
-              value={storeLocation}
-              onChange={(e) => setStoreLocation(e.target.value)}
-              disabled={!editingStore}
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <TextArea
-              label="Store Description"
-              value={storeDescription}
-              onChange={(e) => setStoreDescription(e.target.value)}
-              disabled={!editingStore}
-            />
-          </div>
-
-        </Section>
-
-
-        {/* PROFILE INFORMATION */}
-        <Section
-          title="Profile Information"
-          onEdit={startEditingProfile}
-          isEditing={editingProfile}
-          onSave={saveProfileChanges}
-          onCancel={cancelEditingProfile}
-        >
-
-          {/* Avatar */}
-          <div className="flex items-center gap-6 pb-4 border-b border-border">
-            <div className="relative group">
-              <img
-                src={avatar || "https://via.placeholder.com/100x100?text=Avatar"}
-                alt="Profile Avatar"
-                className="w-24 h-24 object-cover rounded-full border-2 border-border shadow-sm"
-              />
-
-              {/* subtle overlay on edit */}
-              {editingProfile && (
-                <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
-                  Change
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setStoreLogo(URL.createObjectURL(file));
+                        setStoreLogoFile(file);
+                      }
+                    }}
+                    disabled={!editingStore}
+                    className="text-xs text-muted file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-full file:text-sm file:bg-background hover:file:bg-card transition"
+                  />
                 </div>
-              )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <Input
+                  label="Store Name"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  disabled={!editingStore}
+                />
+
+                <Input
+                  label="Store Location"
+                  value={storeLocation}
+                  onChange={(e) => setStoreLocation(e.target.value)}
+                  disabled={!editingStore}
+                />
+              </div>
+
+              <div>
+                <TextArea
+                  label="Store Description"
+                  value={storeDescription}
+                  onChange={(e) => setStoreDescription(e.target.value)}
+                  disabled={!editingStore}
+                />
+              </div>
+            </Section>
+
+            <Section
+              title="Profile Information"
+              onEdit={startEditingProfile}
+              isEditing={editingProfile}
+              onSave={saveProfileChanges}
+              onCancel={cancelEditingProfile}
+            >
+              <div className="flex items-center gap-6 pb-4 border-b border-border">
+                <div className="relative group">
+                  <img
+                    src={avatar || "https://via.placeholder.com/100x100?text=Avatar"}
+                    alt="Profile Avatar"
+                    className="w-24 h-24 object-cover rounded-full border-2 border-border shadow-sm"
+                  />
+
+                  {editingProfile && (
+                    <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">
+                      Change
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-muted">Profile Avatar</p>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setAvatar(URL.createObjectURL(file));
+                        setAvatarFile(file);
+                      }
+                    }}
+                    disabled={!editingProfile}
+                    className="text-xs text-muted file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-full file:text-sm file:bg-background hover:file:bg-card transition"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <Input label="Full Name" value={name} disabled />
+                <Input
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  disabled
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <Input
+                  label="College Name"
+                  value={collegeName}
+                  onChange={(e) => setCollegeName(e.target.value)}
+                  disabled={!editingProfile}
+                />
+
+                <Input
+                  label="UPI ID (Optional)"
+                  value={payoutUPI}
+                  onChange={(e) => setPayoutUPI(e.target.value)}
+                  disabled={!editingProfile}
+                />
+              </div>
+            </Section>
+
+            <div className="mt-6 flex justify-end gap-3 flex-wrap">
+              <button
+                onClick={openPasswordModal}
+                className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-text hover:bg-background transition"
+              >
+                Change Password
+              </button>
+
+              <button
+                onClick={handleSwitchClick}
+                className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-primary hover:bg-background transition"
+              >
+                Switch Profile
+              </button>
+
+              <div className="w-px h-8 bg-border mx-1 hidden sm:block"></div>
+
+              <button
+                onClick={handleLogoutClick}
+                className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-muted hover:bg-background transition"
+              >
+                Logout
+              </button>
+
+              <button
+                onClick={handleDeleteClick}
+                className="px-4 py-2 rounded-full bg-red-500/10 text-red-600 text-sm font-semibold hover:bg-red-500/20 transition"
+              >
+                Delete Account
+              </button>
             </div>
-
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted">Profile Avatar</p>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setAvatar(URL.createObjectURL(file));
-                    setAvatarFile(file);
-                  }
-                }}
-                disabled={!editingProfile}
-                className="text-xs text-muted file:mr-3 file:px-3 file:py-1.5 file:border file:border-border file:rounded-full file:text-sm file:bg-background hover:file:bg-card transition"
-              />
-            </div>
-          </div>
-
-          {/* Name + Email */}
-          <div className="grid grid-cols-2 gap-6">
-            <Input
-              label="Full Name"
-              value={name}
-              disabled
-            />
-            <Input
-              label="Email Address"
-              type="email"
-              value={email}
-              disabled
-            />
-          </div>
-
-          {/* Editable Fields */}
-          <div className="grid grid-cols-2 gap-6">
-            <Input
-              label="College Name"
-              value={collegeName}
-              onChange={(e) => setCollegeName(e.target.value)}
-              disabled={!editingProfile}
-            />
-
-            <Input
-              label="UPI ID (Optional)"
-              value={payoutUPI}
-              onChange={(e) => setPayoutUPI(e.target.value)}
-              disabled={!editingProfile}
-            />
-          </div>
-
-        </Section>
-
-        {/* PROFILE ACTIONS */}
-        <div className="mt-6 flex justify-end gap-3 flex-wrap">
-
-          {/* Secondary Actions */}
-          <button
-            onClick={openPasswordModal}
-            className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-text hover:bg-background transition"
-          >
-            Change Password
-          </button>
-
-          <button
-            onClick={handleSwitchClick}
-            className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-primary hover:bg-background transition"
-          >
-            Switch Profile
-          </button>
-
-          {/* Divider feel */}
-          <div className="w-px h-8 bg-border mx-1 hidden sm:block"></div>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogoutClick}
-            className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-muted hover:bg-background transition"
-          >
-            Logout
-          </button>
-
-          {/* Danger */}
-          <button
-            onClick={handleDeleteClick}
-            className="px-4 py-2 rounded-full bg-red-500/10 text-red-600 text-sm font-semibold hover:bg-red-500/20 transition"
-          >
-            Delete Account
-          </button>
-
-        </div>
+          </>
+        )}
 
         {/* Password modal overlay */}
         {isPasswordModalOpen && (
@@ -736,5 +719,57 @@ const SellerSettings = () => {
     </div>
   );
 };
+
+const SettingsSkeleton = () => (
+  <div className="space-y-8">
+    {[1, 2].map((section) => (
+      <div
+        key={section}
+        className="bg-card rounded-2xl border border-border p-8 shadow-sm animate-pulse"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-background rounded"></div>
+            <div className="h-6 w-40 rounded bg-background"></div>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-background"></div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex items-center gap-6 pb-4 border-b border-border">
+            <div className="w-24 h-24 rounded-full bg-background"></div>
+            <div className="flex-1 space-y-3">
+              <div className="h-4 w-24 rounded bg-background"></div>
+              <div className="h-10 w-48 rounded-full bg-background"></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            {[1, 2].map((field) => (
+              <div key={field} className="space-y-2">
+                <div className="h-4 w-24 rounded bg-background"></div>
+                <div className="h-12 rounded-xl bg-background"></div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <div className="h-4 w-32 rounded bg-background"></div>
+            <div className="h-28 rounded-xl bg-background"></div>
+          </div>
+        </div>
+      </div>
+    ))}
+
+    <div className="flex justify-end gap-3 flex-wrap">
+      {[1, 2, 3, 4].map((item) => (
+        <div
+          key={item}
+          className="h-10 w-32 rounded-full bg-card border border-border animate-pulse"
+        ></div>
+      ))}
+    </div>
+  </div>
+);
 
 export default SellerSettings;

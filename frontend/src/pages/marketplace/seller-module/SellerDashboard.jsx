@@ -1,7 +1,7 @@
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
-import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles } from "lucide-react";
+import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
@@ -278,6 +278,10 @@ export function SellerDashboard() {
     fetchInsights();
   }, []);
 
+  if (loading) {
+    return <SellerDashboardSkeleton />;
+  }
+
   return (
     <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6">
       {/* WELCOME BANNER */}
@@ -290,6 +294,17 @@ export function SellerDashboard() {
             </p>
           </div>
           <div className="flex gap-3">
+            {user?.availableRoles?.includes("admin") && (
+              <Link to="/admin">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 border-border bg-card text-text hover:bg-background"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Admin Dashboard
+                </Button>
+              </Link>
+            )}
             <Link to="/marketplace/seller/products">
               <Button className="flex items-center bg-primary gap-2 text-card">
                 <Plus className="w-4 h-4" />
@@ -521,7 +536,23 @@ export function SellerDashboard() {
               </div>
             </div>
             {insightsLoading ? (
-              <p className="text-sm text-muted">Analyzing products...</p>
+              <div className="space-y-3 mt-4">
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-center justify-between p-3 bg-card rounded-lg border border-border animate-pulse"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-md bg-background" />
+                      <div className="space-y-2">
+                        <div className="h-3.5 w-28 rounded bg-background" />
+                        <div className="h-3 w-20 rounded bg-background" />
+                      </div>
+                    </div>
+                    <div className="h-8 w-16 rounded-lg bg-background" />
+                  </div>
+                ))}
+              </div>
             ) : highViewsNoInquiries.length > 0 ? (
               <div className="max-h-50 overflow-y-auto pr-1 space-y-3">
                 {highViewsNoInquiries.map((product) => (
@@ -798,3 +829,113 @@ export function SellerDashboard() {
 }
 
 export default SellerDashboard
+
+const SellerDashboardSkeleton = () => (
+  <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6 space-y-8">
+    <div className="bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20 animate-pulse">
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-3">
+          <div className="h-8 w-72 rounded bg-card/70" />
+          <div className="h-4 w-56 rounded bg-card/60" />
+        </div>
+        <div className="h-10 w-36 rounded-xl bg-card/70" />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[1, 2, 3, 4].map((item) => (
+        <div
+          key={item}
+          className="bg-card border border-border rounded-2xl p-6 animate-pulse"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-4 w-28 rounded bg-background" />
+            <div className="h-3 w-12 rounded bg-background" />
+          </div>
+          <div className="h-10 w-28 rounded bg-background mb-3" />
+          <div className="h-3 w-24 rounded bg-background" />
+        </div>
+      ))}
+    </div>
+
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-6 h-6 rounded bg-card animate-pulse" />
+        <div className="h-7 w-56 rounded bg-card animate-pulse" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-card border-border border-2 rounded-2xl p-6 animate-pulse">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-full bg-background" />
+            <div className="space-y-2">
+              <div className="h-5 w-32 rounded bg-background" />
+              <div className="h-3 w-20 rounded bg-background" />
+            </div>
+          </div>
+          <div className="h-48 rounded-xl bg-background" />
+        </div>
+
+        <div className="bg-card border-2 border-secondary/40 rounded-2xl p-6 animate-pulse">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-12 h-12 rounded-full bg-background" />
+            <div className="space-y-2">
+              <div className="h-5 w-28 rounded bg-background" />
+              <div className="h-3 w-24 rounded bg-background" />
+            </div>
+          </div>
+          <div className="bg-background border border-border rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-lg bg-card" />
+              <div className="space-y-2">
+                <div className="h-4 w-28 rounded bg-card" />
+                <div className="h-8 w-24 rounded bg-card" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-16 rounded-lg bg-card" />
+              <div className="h-16 rounded-lg bg-card" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card border-2 border-blue-500/30 rounded-2xl p-6 animate-pulse">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-12 h-12 rounded-full bg-background" />
+            <div className="space-y-2">
+              <div className="h-5 w-40 rounded bg-background" />
+              <div className="h-3 w-28 rounded bg-background" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="h-16 rounded-lg bg-background" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {[1, 2].map((table) => (
+        <div key={table}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-card animate-pulse" />
+              <div className="h-7 w-40 rounded bg-card animate-pulse" />
+            </div>
+            <div className="h-8 w-20 rounded-lg bg-card animate-pulse" />
+          </div>
+
+          <div className="bg-card p-4 border-border rounded-2xl animate-pulse">
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((row) => (
+                <div key={row} className="h-12 rounded-md bg-background" />
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);

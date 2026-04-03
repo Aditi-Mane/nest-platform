@@ -40,16 +40,24 @@ const BuyerChatDetails = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceive = (msg) => {
-      if (!msg || !msg._id) return;
+          const handleReceive = async (msg) => {
+        if (!msg || !msg._id) return;
 
-      if (String(msg.conversationId) !== String(conversationId)) return;
+        if (String(msg.conversationId) !== String(conversationId)) return;
 
-      setMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
-    };
+        // Add message to UI
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+
+        // NEW: mark as read instantly
+        try {
+          await api.patch(`/messages/${conversationId}/read`);
+        } catch (err) {
+          console.error("Mark as read failed:", err);
+        }
+      };
 
     socket.on("receive_message", handleReceive);
 
@@ -174,7 +182,7 @@ const BuyerChatDetails = () => {
               {conversationInfo?.sellerId?.avatar ? (
                 <img
                   src={conversationInfo.sellerId.avatar}
-                  className="w-full h-full rounded-full"
+                  className="w-full h-full rounded-full object-cover"
                 />
               ) : (
                 conversationInfo?.sellerId?.name?.[0]
@@ -185,14 +193,17 @@ const BuyerChatDetails = () => {
               <h2 className="text-sm font-semibold">
                 {conversationInfo?.sellerId?.name}
               </h2>
+              <span className="flex items-center justify-center">
+                <p className="text-xs text-muted">
+                  {conversationInfo?.productId?.name}
+                </p>
 
-              <p className="text-xs text-muted">
-                {conversationInfo?.productId?.name}
-              </p>
+                <span className="text-muted mx-1">•</span>
 
-              <p className="text-sm text-primary">
-                ₹{conversationInfo?.productId?.price}
-              </p>
+                <p className="text-sm text-primary">
+                  ₹{conversationInfo?.productId?.price}
+                </p>
+              </span>
             </div>
           </div>
 
@@ -227,7 +238,7 @@ const BuyerChatDetails = () => {
                   className={`px-4 py-2 rounded-2xl text-sm ${
                     isMe
                       ? "bg-primary text-white"
-                      : "bg-background border"
+                      : "bg-background border border-border text-text"
                   }`}
                 >
                   {msg.text}
@@ -249,7 +260,7 @@ const BuyerChatDetails = () => {
 
         {/* INPUT */}
         <div className="px-4 py-3">
-          <div className="flex gap-3 border rounded-xl px-3 py-2">
+          <div className="flex gap-3 border rounded-xl px-3 py-2 border-border">
 
             <input
               value={newMessage}

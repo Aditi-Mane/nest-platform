@@ -76,9 +76,16 @@ const orderSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
     },
+
+    otpVerifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
+
+orderSchema.index({ sellerId: 1, status: 1, otpVerifiedAt: 1 });
 
 const Order = mongoose.model("Order", orderSchema);
 

@@ -5,12 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { useContext } from "react";
+import { useUser } from "@/context/userContext";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   Lightbulb, Users, TrendingUp, Search, Plus, Loader2,
-  Bell, CheckCheck, Settings, Eye, Heart, Bookmark,
+  Bell, CheckCheck, Settings, Eye, Heart, Bookmark, MessageCircle,
   Clock, Pencil, Trash2, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +38,7 @@ function NotificationBell() {
   const ref                               = useRef(null);
 
   const unread = notifications.filter((n) => !n.read).length;
+
 
   useEffect(() => {
     const load = async () => {
@@ -136,73 +139,97 @@ function NotificationBell() {
 }
 
 // ── Venture Card ──────────────────────────────────────────────────────────────
-function VentureCard({ idea, onNavigate, isOwner = false, onDelete }) {
-  const stage           = stageConfig[idea.stage] ?? stageConfig.ideation;
-  const confirmedMembers= idea.teamMembers?.filter((m) => m.confirmed).length ?? 0;
-  const isFull          = confirmedMembers >= idea.teamLimit;
+function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatroom }) {
+  const stage = stageConfig[idea.stage] ?? stageConfig.ideation;
+  const confirmedMembers = idea.teamMembers?.filter((m) => m.confirmed).length ?? 0;
+  const isFull = confirmedMembers >= idea.teamLimit;
 
   return (
     <Card
-      className="p-6 rounded-2xl shadow-sm border border-border hover:shadow-md transition-all cursor-pointer flex flex-col group"
+      className="p-5 rounded-2xl border border-border/60 bg-card backdrop-blur-sm 
+                 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 
+                 cursor-pointer flex flex-col group"
       onClick={() => onNavigate(`/marketplace/buyer/ventures/${idea._id}`)}
     >
-      {/* Stage + Category */}
-      <div className="flex items-start justify-between mb-4">
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${stage.className}`}>
+
+      {/* ── Stage + Category ── */}
+      <div className="flex items-start justify-between mb-3">
+        <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${stage.className}`}>
           {stage.label}
         </span>
+
         <div className="flex items-center gap-1.5">
           {idea.isRecruiting && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
-              Hiring
+            <span className="text-[11px] px-2 py-0.5 rounded-full 
+                             bg-orange-100 text-orange-700 border border-orange-200 animate-pulse">
+              🚀 Hiring
             </span>
           )}
-          <Badge variant="outline" className="text-xs">{idea.category}</Badge>
+          <Badge variant="outline" className="text-[11px]">{idea.category}</Badge>
         </div>
       </div>
 
-      {/* Title */}
-      <h3 className="font-semibold text-base mb-2 leading-snug group-hover:text-primary transition-colors">
+      {/* ── Title ── */}
+      <h3 className="font-semibold text-[17px] mb-1 leading-snug 
+                     group-hover:text-primary transition">
         {idea.title}
       </h3>
 
-      {/* Description */}
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">{idea.description}</p>
+      {/* ── Description ── */}
+      <p className="text-[12px] text-muted-foreground mb-3 line-clamp-3 flex-1">
+        {idea.description}
+      </p>
 
-      {/* Tags */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
+      {/* ── Tags ── */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
         {idea.tags?.slice(0, 3).map((tag) => (
-          <Badge key={tag} variant="secondary" className="text-xs rounded-full">{tag}</Badge>
+          <span
+            key={tag}
+            className="text-[11px] px-2 py-0.5 rounded-full 
+                       bg-primary/10 text-primary hover:bg-primary/20 transition"
+          >
+            #{tag}
+          </span>
         ))}
       </div>
 
-      {/* Creator */}
-      <div className="flex items-center gap-3 pb-4 border-b border-border mb-4">
-        <Avatar className="h-8 w-8">
+      {/* ── Creator ── */}
+      <div className="flex items-center gap-3 py-3 border-t border-border/60">
+
+        <Avatar className="h-8 w-8 ring-2 ring-primary/10">
           <AvatarImage src={idea.creator?.avatar} />
           <AvatarFallback>{idea.creator?.name?.charAt(0)}</AvatarFallback>
         </Avatar>
+
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium truncate">{idea.creator?.name}</p>
-          <p className="text-xs text-muted-foreground truncate">{idea.creator?.major}</p>
+          <p className="text-[11px] text-muted truncate">{idea.creator?.email}</p>
+          <p className="text-[9px] text-muted truncate">{idea.creator?.collegeName}</p>
         </div>
+
+        {/* Owner Actions */}
         {isOwner && (
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 rounded-lg"
-              onClick={(e) => { e.stopPropagation(); onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`); }}
-              title="Manage"
+              className="h-7 w-7 rounded-lg hover:bg-muted"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
+              }}
             >
               <Settings className="h-3.5 w-3.5" />
             </Button>
+
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50"
-              onClick={(e) => { e.stopPropagation(); onDelete(idea._id, idea.title); }}
-              title="Archive"
+              className="h-7 w-7 rounded-lg text-red-500 hover:bg-red-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(idea._id, idea.title);
+              }}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -210,42 +237,66 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete }) {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      {/* ── Footer Stats ── */}
+      <div className="flex items-center justify-between text-xs text-muted mt-2">
+
         <span className="flex items-center gap-1.5">
-          <Users className="h-4 w-4" />
-          {confirmedMembers}/{idea.teamLimit} members
+          <Users className="h-3.5 w-3.5 text-primary" />
+          <span className={`${isFull ? "text-red-500" : ""}`}>
+            {confirmedMembers}/{idea.teamLimit}
+          </span>
         </span>
+
         <div className="flex items-center gap-3">
           {idea.views > 0 && (
-            <span className="flex items-center gap-1">
-              <Eye className="h-3.5 w-3.5" />{idea.views}
+            <span className="flex items-center gap-1 hover:text-primary transition">
+              <Eye className="h-3.5 w-3.5" /> {idea.views}
             </span>
           )}
-          <span className="flex items-center gap-1">
-            <Heart className="h-3.5 w-3.5" />{idea.likes?.length ?? 0}
+
+          <span className="flex items-center gap-1 hover:text-red-500 transition">
+            <Heart className="h-3.5 w-3.5" /> {idea.likes?.length ?? 0}
           </span>
         </div>
       </div>
 
-      {/* Join Button */}
-      {!isOwner && !isFull && idea.isRecruiting && (
+      {/* ── CTA ── */}
+      {!isOwner  && (
         <Button
-          className="w-full mt-4 rounded-xl"
-          onClick={(e) => { e.stopPropagation(); onNavigate(`/marketplace/buyer/ventures/${idea._id}`); }}
+          className="w-full mt-4 rounded-xl text-sm 
+                     bg-primary/90 hover:bg-primary transition"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate(`/marketplace/buyer/ventures/${idea._id}`);
+          }}
         >
-          Join Team
+          Know More
         </Button>
       )}
 
       {isOwner && (
-        <Button
-          variant="outline"
-          className="w-full mt-4 rounded-xl gap-2"
-          onClick={(e) => { e.stopPropagation(); onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`); }}
-        >
-          <Settings className="h-4 w-4" /> Manage
-        </Button>
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <Button
+            variant="outline"
+            className="rounded-xl text-sm gap-2 hover:bg-muted transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenChatroom(idea);
+            }}
+          >
+            <MessageCircle className="h-4 w-4" /> Chatroom
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-xl text-sm gap-2 hover:bg-muted transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
+            }}
+          >
+            <Settings className="h-4 w-4" /> Manage
+          </Button>
+        </div>
       )}
     </Card>
   );
@@ -307,6 +358,25 @@ export default function VenturesPage() {
   // ── Delete confirm ─────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState(null); // { id, title }
   const [deleting,     setDeleting]     = useState(false);
+  
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  const { user } = useUser();
+  const userId = user?._id;
+
+  useEffect(() => {
+  const fetchUserCount = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/users/count");
+      const data = await res.json();
+      setTotalUsers(data.totalUsers);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchUserCount();
+}, []);
 
   // ── Fetch discover ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -321,7 +391,7 @@ export default function VenturesPage() {
           category:    selectedCategory !== "all" ? selectedCategory : undefined,
           stage:       selectedStage    !== "all" ? selectedStage    : undefined,
           sort,
-          recruiting:  recruitingOnly   ? true   : undefined,
+          isRecruiting: recruitingOnly ? true : undefined,
         });
         setVentures(data.ventures);
         setTotalPages(data.totalPages);
@@ -355,8 +425,15 @@ export default function VenturesPage() {
     load();
   }, [mainTab]);
 
+
+
   // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDeleteRequest = (id, title) => setDeleteTarget({ id, title });
+  const handleOpenChatroom = (venture) => {
+    navigate("/marketplace/buyer/ventures/chats", {
+      state: { selectedVentureId: venture._id },
+    });
+  };
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     try {
@@ -386,6 +463,14 @@ export default function VenturesPage() {
             <div className="flex items-center gap-2">
               <NotificationBell />
               <Button
+                variant="outline"
+                className="gap-2 rounded-xl"
+                onClick={() => navigate("/marketplace/buyer/ventures/chats")}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chat Teams
+              </Button>
+              <Button
                 className="gap-2 rounded-xl"
                 onClick={() => navigate("/marketplace/buyer/ventures/create")}
               >
@@ -403,7 +488,7 @@ export default function VenturesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
             { icon: Lightbulb,   label: "Active Ideas",           value: total, color: "text-purple-600", bg: "bg-purple-50" },
-            { icon: Users,       label: "Student Entrepreneurs",  value: 156,   color: "text-primary",    bg: "bg-blue-50"   },
+            { icon: Users,       label: "Student Entrepreneurs",  value: totalUsers,   color: "text-primary",    bg: "bg-blue-50"   },
             { icon: TrendingUp,  label: "Investor Connections",   value: 12,    color: "text-secondary",  bg: "bg-green-50"  },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <Card key={label} className="p-6 rounded-2xl shadow-sm border border-border">
@@ -539,6 +624,7 @@ export default function VenturesPage() {
                       key={idea._id}
                       idea={idea}
                       onNavigate={navigate}
+                      isOwner={idea.creator?._id === userId}
                     />
                   ))}
                 </div>
@@ -636,6 +722,7 @@ export default function VenturesPage() {
                       onNavigate={navigate}
                       isOwner
                       onDelete={handleDeleteRequest}
+                      onOpenChatroom={handleOpenChatroom}
                     />
                   ))}
                 </div>
@@ -643,6 +730,8 @@ export default function VenturesPage() {
             )}
           </>
         )}
+
+        {/* ════ JOINED VENTURES TAB ════ */}
       </div>
 
       {/* ── Delete confirm dialog ── */}

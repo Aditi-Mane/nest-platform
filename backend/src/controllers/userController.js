@@ -98,9 +98,13 @@ export const updateProfile = async (req, res) => {
       collegeName
     } = req.body;
 
-    if(collegeName) user.collegeName = collegeName;
-    if(payoutUPI) user.payoutUPI = payoutUPI;
+    if (collegeName !== undefined) {
+      user.collegeName = collegeName;
+    }
 
+    if (payoutUPI !== undefined) {
+      user.payoutUPI = payoutUPI;
+    }
     if (req.file) {
       // delete old avatar
       if (user.avatar) {
@@ -112,16 +116,18 @@ export const updateProfile = async (req, res) => {
       user.avatar = avatarUrl;
     }
 
-    await user.save();
+     const updatedUser = await user.save();
 
-    res.json({
-      message:"Profile updated successfully",
-      user
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser
     });
 
-  } catch(error){
+  } catch (error) {
     console.log(error);
-    res.status(500).json({message:"Server error"});
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 };
 
@@ -345,5 +351,13 @@ export const updateAvatar = async (req, res) => {
     res.status(500).json({
       message: "Server error",
     });
+  }
+};
+export const getUserCount = async (req, res) => {
+  try {
+    const count = await User.countDocuments();
+    res.status(200).json({ totalUsers: count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

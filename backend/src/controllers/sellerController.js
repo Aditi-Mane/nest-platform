@@ -10,6 +10,9 @@ import Review from "../models/Review.js";
 import { paginate } from "../utils/paginate.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";
 import { deleteFromS3 } from "../utils/deleteFromS3.js";
+import ProductView from "../models/ProductView.js";
+
+const getStatusFromStock = (stock) => (stock === 0 ? "sold" : "available");
 
 export const setupSeller = async (req, res) => {
   try {
@@ -140,7 +143,7 @@ export const createProduct = async (req, res) => {
       stock: stock ? Number(stock) : 1,
       location: user.storeLocation || "",
       createdBy: user._id,
-      status: stock === 0 ? "sold" : "available",
+      status: getStatusFromStock(stock ? Number(stock) : 1),
       whatsIncluded: includedItems
     });
 
@@ -184,7 +187,10 @@ export const getMyProducts = async (req, res) =>{
     }
 
     //base query
-    let queryObj = { createdBy: sellerId };
+    let queryObj = {
+      createdBy: sellerId,
+      status: { $ne: "deleted" },
+    };
 
     //apply filter
     if (category && category !== "all") {
@@ -206,9 +212,7 @@ export const getMyProducts = async (req, res) =>{
 
     const products = await paginatedQuery;
 
-    const total = await Product.countDocuments({
-      createdBy: sellerId,
-    });
+    const total = await Product.countDocuments(queryObj);
 
     return res.status(200).json({
       data: products,
@@ -250,6 +254,12 @@ export const editProduct = async (req, res) => {
       });
     }
 
+    if (product.status === "deleted") {
+      return res.status(400).json({
+        message: "Deleted products cannot be edited"
+      });
+    }
+
     //ownership check
     if (product.createdBy.toString() !== sellerId.toString()) {
       return res.status(403).json({
@@ -259,12 +269,7 @@ export const editProduct = async (req, res) => {
 
     if (stock !== undefined && Number(stock) >= 0) {
       product.stock = Number(stock);
-
-      if (product.stock === 0) {
-        product.status = "sold";
-      } else {
-        product.status = "available";
-      }
+      product.status = getStatusFromStock(product.stock);
     }
 
     //update basic fields
@@ -377,17 +382,19 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    await Promise.all(
-      product.images.map(img => {
-        const url = img.url || img;
+    if (product.status === "deleted") {
+      return res.status(400).json({
+        message: "Product already deleted",
+      });
+    }
 
-        return deleteFromS3(url).catch(err => {
-          console.error("Failed to delete:", url, err);
-        });
-      })
+    product.status = "deleted";
+    await product.save();
+
+    await Cart.updateMany(
+      {},
+      { $pull: { items: { product: product._id } } }
     );
-
-    await product.deleteOne();
 
     return res.status(200).json({
       message: "Product deleted successfully",
@@ -415,7 +422,7 @@ export const confirmDeal = async (req, res) => {
         message: "Conversation not found",
       });
     }
-    if (["cancelled", "completed"].includes(conversation.status)) {
+    if (conversation.status === "completed") {
       return res.status(400).json({
         message: "This conversation is no longer active"
       });
@@ -433,6 +440,12 @@ export const confirmDeal = async (req, res) => {
     if(!product) {
       return res.status(404).json({
         message: "Product not found",
+      });
+    }
+
+    if (product.status === "deleted") {
+      return res.status(400).json({
+        message: "Deleted products cannot be used for new deals",
       });
     }
 
@@ -525,7 +538,7 @@ export const cancelDeal = async (req, res) =>{
       if(product) {
         product.stock += existingOrder.quantity;
 
-        if(product.stock > 0) {
+        if(product.status !== "deleted" && product.stock > 0) {
           product.status = "available";
         }
 
@@ -703,7 +716,11 @@ export const verifyOrderOtp = async (req, res) => {
 
       if (product) {
         product.stock += order.quantity;
-        product.status = "available";
+
+        if (product.status !== "deleted") {
+          product.status = "available";
+        }
+
         await product.save();
       }
 
@@ -721,7 +738,10 @@ export const verifyOrderOtp = async (req, res) => {
     }
 
     // Complete order
-    order.status = "otp_verified";
+    if (order.status !== "otp_verified") {
+      order.status = "otp_verified";
+      order.otpVerifiedAt = new Date();
+    }
     order.otp = undefined;
     order.otpExpiry = undefined;
 
@@ -730,10 +750,8 @@ export const verifyOrderOtp = async (req, res) => {
     const product = await Product.findById(order.productId);
 
     if (product) {
-      if (product.stock === 0) {
-        product.status = "sold";
-      } else {
-        product.status = "available";
+      if (product.status !== "deleted") {
+        product.status = getStatusFromStock(product.stock);
       }
 
       await product.save();
@@ -879,27 +897,26 @@ export const getAverageRating = async (req, res) => {
 export const getEarnings = async (req, res) => {
   try {
     const sellerId = new mongoose.Types.ObjectId(req.user._id);
+    const now = new Date();
 
     //today start (midnight)
-    const todayStart = new Date();
+    const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);
 
     //yesterday start
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(todayStart.getDate() - 1);
 
-    //tomorrow start (to cap today's range)
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(todayStart.getDate() + 1);
-
     const earnings = await Order.aggregate([
       {
         $match: {
           sellerId: sellerId,
           status: "otp_verified",
-          createdAt: {
+          otpVerifiedAt: {
+            $exists: true,
+            $ne: null,
             $gte: yesterdayStart,
-            $lt: tomorrowStart,
+            $lt: now,
           },
         },
       },
@@ -907,7 +924,7 @@ export const getEarnings = async (req, res) => {
         $group: {
           _id: {
             $cond: [
-              { $gte: ["$createdAt", todayStart] },
+              { $gte: ["$otpVerifiedAt", todayStart] },
               "today",
               "yesterday",
             ],
@@ -1233,6 +1250,26 @@ export const getTopProductThisWeek = async (req, res) => {
 export const incrementViews = async (req, res) => {
   try {
     const { productId } = req.params;
+
+    // normalize today's date (midnight)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const product = await Product.findOne({
+      _id: productId,
+      status: { $ne: "deleted" },
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // update day-wise views (atomic + upsert)
+    await ProductView.findOneAndUpdate(
+      { productId, date: today },
+      { $inc: { views: 1 } },
+      { upsert: true, new: true }
+    );
 
     await Product.findByIdAndUpdate(productId, {
       $inc: { views: 1 },

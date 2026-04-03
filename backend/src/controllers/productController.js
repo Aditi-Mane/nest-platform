@@ -71,7 +71,7 @@ export const getProductById=async(req,res)=>{
       "name avatar collegeName averageRating reviewCount itemsSold responseTime createdAt");
       
 
-      if(!product){
+      if(!product || product.status === "deleted"){
         return res.status(404).json({
             message: "Product not found",
         });
@@ -82,3 +82,4 @@ export const getProductById=async(req,res)=>{
     res.status(500).json({ message: err.message });
    }
 };
+

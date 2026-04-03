@@ -6,6 +6,25 @@ const daysMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const safeDivide = (a, b) => (b === 0 ? 0 : (a / b) * 100);
 
+const formatTrendLabel = (dateString, range) => {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  if (range === "30d") {
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+    });
+  }
+
+  return daysMap[date.getDay()];
+};
+
+const formatTrendData = (rawData, range, valueKey) =>
+  rawData.map((item) => ({
+    name: formatTrendLabel(item._id.date, range),
+    value: item[valueKey],
+  }));
+
 /* ---------------- OVERVIEW ---------------- */
 
 export const getOverviewStats = async (req, res) => {
@@ -43,10 +62,7 @@ export const getRevenueTrend = async (req, res) => {
       range
     );
 
-    const formatted = rawData.map((item) => ({
-      name: daysMap[item._id.day - 1],
-      value: item.revenue,
-    }));
+    const formatted = formatTrendData(rawData, range, "revenue");
 
     res.json({
       success: true,
@@ -73,10 +89,7 @@ export const getOrdersTrend = async (req, res) => {
       range
     );
 
-    const formatted = rawData.map((item) => ({
-      name: daysMap[item._id.day - 1],
-      value: item.count,
-    }));
+    const formatted = formatTrendData(rawData, range, "count");
 
     res.json({
       success: true,
@@ -101,19 +114,16 @@ export const getViewsTrend = async (req, res) => {
       range
     );
 
-    const formatted = rawData.map((item) => ({
-      name: daysMap[item._id.day - 1],
-      value: item.views,
-    }));
+    const formatted = formatTrendData(rawData, range, "views");
 
-    res.json({
+    return res.json({
       success: true,
       data: formatted,
     });
 
   } catch (error) {
     console.error("Views Trend Error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch views trend",
     });
@@ -453,20 +463,11 @@ export const getDashboard = async (req, res) => {
 
     /* ---------- FORMAT DATA ---------- */
 
-    const revenue = revenueRaw.map((item) => ({
-      name: daysMap[item._id.day - 1],
-      value: item.revenue,
-    }));
+    const revenue = formatTrendData(revenueRaw, range, "revenue");
 
-    const orders = ordersRaw.map((item) => ({
-      name: daysMap[item._id.day - 1],
-      value: item.count,
-    }));
+    const orders = formatTrendData(ordersRaw, range, "count");
 
-    const views = viewsRaw.map((item) => ({
-      name: daysMap[item._id.day - 1],
-      value: item.views,
-    }));
+    const views = formatTrendData(viewsRaw, range, "views");
 
     const topProducts = topProductsRaw.map((item, index) => ({
       id: item._id,
@@ -481,9 +482,8 @@ export const getDashboard = async (req, res) => {
       id: item._id,
       name: item.name || "Unknown",
       image: item.images?.[0]?.url || "",
-      views: item.views || 0,
       sales: item.sales || 0,
-      conversionRate: item.conversionRate || 0,
+      revenue: item.revenue || 0,
       rank: index + 1,
     }));
 

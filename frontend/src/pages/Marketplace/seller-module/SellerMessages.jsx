@@ -137,7 +137,7 @@ const SellerMessages = () => {
     <div className="bg-background min-h-screen p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">All Buyer Requests</h1>
-          <p className="text-muted">
+          <p className="text-muted mt-1">
             Complete list of all conversations and negotiations with potential buyers
           </p>
       </div>
@@ -208,7 +208,11 @@ const SellerMessages = () => {
       </div>
 
       {loading ? (
-          <p className="text-muted mb-4">Loading requests...</p>
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <MessageCardSkeleton key={index} />
+            ))}
+          </div>
         ) : requests.length === 0 ? (
           <p className="text-muted mb-4">No requests yet</p>
         ) : (
@@ -246,8 +250,8 @@ const SellerMessages = () => {
                 }}
               >
                 <img
-                  src={item.productId.images[0].url}
-                  alt={item.productId.name}
+                  src={item.productId?.images[0].url || "/placeholder.png"}
+                  alt={item.productId?.name || "Product"}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -372,4 +376,22 @@ const SellerMessages = () => {
 };
 
 export default SellerMessages;
+
+const MessageCardSkeleton = () => (
+  <div className="bg-card rounded-2xl p-6 animate-pulse shadow-[0_3px_8px_rgba(0,0,0,0.04)]">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="w-[60px] h-[60px] rounded-2xl bg-background" />
+        <div className="space-y-2">
+          <div className="h-4 w-52 rounded bg-background" />
+          <div className="h-3 w-32 rounded bg-background" />
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="h-7 w-28 rounded-full bg-background" />
+        <div className="h-9 w-20 rounded-xl bg-background" />
+      </div>
+    </div>
+  </div>
+);
 

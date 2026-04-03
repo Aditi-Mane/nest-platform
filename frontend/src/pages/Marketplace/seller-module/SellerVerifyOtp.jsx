@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FiShield, FiRefreshCw, FiArrowLeft } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../api/axios.js";
+import toast from "react-hot-toast";
 
 const SellerVerifyOtp = () => {
   const { orderId } = useParams();
@@ -21,6 +22,7 @@ const SellerVerifyOtp = () => {
           otp
         }
       )
+      toast.success("OTP Verified Successfully")
 
       navigate("/marketplace/seller/orders");
     } catch (error) {

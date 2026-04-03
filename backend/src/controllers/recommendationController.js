@@ -7,7 +7,7 @@ export const getMLRecommendations = async (req, res) => {
 
     const currentProduct = await Product.findById(id);
 
-    if (!currentProduct) {
+    if (!currentProduct || currentProduct.status === "deleted") {
       return res.status(404).json({ message: "Product not found" });
     }
 
@@ -98,7 +98,8 @@ export const recommendFromCart = async (req, res) => {
 
     //Get cart products
     const cartProducts = await Product.find({
-      _id: { $in: productIds }
+      _id: { $in: productIds },
+      status: { $ne: "deleted" },
     });
 
     // Extract categories

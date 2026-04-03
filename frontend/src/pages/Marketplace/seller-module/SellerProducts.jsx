@@ -28,6 +28,9 @@ const SellerProducts = () => {
   const [ratings, setRatings] = useState([]);
   const [overallRating, setOverallRating] = useState(0);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+
   useEffect(() => {
 
     const fetchAnalytics = async () => {
@@ -172,21 +175,24 @@ const SellerProducts = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
+  const handleDelete = (id) => {
+    setProductToDelete(id);
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmDelete) return;
-
+  const confirmDelete = async () => {
     try {
-      await api.delete(`/seller/delete/${id}`);
+      await api.delete(`/seller/delete/${productToDelete}`);
 
       //remove from UI instantly
-      setProducts((prev) => prev.filter((p) => p._id !== id));
+      setProducts((prev) => prev.filter((p) => p._id !== productToDelete));
 
+      toast.success("Product deleted successfully");
+
+      setShowDeleteModal(false);
+      setProductToDelete(null);
     } catch (error) {
-      alert(
+      toast.error(
         error.response?.data?.message ||
         "Failed to delete product"
       );
@@ -374,7 +380,7 @@ const SellerProducts = () => {
       <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold">Products</h1>
-            <p className="text-muted">
+            <p className="text-muted mt-1">
               Manage your product inventory and performance
             </p>
             <p className="mt-2 text-sm flex items-center gap-3 text-muted">
@@ -484,7 +490,9 @@ const SellerProducts = () => {
       {/* PRODUCT GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {fetchLoading ? (
-          <p className="text-muted mb-4">Loading products...</p>
+          Array.from({ length: 6 }).map((_, index) => (
+            <ProductCardSkeleton key={index} />
+          ))
         ) : products.length === 0 ? (
           <p className="text-muted mb-4">No matching products found</p>
         ) : (
@@ -1239,8 +1247,67 @@ const SellerProducts = () => {
         </div>
       )}
 
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-card rounded-2xl p-8 shadow-xl max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-text mb-4">Confirm Deletion</h2>
+            <p className="text-muted mb-6">
+              Are you sure you want to delete "{products.find(p => p._id === productToDelete)?.name}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 text-white rounded-xl py-3 shadow-md hover:opacity-90 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
 export default SellerProducts;
+
+const ProductCardSkeleton = () => (
+  <div className="bg-card border border-border rounded-2xl shadow-sm animate-pulse">
+    <div className="h-44 bg-[#efe6d6] rounded-t-2xl" />
+    <div className="p-6 space-y-4">
+      <div className="h-6 w-2/3 rounded bg-background" />
+      <div className="space-y-2">
+        <div className="h-4 w-full rounded bg-background" />
+        <div className="h-4 w-5/6 rounded bg-background" />
+      </div>
+      <div className="flex gap-3">
+        <div className="h-7 w-24 rounded-full bg-background" />
+        <div className="h-7 w-20 rounded-full bg-background" />
+      </div>
+      <div className="grid grid-cols-3 gap-4 rounded-xl bg-[#efe6d6] border border-border p-3">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="space-y-2">
+            <div className="h-3 w-12 rounded bg-white/70" />
+            <div className="h-4 w-14 rounded bg-white" />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-20 rounded bg-background" />
+        <div className="h-5 w-16 rounded bg-background" />
+      </div>
+      <div className="flex gap-3 pt-2">
+        <div className="h-10 flex-1 rounded-xl bg-background" />
+        <div className="h-10 flex-1 rounded-xl bg-background" />
+      </div>
+    </div>
+  </div>
+);

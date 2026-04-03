@@ -19,10 +19,11 @@ import messageRoutes from "./routes/messageRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
 import analyticsRoutes from "./routes/analyticsRoutes.js"
 import { initSocket } from "./config/socket.js"
-import ventureRoutes      from "./routes/ventureRoutes.js";
-import applicationRoutes  from "./routes/applicationRoutes.js";   // only /mine
+import ventureRoutes from "./routes/ventureRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";   
 import notificationRoutes from "./routes/notificationRoutes.js";
- 
+import salesPredictionRoutes from "./routes/salesPredictionRoutes.js";
+
 
 
 connectDB()
@@ -52,6 +53,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/ventures",      ventureRoutes);
 app.use("/api/applications",  applicationRoutes);   // separate prefix — fixes the /mine bug
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/analytics", salesPredictionRoutes);
 
 app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")

@@ -29,19 +29,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import api from '../../../api/axios.js'
 import { useLocation } from "react-router-dom";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 export default function CartPage() {
   const navigate = useNavigate();
   const { cartItems, loading, updateQuantity, removeFromCart } = useCart();

@@ -39,13 +39,18 @@ const SellerChatDetails = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceive = (msg) => {
+    const handleReceive = async (msg) => {
       if (!msg || !msg._id) return; 
 
       setMessages((prev) => {
         if (prev.some((m) => m?._id === msg._id)) return prev;
         return [...prev, msg];
       });
+      try {
+        await api.patch(`/messages/${conversationId}/read`);
+      } catch (err) {
+        console.error("Mark as read failed:", err);
+      }
     };
 
     socket.on("receive_message", handleReceive);
@@ -194,7 +199,12 @@ return (
             {/* Confirm Deal */}
             {isSeller && ["initiated","negotiating","cancelled"].includes(conversationInfo?.status) && (
               <button
-                onClick={() => setShowDealModal(true)}
+                onClick={() => {
+                  setPricePerItem(conversationInfo.productId.price);
+                  setQuantity(1);
+                  setDealError("");
+                  setShowDealModal(true);
+                }}
                 className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white"
               >
                 Confirm Deal
