@@ -4,6 +4,7 @@ import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../context/UserContext";
 import ReviewModal from "../../../components/ReviewModal.jsx";
+import { toast } from "sonner";
 import {
   Tabs,
   TabsContent,
@@ -111,6 +112,7 @@ export const ProfilePage = () => {
 
   /*  REVIEW */
   const handleReviewSubmitted = () => {
+    toast.success("Product reviewed!")
     setIsReviewModalOpen(false);
     fetchPurchases(); // refresh orders after review
   };

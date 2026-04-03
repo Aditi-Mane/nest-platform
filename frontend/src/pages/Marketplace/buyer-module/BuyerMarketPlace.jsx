@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { toast } from "sonner";
 import { ProductCard } from "@/components/ProductCard.jsx";
 import { CategoryFilter } from "@/components/CategoryFilter.jsx";
 import { Button } from "@/components/ui/button.jsx";

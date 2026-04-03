@@ -33,3 +33,9 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
 }
+
+*:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+

@@ -91,9 +91,10 @@ function ChatListItem({ application, isSelected, onClick }) {
         isSelected ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-muted/50'
       }`}
     >
-      <Avatar className="h-14 w-14 ring-2 ring-primary/10 shrink-0">
-        <AvatarImage src={venture?.creator?.avatar} />
-        <AvatarFallback>{venture?.creator?.name?.charAt(0)}</AvatarFallback>
+      <Avatar className="h-10 w-10 bg-primary text-white">
+        <AvatarFallback className="bg-primary text-white font-semibold">
+          {  venture?.title.charAt(0)|| "V"}
+        </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">
@@ -483,18 +484,21 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
     });
   }, [hydratedTeams]);
 
-  useEffect(() => {
-    if (!initialSelectedVentureId || !hydratedTeams.length) return;
+ useEffect(() => {
+  if (!initialSelectedVentureId || !hydratedTeams.length) return;
 
-    const matchingTeam = hydratedTeams.find(
-      (team) => team.venture?._id === initialSelectedVentureId
+  const matchingTeam = hydratedTeams.find((team) => {
+    return (
+      String(team._id) === String(initialSelectedVentureId) ||
+      String(team.venture?._id) === String(initialSelectedVentureId)
     );
+  });
 
-    if (matchingTeam) {
-      setSelectedApplication(matchingTeam);
-      setShowInfo(false);
-    }
-  }, [hydratedTeams, initialSelectedVentureId]);
+  if (matchingTeam) {
+    setSelectedApplication(matchingTeam);
+    setShowInfo(false);
+  }
+}, [hydratedTeams, initialSelectedVentureId]);
 
   const handleMessageSent = useCallback((applicationId, message) => {
     if (!message) return;
@@ -547,17 +551,7 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
             </span>
           </div>
 
-          {onBack && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 gap-2"
-              onClick={onBack}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Ventures
-            </Button>
-          )}
+          
         </div>
 
         <div className="flex-1 overflow-y-auto">

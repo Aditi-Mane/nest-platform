@@ -10,8 +10,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Plus, X, Lightbulb, Users, TrendingUp, Loader2, AlertTriangle,Tag } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserCheck, Search } from "lucide-react";
 import { toast } from "sonner";
 import { createVenture } from "@/api/venturesApi";
+import api from "../../../api/axios";
 
 const CATEGORIES = [
   "EdTech", "Social Impact", "Marketplace", "E-commerce",
@@ -31,11 +34,52 @@ export default function CreateVenturePage() {
   const [tags,            setTags]            = useState([]);
   const [currentTag,      setCurrentTag]      = useState("");
   const [openRoles,       setOpenRoles]       = useState([]);
-  const [currentRole,     setCurrentRole]     = useState({ title: "", skills: "" });
+  const [currentRole,     setCurrentRole]     = useState({ title: "", skills: "", spots: 1,  });
   const [submitting,      setSubmitting]      = useState(false);
 
   const [similarVentures,    setSimilarVentures]    = useState([]);
   const [showSimilarWarning, setShowSimilarWarning] = useState(false);
+
+
+  const [memberEmail,     setMemberEmail]     = useState("");
+const [memberRole,      setMemberRole]      = useState("");
+const [foundUser,       setFoundUser]       = useState(null);   // { _id, name, email, avatar, collegeName }
+const [searchingUser,   setSearchingUser]   = useState(false);
+const [userSearchErr,   setUserSearchErr]   = useState("");
+const [teamMembers,     setTeamMembers]     = useState([]);
+
+const handleEmailSearch = async () => {
+  if (!memberEmail.trim()) return;
+  setSearchingUser(true);
+  setFoundUser(null);
+  setUserSearchErr("");
+  try {
+    const { data } = await api.get('/users/search', { params: { email: memberEmail.trim() } });
+    // Don't allow adding yourself or duplicates
+    if (data.user._id === req?.user?._id) {
+      setUserSearchErr("You're already the founder.");
+    } else if (teamMembers.some((m) => m._id === data.user._id)) {
+      setUserSearchErr("This person is already added.");
+    } else {
+      setFoundUser(data.user);
+    }
+  } catch (err) {
+    setUserSearchErr(err?.response?.data?.message ?? "User not found.");
+  } finally {
+    setSearchingUser(false);
+  }
+};
+
+const addMember = () => {
+  if (!foundUser || !memberRole.trim()) return;
+  setTeamMembers([...teamMembers, { ...foundUser, role: memberRole.trim() }]);
+  setFoundUser(null);
+  setMemberEmail("");
+  setMemberRole("");
+  setUserSearchErr("");
+};
+
+const removeMember = (id) => setTeamMembers(teamMembers.filter((m) => m._id !== id));
 
   const addTag = () => {
     if (currentTag.trim() && tags.length < 5) {
@@ -46,12 +90,21 @@ export default function CreateVenturePage() {
   const removeTag = (i) => setTags(tags.filter((_, idx) => idx !== i));
 
   const addRole = () => {
-    if (currentRole.title.trim() && currentRole.skills.trim()) {
-      const skills = currentRole.skills.split(",").map((s) => s.trim()).filter(Boolean);
-      setOpenRoles([...openRoles, { title: currentRole.title.trim(), skills }]);
-      setCurrentRole({ title: "", skills: "" });
-    }
-  };
+  if (currentRole.title.trim() && currentRole.skills.trim()) {
+    const skills = currentRole.skills.split(",").map((s) => s.trim());
+
+    setOpenRoles([
+      ...openRoles,
+      {
+        title: currentRole.title.trim(),
+        skills,
+        spots: Number(currentRole.spots),
+      },
+    ]);
+
+    setCurrentRole({ title: "", skills: "", spots: 1 });
+  }
+};
   const removeRole = (i) => setOpenRoles(openRoles.filter((_, idx) => idx !== i));
 
   const handleSubmit = async (e) => {
@@ -62,17 +115,16 @@ export default function CreateVenturePage() {
     }
     try {
       setSubmitting(true);
-      const { data } = await createVenture({
-        title,
-        description,
-        fullDescription,
-        category,
-        stage,
-        teamLimit: Number(teamLimit),
-        openRoles,
-        tags,
-        isRecruiting,
-      });
+     const { data } = await createVenture({
+  title, description, fullDescription, category,
+  stage, teamLimit: Number(teamLimit),
+  openRoles, tags, isRecruiting,
+  teamMembers: teamMembers.map((m) => ({   
+    email: m.email,
+    role: m.role,
+    collegeName: m.collegeName,
+  })),
+});
 
       if (data.similarVentures?.length > 0) {
         setSimilarVentures(data.similarVentures);
@@ -96,6 +148,7 @@ export default function CreateVenturePage() {
   stage,
   teamLimit,
 ].filter(Boolean).length;
+
 
 const progress = Math.round((completedSteps / 6) * 100);
 
@@ -348,8 +401,129 @@ const progress = Math.round((completedSteps / 6) * 100);
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">Including yourself</p>
-              </div>
+              </div> 
+                        {/* ── Existing Team Members Card ── */}
+<Card className="rounded-2xl shadow-sm border border-border">
+  <CardHeader className="border-b border-border pb-2">
+    <div className="flex items-center gap-3 group">
+      <div className="p-2 rounded-xl bg-purple-100 text-purple-600 group-hover:scale-110 transition">
+        <UserCheck className="h-5 w-5" />
+      </div>
+      <CardTitle className="text-lg font-semibold group-hover:text-purple-600 transition">
+        Existing Team Members
+      </CardTitle>
+    </div>
+  </CardHeader>
 
+  <CardContent className="p-4 space-y-4">
+
+    {/* Email search row */}
+    <div>
+      <Label>Search by Email</Label>
+      <div className="flex gap-2 mt-2">
+        <Input
+          placeholder="teammate@example.com"
+          value={memberEmail}
+          onChange={(e) => {
+            setMemberEmail(e.target.value);
+            setFoundUser(null);        // clear preview on edit
+            setUserSearchErr("");
+          }}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleEmailSearch())}
+          className="rounded-xl bg-muted/40 border-transparent focus:ring-2 focus:ring-primary/20"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-xl px-3 shrink-0"
+          onClick={handleEmailSearch}
+          disabled={searchingUser || !memberEmail.trim()}
+        >
+          {searchingUser
+            ? <Loader2 className="h-4 w-4 animate-spin" />
+            : <Search className="h-4 w-4" />}
+        </Button>
+      </div>
+      {userSearchErr && (
+        <p className="text-xs text-destructive mt-1.5">{userSearchErr}</p>
+      )}
+    </div>
+
+    {/* User preview card */}
+    {foundUser && (
+      <div className="p-4 bg-muted-50 rounded-xl border border-muted-200 space-y-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-11 w-11 ring-2 ring-purple-200">
+            <AvatarImage src={foundUser.avatar} alt={foundUser.name} />
+            <AvatarFallback className="bg-purple-100 text-purple-700 font-semibold">
+              {foundUser.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-semibold text-sm">{foundUser.name}</p>
+            <p className="text-xs text-muted-foreground">{foundUser.email}</p>
+            {foundUser.collegeName && (
+              <Badge variant="outline" className="text-xs rounded-full mt-1">
+                {foundUser.collegeName}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs mb-1 block">Their Role in Your Venture *</Label>
+          <Input
+            placeholder="e.g., Backend Developer"
+            value={memberRole}
+            onChange={(e) => setMemberRole(e.target.value)}
+            className="rounded-xl bg-muted/40 border-transparent focus:border-border focus:ring-2 focus:ring-border/20"
+          />
+        </div>
+
+        <Button
+          type="button"
+          className="w-full gap-2 rounded-xl bg-muted hover:bg-muted-700 text-white"
+          onClick={addMember}
+          disabled={!memberRole.trim()}
+        >
+          <Plus className="h-4 w-4" />
+          Add {foundUser.name.split(" ")[0]} to Team
+        </Button>
+      </div>
+    )}
+
+    {/* Added members list */}
+    {teamMembers.length > 0 && (
+      <div className="space-y-2">
+        <Label>Added Members</Label>
+        {teamMembers.map((m) => (
+          <div key={m._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-border">
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarImage src={m.avatar} alt={m.name} />
+              <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-semibold">
+                {m.name?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{m.name}</p>
+              <p className="text-xs text-muted-foreground">{m.role} · {m.collegeName}</p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => removeMember(m._id)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    )}
+  </CardContent>
+</Card>
+       
               <div className="mt-5">
                 <Label>Open Roles (Optional)</Label>
                 <p className="text-xs text-muted/80 mb-3 mt-0.5">
@@ -368,6 +542,23 @@ const progress = Math.round((completedSteps / 6) * 100);
                     onChange={(e) => setCurrentRole({ ...currentRole, skills: e.target.value })}
                     className="rounded-xl bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
+                   <p className="text-xs text-muted/80 mb-3 mt-0.5">
+                  Number of openings
+                 </p>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Number of openings"
+                    className="rounded-lg bg-muted/40 border-transparent focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    value={currentRole.spots}
+                    onChange={(e) =>
+                      setCurrentRole({
+                        ...currentRole,
+                        spots: e.target.value,
+                      })
+                    }
+                  />
+
                   <Button
                     type="button"
                     variant="outline"

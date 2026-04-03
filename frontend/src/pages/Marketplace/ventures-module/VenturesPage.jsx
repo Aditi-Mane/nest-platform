@@ -424,6 +424,8 @@ export default function VenturesPage() {
     }
   };
 
+  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -600,6 +602,7 @@ export default function VenturesPage() {
                       idea={idea}
                       onNavigate={navigate}
                       isOwner={idea.creator?._id === userId}
+                      onOpenChatroom={handleOpenChatroom}
                     />
                   ))}
                 </div>

@@ -744,10 +744,13 @@ export const verifyOrderOtp = async (req, res) => {
 
     await order.save();
 
+    const quantity = Number(order.quantity) || 1;
     await User.findByIdAndUpdate(
-    order.sellerId,
-    { $inc: { itemsSold: order.quantity } }
-  );
+      order.sellerId,
+      { $inc: { itemsSold: quantity } },
+      { new: true }
+    );
+
 
     const product = await Product.findById(order.productId);
 

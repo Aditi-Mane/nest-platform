@@ -46,6 +46,7 @@ export function CartProvider({ children }) {
     try {
       await api.delete(`/cart/remove/${productId}`);
       await fetchCart();
+      toast.success("🛒 Item removed from cart!");
     } catch (error) {
       console.error("Remove cart error:", error);
     }
