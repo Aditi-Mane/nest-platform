@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProductDetailPage from "./marketplace/buyer-module/ProductDetailPage.jsx";
 import SellerPanel from "./marketplace/seller-module/SellerPanel.jsx";
@@ -8,10 +7,9 @@ import SellerOrders from "./marketplace/seller-module/SellerOrders.jsx";
 import SellerAnalytics from "./Marketplace/seller-module/SellerAnalytics.jsx";
 import SellerMessages from "./marketplace/seller-module/SellerMessages.jsx";
 import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx";
-
 import BuyerMarketPlace from "./marketplace/buyer-module/BuyerMarketPlace.jsx";
 import CartPage from "./marketplace/buyer-module/CartPage.jsx";
-import BuyerLayout from "./marketplace/buyer-module/BuyerLayout.jsx"
+import BuyerLayout from "./marketplace/buyer-module/BuyerLayout.jsx";
 import Wishlist from "./marketplace/buyer-module/Wishlist.jsx";
 import { ProfilePage } from "./marketplace/buyer-module/ProfilePage.jsx";
 import SellerSentiment from "./marketplace/seller-module/SellerSentiment.jsx";
@@ -19,27 +17,36 @@ import SellerPrediction from "./marketplace/seller-module/SellerPrediction.jsx";
 import SellerSettings from "./marketplace/seller-module/SellerSettings.jsx";
 import SellerChatDetails from "./marketplace/seller-module/SellerChatDetails.jsx";
 import SellerVerifyOtp from "./marketplace/seller-module/SellerVerifyOtp.jsx";
-
 import BuyerChatDetails from "./marketplace/buyer-module/BuyerChatDetails.jsx";
-import BuyerMessages from "./marketplace/buyer-module/BuyerMessages.jsx";
 import MessagesLayout from "./marketplace/buyer-module/MessagesLayout.jsx";
-
 import VenturesPage from "./marketplace/ventures-module/VenturesPage.jsx";
 import VentureDetailPage from "./marketplace/ventures-module/VentureDetailPage.jsx";
 import InvestorsPage from "./marketplace/ventures-module/InvestorsPage.jsx";
 import CreateVenturePage from "./marketplace/ventures-module/CreateVenturePage.jsx";
 import CreateStartupPage from "./marketplace/ventures-module/CreateStartupPage.jsx";
 import TeamChatsPage from "./marketplace/ventures-module/TeamChatsPage.jsx";
-
-
+import RoleProtectedRoute from "../routes/RoleProtectedRoute.jsx";
 
 function Marketplace() {
-  
   return (
     <Routes>
-      <Route path="seller/setup" element={<SellerSetup />}/>
+      <Route
+        path="seller/setup"
+        element={
+          <RoleProtectedRoute allowedRole="seller">
+            <SellerSetup />
+          </RoleProtectedRoute>
+        }
+      />
 
-      <Route path="seller" element={<SellerPanel />}>
+      <Route
+        path="seller"
+        element={
+          <RoleProtectedRoute allowedRole="seller">
+            <SellerPanel />
+          </RoleProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<SellerDashboard />} />
         <Route path="products" element={<SellerProducts />} />
@@ -54,36 +61,124 @@ function Marketplace() {
       </Route>
 
       <Route path="buyer" element={<BuyerLayout />}>
-      <Route index element={<BuyerMarketPlace />} />
-      <Route path="product/:id" element={<ProductDetailPage />} />
-      <Route path="cart" element={<CartPage />} />
-      <Route path="wishlist" element={<Wishlist />} />
+        <Route
+          index
+          element={
+            <RoleProtectedRoute allowedRole="buyer">
+              <BuyerMarketPlace />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="product/:id"
+          element={
+            <RoleProtectedRoute allowedRole="buyer">
+              <ProductDetailPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="cart"
+          element={
+            <RoleProtectedRoute allowedRole="buyer">
+              <CartPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="wishlist"
+          element={
+            <RoleProtectedRoute allowedRole="buyer">
+              <Wishlist />
+            </RoleProtectedRoute>
+          }
+        />
 
-      {/* ── Ventures Module ── */}
-      <Route path="ventures" element={<VenturesPage />} />
-      <Route path="ventures/:id" element={<VentureDetailPage />} />
-      <Route path="ventures/chats" element={<TeamChatsPage />} />
-      <Route path="ventures/create" element={<CreateVenturePage />} />
-      <Route path="ventures/investors" element={<InvestorsPage />} />
-      <Route path="ventures/create-startup" element={<CreateStartupPage />} />
- 
-      <Route path="ProfilePage" element={<ProfilePage />} />
-      <Route path="messages" element={<MessagesLayout />}>
-            <Route
-                index
-                element={
-                  <div className="flex items-center justify-center h-full text-muted">
-                      Select a conversation to start chatting
-                  </div>
-                }
-            />
-            <Route path=":conversationId" element={<BuyerChatDetails />} />
-            </Route>
+        <Route
+          path="ventures"
+          element={
+            <RoleProtectedRoute allowedRoles={["buyer", "seller"]}>
+              <VenturesPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="ventures/:id"
+          element={
+            <RoleProtectedRoute allowedRoles={["buyer", "seller"]}>
+              <VentureDetailPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="ventures/chats"
+          element={
+            <RoleProtectedRoute allowedRoles={["buyer", "seller"]}>
+              <TeamChatsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="ventures/create"
+          element={
+            <RoleProtectedRoute allowedRoles={["buyer", "seller"]}>
+              <CreateVenturePage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="ventures/investors"
+          element={
+            <RoleProtectedRoute allowedRoles={["buyer", "seller"]}>
+              <InvestorsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="ventures/create-startup"
+          element={
+            <RoleProtectedRoute allowedRoles={["buyer", "seller"]}>
+              <CreateStartupPage />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="ProfilePage"
+          element={
+            <RoleProtectedRoute allowedRole="buyer">
+              <ProfilePage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="messages"
+          element={
+            <RoleProtectedRoute allowedRole="buyer">
+              <MessagesLayout />
+            </RoleProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <div className="flex items-center justify-center h-full text-muted">
+                Select a conversation to start chatting
+              </div>
+            }
+          />
+          <Route
+            path=":conversationId"
+            element={
+              <RoleProtectedRoute allowedRole="buyer">
+                <BuyerChatDetails />
+              </RoleProtectedRoute>
+            }
+          />
+        </Route>
       </Route>
-      </Routes>
-  )
-  
-
+    </Routes>
+  );
 }
 
 export default Marketplace;

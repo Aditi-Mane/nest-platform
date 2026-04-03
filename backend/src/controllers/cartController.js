@@ -1,4 +1,5 @@
 import Cart from "../models/Cart.js";
+import Product from "../models/Product.js";
 
 export const getUserCart = async (req, res) => {
   try {
@@ -21,7 +22,9 @@ export const getUserCart = async (req, res) => {
     }
 
     // remove deleted products
-    const cleanedItems = cart.items.filter(item => item.product !== null);
+    const cleanedItems = cart.items.filter(
+      (item) => item.product !== null && item.product.status !== "deleted"
+    );
 
     // optional: permanently remove them from DB
     if (cleanedItems.length !== cart.items.length) {
@@ -55,6 +58,23 @@ export const addToCart= async(req,res)=>{
           message: "Product ID is required",
         });
       }
+
+      const product = await Product.findById(productId).select("status");
+
+      if (!product || product.status === "deleted") {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      if (product.status !== "available") {
+        return res.status(400).json({
+          success: false,
+          message: "Product not available",
+        });
+      }
+
       //find users cart
       let cart=await Cart.findOne({ user: userId});
 
@@ -175,6 +195,20 @@ export const updateCartQuantity = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Item not found in cart",
+      });
+    }
+
+    const product = await Product.findById(productId).select("status");
+
+    if (!product || product.status === "deleted") {
+      cart.items = cart.items.filter(
+        (currentItem) => currentItem.product.toString() !== productId
+      );
+      await cart.save();
+
+      return res.status(404).json({
+        success: false,
+        message: "Product no longer available",
       });
     }
 

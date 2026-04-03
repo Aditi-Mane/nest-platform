@@ -4,8 +4,7 @@
 
 import api from "../../../api/axios.js";
 import { useState, useEffect, useCallback } from "react";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/card";
 import {
   TrendingUp,
   Package,
@@ -35,7 +34,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 // ─────────────────────────────────────────────
 //  THEME TOKENS  (earthy palette, extended)
@@ -62,6 +61,9 @@ const T = {
 //  ICON MAP
 // ─────────────────────────────────────────────
 const ICON_MAP = { Package, TrendingUp, Sparkles, AlertTriangle };
+const PAGE_TITLE_CLASS = "text-3xl font-bold text-text";
+const SECTION_TITLE_CLASS = "text-xl font-semibold text-text";
+const SECTION_SUBTITLE_CLASS = "text-sm text-muted";
 
 // ─────────────────────────────────────────────
 //  HELPERS
@@ -226,7 +228,7 @@ function ForecastTooltip({ active, payload, label }) {
 function StatCard({ accentColor, icon: Icon, iconBg, label, value, sub, subColor, badge, children }) {
   return (
     <Card
-      className="p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
+      className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden rounded-2xl border border-border"
       style={{ borderLeft: `4px solid ${accentColor}` }}
     >
       
@@ -239,10 +241,10 @@ function StatCard({ accentColor, icon: Icon, iconBg, label, value, sub, subColor
         </div>
         {badge}
       </div>
-      <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1.5 font-medium">
+      <p className="text-xs text-muted uppercase tracking-widest mb-1.5 font-medium">
         {label}
       </p>
-      <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
+      <p className="text-2xl font-bold text-text mb-1">{value}</p>
       {sub && (
         <p className="text-xs font-semibold mt-1" style={{ color: subColor ?? T.secondary }}>
           {sub}
@@ -330,18 +332,20 @@ export default function SellerPrediction() {
   // ─────────────────────────────────────────────
   if (error) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 py-20 text-center">
-        <div
-          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
-          style={{ backgroundColor: T.redBg }}
-        >
-          <AlertTriangle size={36} style={{ color: T.red }} />
+      <div className="min-h-screen bg-background text-text px-6 py-6">
+        <div className="max-w-[1600px] mx-auto py-20 text-center">
+          <div
+            className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
+            style={{ backgroundColor: T.redBg }}
+          >
+            <AlertTriangle size={36} style={{ color: T.red }} />
+          </div>
+          <h2 className="text-2xl font-bold text-text mb-2">Couldn't load forecast</h2>
+          <p className="text-muted mb-8 max-w-sm mx-auto">{error}</p>
+          <Button onClick={handleRefresh}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Try again
+          </Button>
         </div>
-        <h2 className="text-2xl font-bold mb-2">Couldn't load forecast</h2>
-        <p className="text-muted-foreground mb-8 max-w-sm mx-auto">{error}</p>
-        <Button variant="primary" onClick={handleRefresh}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Try again
-        </Button>
       </div>
     );
   }
@@ -363,11 +367,12 @@ export default function SellerPrediction() {
   //  RENDER
   // ─────────────────────────────────────────────
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-background text-text px-6 py-6">
+      <div className="max-w-[1600px] mx-auto space-y-6">
 
       {/* ━━━━━━━━━━━━━━━━ PAGE HEADER ━━━━━━━━━━━━━━━━ */}
       <div
-        className="rounded-2xl p-6 mb-8 relative overflow-hidden"
+        className="rounded-2xl p-6 relative overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${T.bg} 0%, #f5ede0 60%, #ede8e0 100%)`,
           border: `1.5px solid ${T.border}`,
@@ -378,7 +383,7 @@ export default function SellerPrediction() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 relative z-10">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-3">
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              <h1 className={PAGE_TITLE_CLASS}>
                 AI Sales Forecast
               </h1>
 
@@ -403,11 +408,11 @@ export default function SellerPrediction() {
               )}
             </div>
 
-            <p className="text-muted-foreground text-sm max-w-xl mb-3">
+            <p className="text-sm text-muted max-w-xl mb-3">
               Predictions from your real order history, category trends, and inventory data
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
               {relativeTime && (
                 <span className="flex items-center gap-1.5">
                   <Clock size={13} />
@@ -452,7 +457,7 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ KPI METRIC CARDS ━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (
           [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
         ) : (
@@ -825,13 +830,13 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ CATEGORY + INVENTORY ━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Category Performance Chart */}
         <Card className="lg:col-span-2 p-6" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
           <div className="mb-5">
-            <h2 className="text-xl font-bold text-foreground mb-1">Category Performance Forecast</h2>
-            <p className="text-sm text-muted-foreground">Current vs predicted revenue by product category</p>
+            <h2 className={`${SECTION_TITLE_CLASS} mb-1`}>Category Performance Forecast</h2>
+            <p className={SECTION_SUBTITLE_CLASS}>Current vs predicted revenue by product category</p>
           </div>
 
           {loading ? (
@@ -915,9 +920,9 @@ export default function SellerPrediction() {
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#f5e6d8" }}>
               <Package size={14} style={{ color: T.primary }} />
             </div>
-            <h2 className="text-lg font-bold text-foreground">Smart Inventory</h2>
+            <h2 className="text-lg font-semibold text-text">Smart Inventory</h2>
           </div>
-          <p className="text-sm text-muted-foreground mb-5">AI-optimised stock levels</p>
+          <p className="text-sm text-muted mb-5">AI-optimised stock levels</p>
 
           {loading ? (
             <div className="space-y-3">
@@ -991,8 +996,8 @@ export default function SellerPrediction() {
               <Sparkles size={20} style={{ color: T.primary }} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">AI-Powered Recommendations</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className={SECTION_TITLE_CLASS}>AI-Powered Recommendations</h2>
+              <p className={SECTION_SUBTITLE_CLASS}>
                 {isGemini
                   ? "✨ Generated by Google Gemini using your real sales data"
                   : "⚙️ Smart rule-based insights from your order history"}
@@ -1137,6 +1142,7 @@ export default function SellerPrediction() {
           </div>
         </div>
       </Card>
+      </div>
     </div>
   );
 }
