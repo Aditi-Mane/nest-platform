@@ -738,7 +738,10 @@ export const verifyOrderOtp = async (req, res) => {
     }
 
     // Complete order
-    order.status = "otp_verified";
+    if (order.status !== "otp_verified") {
+      order.status = "otp_verified";
+      order.otpVerifiedAt = new Date();
+    }
     order.otp = undefined;
     order.otpExpiry = undefined;
 
@@ -894,27 +897,26 @@ export const getAverageRating = async (req, res) => {
 export const getEarnings = async (req, res) => {
   try {
     const sellerId = new mongoose.Types.ObjectId(req.user._id);
+    const now = new Date();
 
     //today start (midnight)
-    const todayStart = new Date();
+    const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);
 
     //yesterday start
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(todayStart.getDate() - 1);
 
-    //tomorrow start (to cap today's range)
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(todayStart.getDate() + 1);
-
     const earnings = await Order.aggregate([
       {
         $match: {
           sellerId: sellerId,
           status: "otp_verified",
-          createdAt: {
+          otpVerifiedAt: {
+            $exists: true,
+            $ne: null,
             $gte: yesterdayStart,
-            $lt: tomorrowStart,
+            $lt: now,
           },
         },
       },
@@ -922,7 +924,7 @@ export const getEarnings = async (req, res) => {
         $group: {
           _id: {
             $cond: [
-              { $gte: ["$createdAt", todayStart] },
+              { $gte: ["$otpVerifiedAt", todayStart] },
               "today",
               "yesterday",
             ],
