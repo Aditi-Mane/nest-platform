@@ -3,6 +3,7 @@ import { FiCheckCircle, FiClock} from "react-icons/fi";
 import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
+import toast from "react-hot-toast";
 
 const SellerOrderHistory = () => {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ const SellerOrderHistory = () => {
         orderId: id
       })
       
+      toast.success("OTP Generated Successfully");
       await fetchSellerOrders();
     } catch (error) {
       console.error(error);
