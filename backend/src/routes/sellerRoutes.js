@@ -26,6 +26,7 @@ router.patch("/views/:productId", protect, incrementViews);
 router.get("/seller-rating/:sellerId", protect, getSellerAverageRating);
 
 //seller dashboard routes
+
 router.get("/earnings", protect, checkSeller, getEarnings);
 router.get("/pendingEarnings", protect, checkSeller, getPendingEarnings);
 router.get("/negotiations", protect, checkSeller, getNegotiatingConversations);

@@ -194,6 +194,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
       </div>
 
       {/* ── Creator ── */}
+      
       <div className="flex items-center gap-3 py-3 border-t border-border/60">
 
         <Avatar className="h-8 w-8 ring-2 ring-primary/10">
@@ -207,35 +208,9 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
           <p className="text-[9px] text-muted truncate">{idea.creator?.collegeName}</p>
         </div>
 
-        {/* Owner Actions */}
-        {isOwner && (
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
-              }}
-            >
-              <Settings className="h-3.5 w-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg text-red-500 hover:bg-red-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(idea._id, idea.title);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
+       
       </div>
+      
 
       {/* ── Footer Stats ── */}
       <div className="flex items-center justify-between text-xs text-muted mt-2">
