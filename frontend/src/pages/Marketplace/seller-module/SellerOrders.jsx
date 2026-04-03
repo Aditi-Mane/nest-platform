@@ -80,7 +80,7 @@ const SellerOrderHistory = () => {
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Order History</h1>
-          <p className="text-muted">
+          <p className="text-muted mt-1">
             View all your completed and ongoing orders
           </p>
       </div>

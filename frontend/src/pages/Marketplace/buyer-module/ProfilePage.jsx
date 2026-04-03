@@ -298,7 +298,7 @@ export const ProfilePage = () => {
               {purchaseHistory
                 .filter(order => order !== null)
                 .map((order) => (
-                  <Card key={order._id} className="rounded-2xl hover:shadow-md">
+                  <Card key={order._id} className="rounded-2xl border-border hover:shadow-md">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-5">
 

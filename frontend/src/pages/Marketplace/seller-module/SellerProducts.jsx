@@ -374,7 +374,7 @@ const SellerProducts = () => {
       <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold">Products</h1>
-            <p className="text-muted">
+            <p className="text-muted mt-1">
               Manage your product inventory and performance
             </p>
             <p className="mt-2 text-sm flex items-center gap-3 text-muted">
