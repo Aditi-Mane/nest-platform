@@ -1,6 +1,12 @@
 from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
 
-client = MongoClient("mongodb+srv://aditimane549_db_user:O076GWNIpvfoSuni@nestdb.m9wm8kv.mongodb.net/?appName=nestDB")
+load_dotenv()
 
-db = client["test"]   
+mongo_uri = os.getenv("MONGO_URI")
+
+client = MongoClient(mongo_uri)
+
+db = client["test"]
 reviews_collection = db["reviews"]
