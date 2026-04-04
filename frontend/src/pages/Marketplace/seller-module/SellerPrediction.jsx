@@ -287,7 +287,7 @@ export default function SellerPrediction() {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await api.get("/analytics/all", { params: { range } });
+        const { data } = await api.get("/sales-analytics/all", { params: { range } });
         if (!data.success) throw new Error(data.error ?? "Unknown error");
         setDashboardData(data);
         setChartData(data.forecast?.chartData ?? []);
@@ -308,7 +308,7 @@ export default function SellerPrediction() {
     setTimeRange(range);
     setChartLoading(true);
     try {
-      const { data } = await api.get("/analytics/forecast", { params: { range } });
+      const { data } = await api.get("/sales-analytics/forecast", { params: { range } });
       if (data.success) setChartData(data.chartData ?? []);
     } catch (err) {
       console.error("Forecast fetch error:", err);

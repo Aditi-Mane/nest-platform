@@ -53,7 +53,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/ventures",      ventureRoutes);
 app.use("/api/applications",  applicationRoutes);   // separate prefix — fixes the /mine bug
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/analytics", salesPredictionRoutes);
+app.use("/api/sales-analytics", salesPredictionRoutes);
 
 app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")

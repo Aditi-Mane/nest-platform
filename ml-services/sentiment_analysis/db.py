@@ -1,12 +1,12 @@
-from pymongo import MongoClient
 import os
+from pymongo import MongoClient
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  
 
-mongo_uri = os.getenv("MONGO_URI")
+MONGO_URI = os.getenv("MONGO_URI")
 
-client = MongoClient(mongo_uri)
+client = MongoClient(MONGO_URI)
 
-db = client["test"]
+db = client["your_db_name"]
 reviews_collection = db["reviews"]

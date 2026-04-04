@@ -1,7 +1,7 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import { checkSeller } from "../middleware/sellerMiddleware.js";
-import { getConversationStats, getConversionFunnel, getDashboard, getOrdersTrend, getViewsTrend,getOverviewStats, getRevenueTrend, getTopProducts, getLowProducts } from "../controllers/analyticsController.js";
+import { getConversationStats, getConversionFunnel, getDashboard, getOrdersTrend, getViewsTrend,getOverviewStats, getRevenueTrend, getTopProducts,  } from "../controllers/analyticsController.js";
 
 const router = express.Router();
 
