@@ -360,7 +360,7 @@ if (!product) {
             </Card>
 
             {/* Details */}
-            <Card className="rounded-2xl">
+            <Card className="rounded-2xl border-border">
               <CardContent className="p-6">
                 <h1 className="text-3xl mb-2 font-bold">{product.name}</h1>
 
@@ -542,7 +542,7 @@ if (!product) {
             {/* Sidebar */}
           <div className="space-y-6">
                    {/* Purchase Card */}
-            <Card className="rounded-2xl top-24  self-start">
+            <Card className="rounded-2xl border-border top-24 self-start">
               <CardContent className="p-6 space-y-4">
           <Button
                   size="lg"
@@ -616,7 +616,7 @@ if (!product) {
             {/* Seller Card */}
            
             {seller && (
-              <Card className="rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+              <Card className="rounded-2xl border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Seller Information</CardTitle>
                 </CardHeader>
@@ -673,7 +673,7 @@ if (!product) {
               </Card>
             )}
 
-           <Card className="rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+           <Card className="rounded-2xl border-border shadow-sm hover:shadow-md transition-all duration-300">
   <CardHeader className="pb-2">
     <CardTitle className="flex items-center gap-2 text-base font-semibold">
       <Sparkles className="h-5 w-5 text-primary" />
@@ -702,7 +702,7 @@ if (!product) {
                   onClick={() =>
                     navigate(`/marketplace/buyer/product/${item._id}`)
                   }
-                  className="flex gap-3 p-2 rounded-xl hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                  className="flex cursor-pointer gap-3 rounded-xl border border-border bg-card p-2.5 transition-colors duration-200 hover:bg-background"
                 >
                   {/* Image */}
                   <div className="w-16 h-16 rounded-lg overflow-hidden border bg-white shrink-0">

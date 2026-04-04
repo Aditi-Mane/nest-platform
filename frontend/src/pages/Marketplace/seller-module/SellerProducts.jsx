@@ -28,6 +28,9 @@ const SellerProducts = () => {
   const [ratings, setRatings] = useState([]);
   const [overallRating, setOverallRating] = useState(0);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+
   useEffect(() => {
 
     const fetchAnalytics = async () => {
@@ -172,21 +175,24 @@ const SellerProducts = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
+  const handleDelete = (id) => {
+    setProductToDelete(id);
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmDelete) return;
-
+  const confirmDelete = async () => {
     try {
-      await api.delete(`/seller/delete/${id}`);
+      await api.delete(`/seller/delete/${productToDelete}`);
 
       //remove from UI instantly
-      setProducts((prev) => prev.filter((p) => p._id !== id));
+      setProducts((prev) => prev.filter((p) => p._id !== productToDelete));
 
+      toast.success("Product deleted successfully");
+
+      setShowDeleteModal(false);
+      setProductToDelete(null);
     } catch (error) {
-      alert(
+      toast.error(
         error.response?.data?.message ||
         "Failed to delete product"
       );
@@ -374,7 +380,7 @@ const SellerProducts = () => {
       <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold">Products</h1>
-            <p className="text-muted">
+            <p className="text-muted mt-1">
               Manage your product inventory and performance
             </p>
             <p className="mt-2 text-sm flex items-center gap-3 text-muted">
@@ -1237,6 +1243,32 @@ const SellerProducts = () => {
 
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-card rounded-2xl p-8 shadow-xl max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-text mb-4">Confirm Deletion</h2>
+            <p className="text-muted mb-6">
+              Are you sure you want to delete "{products.find(p => p._id === productToDelete)?.name}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 text-white rounded-xl py-3 shadow-md hover:opacity-90 transition"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

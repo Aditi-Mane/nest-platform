@@ -22,39 +22,55 @@ const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => {
   const showEdit = onEdit || isEditing;
 
   return(
-    <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
+    <div className="bg-card rounded-2xl border border-border p-8 shadow-sm hover:shadow-md transition">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-6 bg-primary rounded"></div>
+          <h2 className="text-lg font-semibold text-text">{title}</h2>
+        </div>
 
-        {showEdit &&
-          (isEditing ? (
-            <div className="flex gap-2">
-              <button onClick={onCancel} className="px-3 py-1 border rounded">
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <>
+              <button
+                onClick={onCancel}
+                className="px-3 py-1.5 text-sm rounded-full border border-border text-muted hover:text-text hover:bg-background transition"
+              >
                 Cancel
               </button>
-              <button onClick={onSave} className="px-3 py-1 bg-primary text-white rounded">
+              <button
+                onClick={onSave}
+                className="px-4 py-1.5 text-sm rounded-full bg-primary text-white hover:bg-primary/90 transition font-medium"
+              >
                 Save
               </button>
-            </div>
+            </>
           ) : (
-            <button onClick={onEdit}>
-              <MdEdit />
-            </button>
-          ))}
+            onEdit && (
+              <button
+                onClick={onEdit}
+                className="p-2 rounded-full hover:bg-background text-muted hover:text-primary transition"
+                aria-label={`Edit ${title}`}
+              >
+                <MdEdit size={18} />
+              </button>
+            )
+          )}
+        </div>
       </div>
 
-      {children}
+      <div className="space-y-6">{children}</div>
     </div>
   );
 };
 
 const Input = ({ label, disabled, ...props }) => (
   <div>
-    <label className="block text-sm mb-1">{label}</label>
+    <label className="block text-sm mb-1 text-muted">{label}</label>
     <input
       {...props}
       disabled={disabled}
-      className="w-full px-4 py-2 border rounded"
+      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition"
     />
   </div>
 );
@@ -139,20 +155,25 @@ export const ProfilePage = () => {
     }
   };
 
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [targetRole, setTargetRole] = useState("buyer");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   /* SWITCH ROLE */
-  const handleSwitchClick = async () => {
+  const handleSwitchClick = () => {
+    if (!user) return;
+    const newRole = user.activeRole === "buyer" ? "seller" : "buyer";
+    setTargetRole(newRole);
+    setShowSwitchModal(true);
+  };
+
+  const confirmSwitch = async () => {
     try {
-      const newRole = user.activeRole === "buyer" ? "seller" : "buyer";
-
-      const res = await api.put("/users/switch-role", {
-        role: newRole,
-      });
-
-      setUser((prev) => ({
-        ...prev,
-        activeRole: res.data.role,
-      }));
-
+      const res = await api.put("/users/switch-role", { role: targetRole });
+      setUser((prev) => ({ ...prev, activeRole: res.data.role }));
+      setShowSwitchModal(false);
       navigate(`/marketplace/${res.data.role}`);
     } catch (error) {
       console.log(error);
@@ -160,21 +181,34 @@ export const ProfilePage = () => {
   };
 
   /* LOGOUT */
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
   const confirmLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
     navigate("/auth/login");
+    setShowLogoutModal(false);
   };
 
   /* DELETE */
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
   const confirmDelete = async () => {
     try {
+      setDeleteLoading(true);
       await api.delete("/users/delete");
       localStorage.removeItem("token");
       setUser(null);
+      setShowDeleteModal(false);
       navigate("/auth/login");
     } catch (error) {
       console.log(error);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -208,7 +242,7 @@ export const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-white text-text">
-      <div className="p-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-8">
 
         {/* HEADER */}
         <div className="flex items-center justify-between">
@@ -216,7 +250,7 @@ export const ProfilePage = () => {
             <h1 className="text-3xl font-bold text-primary">
               Profile Settings
             </h1>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted mt-1">
               Manage your profile information
             </p>
           </div>
@@ -257,7 +291,7 @@ export const ProfilePage = () => {
             </div>
 
             {editingProfile && (
-              <label className="cursor-pointer px-4 py-2 rounded-full border text-sm hover:bg-background">
+              <label className="cursor-pointer px-4 py-2 rounded-full border text-sm hover:bg-background border-border text-text">
                 Choose Photo
                 <input
                   type="file"
@@ -289,6 +323,37 @@ export const ProfilePage = () => {
           </div>
         </Section>
 
+        {/* ACTIONS */}
+        <div className="flex justify-end gap-3 flex-wrap">
+          <button
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="px-4 py-2 text-sm rounded-full border border-border text-muted hover:text-text hover:bg-background transition"
+          >
+            Change Password
+          </button>
+
+          <button
+            onClick={handleSwitchClick}
+            className="px-4 py-2 text-sm rounded-full border border-border text-muted hover:text-text hover:bg-background transition"
+          >
+            Switch Profile
+          </button>
+
+          <button
+            onClick={handleLogoutClick}
+            className="px-4 py-2 text-sm rounded-full border border-border text-muted hover:text-text hover:bg-background transition"
+          >
+            Logout
+          </button>
+
+          <button
+            onClick={handleDeleteClick}
+            className="px-4 py-2 text-sm rounded-full bg-red-500/20 bg-opacity-10 text-red-600 hover:bg-red-500 hover:text-white transition"
+          >
+            Delete Account
+          </button>
+        </div>
+
         {/* ORDER */}
         <Section title="Orders">
           {purchaseHistory.length === 0 ? (
@@ -300,7 +365,7 @@ export const ProfilePage = () => {
               {purchaseHistory
                 .filter(order => order !== null)
                 .map((order) => (
-                  <Card key={order._id} className="rounded-2xl hover:shadow-md">
+                  <Card key={order._id} className="rounded-2xl border-border hover:shadow-md">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-5">
 
@@ -343,6 +408,7 @@ export const ProfilePage = () => {
 
                           <Button
                             size="sm"
+                            className="border border-border hover:bg-card"
                             variant="outline"
                             disabled={order.reviewed}
                             onClick={() => {
@@ -362,43 +428,39 @@ export const ProfilePage = () => {
           )}
         </Section>
 
-        {/* ACTIONS */}
-        <div className="flex justify-end gap-3 flex-wrap">
-          <button onClick={() => setIsPasswordModalOpen(true)} className="px-4 py-2 border rounded">
-            Change Password
-          </button>
-
-          <button onClick={handleSwitchClick} className="px-4 py-2 border rounded">
-            Switch Profile
-          </button>
-
-          <button onClick={confirmLogout} className="px-4 py-2 border rounded">
-            Logout
-          </button>
-
-          <button
-            onClick={confirmDelete}
-            className="px-4 py-2 bg-red-500/10 text-red-600 rounded"
-          >
-            Delete Account
-          </button>
-        </div>
-
       </div>
 
       {/* PASSWORD MODAL */}
       {isPasswordModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl p-6">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+            <button
+              onClick={() => setIsPasswordModalOpen(false)}
+              className="absolute top-3 right-3 text-muted hover:text-gray-800"
+              aria-label="Close password modal"
+            >
+              ✕
+            </button>
+
             <h3 className="text-xl font-semibold mb-4">Change Password</h3>
 
-            <input
-              type={showPassword ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password"
-              className="w-full px-4 py-3 border rounded-xl"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
 
             {passwordError && (
               <p className="text-red-500 text-sm mt-2">{passwordError}</p>
@@ -410,15 +472,15 @@ export const ProfilePage = () => {
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="px-4 py-2 border rounded"
+                className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePassChange}
-                className="px-4 py-2 bg-primary text-white rounded"
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-white hover:bg-primary/90"
               >
-                Save
+                Save Password
               </button>
             </div>
           </div>
@@ -431,6 +493,104 @@ export const ProfilePage = () => {
           productId={selectedProduct}
           onClose={handleReviewSubmitted}
         />
+      )}
+
+      {/* Switch Confirmation */}
+      {showSwitchModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+            <button
+              onClick={() => setShowSwitchModal(false)}
+              className="absolute top-3 right-3 text-muted hover:text-gray-800"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-2 text-text">Switch Profile</h3>
+            <p className="text-sm text-muted mb-6">
+              You are about to switch to <span className="font-semibold text-primary">{targetRole}</span> mode.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSwitchModal(false)}
+                className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSwitch}
+                className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90"
+              >
+                Confirm Switch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="absolute top-3 right-3 text-muted hover:text-gray-800"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-2 text-text">Logout</h3>
+            <p className="text-sm text-muted mb-6">Are you sure you want to log out of your account?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleteLoading}
+              className="absolute top-3 right-3 text-muted hover:text-gray-800"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-2 text-red-500">Delete Account</h3>
+            <p className="text-sm text-muted mb-4">This action cannot be undone.</p>
+            <p className="text-sm text-muted mb-6">
+              Your account will be permanently removed and all your personal data will be anonymized.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+                className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-gray-100 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600 disabled:opacity-60"
+              >
+                {deleteLoading ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

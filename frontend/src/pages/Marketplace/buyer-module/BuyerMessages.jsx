@@ -213,7 +213,7 @@ useEffect(() => {
 
   
 }}
-  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-muted"
+  className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-background"
 >
   {/* Avatar */}
   <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-semibold overflow-hidden shrink-0">

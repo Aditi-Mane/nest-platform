@@ -40,7 +40,7 @@ export function ProductCard({
             <img
               src={product.images[imageIndex].url}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="h-full w-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
             />
 
             {/* Image Dots for switching images */}

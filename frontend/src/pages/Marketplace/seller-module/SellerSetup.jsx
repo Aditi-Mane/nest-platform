@@ -12,6 +12,7 @@ import InputField from "../../../components/auth/InputField.jsx";
 import PrimaryButton from "../../../components/auth/PrimaryButton.jsx";
 
 import api from "../../../api/axios.js";
+import toast from "react-hot-toast";
 
 const SellerSetup = () => {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ const SellerSetup = () => {
       }
 
       await api.post("/seller/setup", formData);
+      toast.success("Store Setup done");
 
       navigate("/marketplace/seller");
 

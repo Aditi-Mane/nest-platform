@@ -49,7 +49,15 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
     navigate("/marketplace/buyer/ventures");
   }
   };
-  const { user } = useUser();
+  const { user, setUser } = useUser();
+
+  useEffect(() => {
+    if (!user?.avatar) {
+      api.get("/users/me").then(res => {
+        setUser(res.data);
+      }).catch(err => console.error(err));
+    }
+  }, []);
  
     
  
@@ -154,15 +162,12 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
 
             {/* Profile Avatar */}
             <Avatar
-              className="cursor-pointer border border-border"
+              className="cursor-pointer"
               onClick={() => onNavigate("profile")}
             >
               <AvatarImage
-                src={
-                  user?.avatar
-                    ? `http://localhost:5000${user.avatar}`
-                    : undefined
-                }
+                src={user?.avatar}
+                alt={user?.name || "User"}
               />
 
               <AvatarFallback className="bg-card text-text font-bold">

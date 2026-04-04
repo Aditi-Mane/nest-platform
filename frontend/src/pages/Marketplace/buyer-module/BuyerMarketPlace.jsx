@@ -2,8 +2,6 @@ import { Search, X } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import {
   SlidersHorizontal,
-  Grid3x3,
-  List,
   ShoppingBag,
   ShieldCheck,
 } from "lucide-react";
@@ -24,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import axios from "axios";
 import {useCart} from "../../../context/CartContext.jsx";
@@ -33,9 +30,6 @@ import { useUser } from "../../../context/UserContext.jsx";
 export default function Buying() {
   const navigate = useNavigate();
   const { user } = useUser();
-
-  
-  const [viewMode, setViewMode] = useState("grid");
 
   const { favourites, toggleFavourite } = useOutletContext();
 
@@ -110,74 +104,77 @@ useEffect(() => {
             </Button>
           )}
         </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-8">
+        <div className="relative mb-8 overflow-hidden rounded-[28px] border border-border bg-card p-6">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24" />
 
-          <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+          <div className="relative mb-6 flex flex-col gap-4 lg:flex-row lg:items-center">
 
             {/* Search */}
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <div className="group relative w-full">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition-colors duration-200 group-hover:text-primary" />
 
               <Input
                 placeholder="Search books, notes, electronics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 rounded-xl border border-gray-300 bg-gray-50 focus:bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition"
+                className="h-12 rounded-2xl border border-border bg-background/80 pl-11 pr-12 text-sm shadow-sm transition-all duration-200 hover:border-primary/35 hover:bg-card focus-visible:border-primary/45 focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
               />
 
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-all duration-200 hover:bg-background hover:text-text"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            {/* Sort + Grid/List */}
+            {/* Sort */}
             <div className="flex items-center gap-3 lg:ml-auto">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] rounded-xl border-gray-300">
+                <SelectTrigger className="h-12 w-[190px] rounded-2xl border-border bg-background/80 px-4 text-sm shadow-sm data-[size=default]:h-12 transition-all duration-200 hover:border-primary/35 hover:bg-card focus-visible:border-primary/45 focus-visible:ring-4 focus-visible:ring-primary/10">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
 
-                <SelectContent className="bg-white border rounded-lg shadow-md">
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectContent className="rounded-2xl border border-border bg-card shadow-xl">
+                  <SelectItem
+                    value="recent"
+                    className="rounded-xl px-3 py-2 text-text focus:bg-background focus:text-primary"
+                  >
+                    Most Recent
+                  </SelectItem>
+                  <SelectItem
+                    value="popular"
+                    className="rounded-xl px-3 py-2 text-text focus:bg-background focus:text-primary"
+                  >
+                    Most Popular
+                  </SelectItem>
+                  <SelectItem
+                    value="price-low"
+                    className="rounded-xl px-3 py-2 text-text focus:bg-background focus:text-primary"
+                  >
+                    Price: Low to High
+                  </SelectItem>
+                  <SelectItem
+                    value="price-high"
+                    className="rounded-xl px-3 py-2 text-text focus:bg-background focus:text-primary"
+                  >
+                    Price: High to Low
+                  </SelectItem>
                 </SelectContent>
               </Select>
-
-              <Tabs value={viewMode} onValueChange={setViewMode}>
-                <TabsList className="bg-gray-100">
-                  <TabsTrigger value="grid" >
-                    <Grid3x3 className="h-4 w-4" />
-                  </TabsTrigger>
-
-                  <TabsTrigger value="list" >
-                    <List className="h-4 w-4" />
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
             </div>
           </div>
 
           {/* Category + Filters */}
-          <div className="flex justify-between items-center">
+          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <CategoryFilter
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
             />
 
-            <Button
-              variant="outline"
-              className="rounded-xl flex items-center gap-2 border-gray-300 hover:bg-gray-100"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-            </Button>
+            
           </div>
         </div>
         {/*Products Section */}
@@ -189,13 +186,7 @@ useEffect(() => {
           </p>
         ) : (
           <>
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "space-y-4"
-            }
-          >
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {product.map((product) => (
               <ProductCard
                 key={product._id}
@@ -213,6 +204,7 @@ useEffect(() => {
 
         <div className="flex justify-center items-center gap-3 mt-10">
           <Button
+            className="border-border text-text"
             variant="outline"
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
@@ -220,11 +212,12 @@ useEffect(() => {
             Prev
           </Button>
 
-          <span className="text-sm">
+          <span className="text-sm text-text">
             Page {page} of {totalPages}
           </span>
 
           <Button
+          className="border-border text-text"
             variant="outline"
             disabled={page === totalPages}
             onClick={() => setPage((p) => p + 1)}

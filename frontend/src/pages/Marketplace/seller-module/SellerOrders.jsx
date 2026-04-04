@@ -3,6 +3,7 @@ import { FiCheckCircle, FiClock} from "react-icons/fi";
 import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
+import toast from "react-hot-toast";
 
 const SellerOrderHistory = () => {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ const SellerOrderHistory = () => {
         orderId: id
       })
       
+      toast.success("OTP Generated Successfully");
       await fetchSellerOrders();
     } catch (error) {
       console.error(error);
@@ -80,7 +82,7 @@ const SellerOrderHistory = () => {
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Order History</h1>
-          <p className="text-muted">
+          <p className="text-muted mt-1">
             View all your completed and ongoing orders
           </p>
       </div>

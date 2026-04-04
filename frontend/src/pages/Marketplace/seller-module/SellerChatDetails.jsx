@@ -199,7 +199,12 @@ return (
             {/* Confirm Deal */}
             {isSeller && ["initiated","negotiating","cancelled"].includes(conversationInfo?.status) && (
               <button
-                onClick={() => setShowDealModal(true)}
+                onClick={() => {
+                  setPricePerItem(conversationInfo.productId.price);
+                  setQuantity(1);
+                  setDealError("");
+                  setShowDealModal(true);
+                }}
                 className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white"
               >
                 Confirm Deal

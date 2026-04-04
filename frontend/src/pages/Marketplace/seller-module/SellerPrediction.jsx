@@ -127,33 +127,47 @@ function PriorityBadge({ priority }) {
 // ─────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="p-6 rounded-xl border border-border animate-pulse bg-card">
+    <div className="rounded-2xl border border-border bg-card p-6 animate-pulse">
       <div className="flex justify-between mb-4">
-        <div className="h-3 bg-muted rounded-full w-24" />
-        <div className="h-8 w-8 bg-muted rounded-lg" />
+        <div className="h-3 w-24 rounded-full bg-background" />
+        <div className="h-8 w-8 rounded-lg bg-background" />
       </div>
-      <div className="h-8 bg-muted rounded-lg w-3/4 mb-3" />
-      <div className="h-3 bg-muted rounded-full w-1/2" />
+      <div className="mb-3 h-8 w-3/4 rounded-lg bg-background" />
+      <div className="h-3 w-1/2 rounded-full bg-background" />
     </div>
   );
 }
 
 function ChartSkeleton() {
   return (
-    <div className="h-[450px] flex items-center justify-center">
-      <div className="text-center">
-        <div
-          className="w-16 h-16 rounded-full mx-auto mb-4 animate-spin"
-          style={{
-            border: `4px solid ${T.border}`,
-            borderTopColor: T.primary,
-          }}
-        />
-        <p className="font-semibold" style={{ color: T.primary }}>
-          Analysing your sales data…
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">Running forecast model</p>
+    <div className="h-[450px] rounded-2xl border border-border bg-card p-6 animate-pulse">
+      <div className="mb-5 h-5 w-40 rounded bg-background" />
+      <div className="h-[320px] rounded-2xl bg-background" />
+      <div className="mt-6 flex items-center justify-center gap-6 border-t border-border pt-5">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="flex items-center gap-2">
+            <div className="h-3 w-8 rounded-full bg-background" />
+            <div className="h-4 w-24 rounded bg-background" />
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+function PanelSkeleton({ rows = 4, rowHeight = "h-20" }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rows }).map((_, index) => (
+        <div
+          key={index}
+          className={`rounded-2xl border border-border bg-card p-4 animate-pulse ${rowHeight}`}
+        >
+          <div className="mb-3 h-4 w-1/3 rounded bg-background" />
+          <div className="mb-2 h-4 w-3/4 rounded bg-background" />
+          <div className="h-3 w-1/2 rounded bg-background" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -228,25 +242,25 @@ function ForecastTooltip({ active, payload, label }) {
 function StatCard({ accentColor, icon: Icon, iconBg, label, value, sub, subColor, badge, children }) {
   return (
     <Card
-      className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden rounded-2xl border border-border"
+      className="rounded-2xl border border-border p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
       style={{ borderLeft: `4px solid ${accentColor}` }}
     >
       
-      <div className="flex items-start justify-between mb-4">
+      <div className="mb-3 flex items-start justify-between">
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
           style={{ backgroundColor: iconBg }}
         >
           {typeof Icon === "string" ? Icon : <Icon size={20} style={{ color: accentColor }} />}
         </div>
         {badge}
       </div>
-      <p className="text-xs text-muted uppercase tracking-widest mb-1.5 font-medium">
+      <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted">
         {label}
       </p>
-      <p className="text-2xl font-bold text-text mb-1">{value}</p>
+      <p className="mb-0.5 text-2xl font-bold text-text">{value}</p>
       {sub && (
-        <p className="text-xs font-semibold mt-1" style={{ color: subColor ?? T.secondary }}>
+        <p className="mt-0.5 text-xs font-semibold" style={{ color: subColor ?? T.secondary }}>
           {sub}
         </p>
       )}
@@ -530,8 +544,8 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ REVENUE FORECAST CHART ━━━━━━━━━━━━━━━━ */}
-      <Card className="p-6 mb-6" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <Card className="mb-6 border border-border p-5" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-foreground mb-1">Revenue Forecast</h2>
             <p className="text-sm text-muted-foreground">
@@ -684,19 +698,19 @@ export default function SellerPrediction() {
       </Card>
 
       {/* ━━━━━━━━━━━━━━━━ INSIGHT KPI CARDS ━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+      <div className="grid grid-cols-1 gap-5 mb-6 md:grid-cols-2 lg:grid-cols-4">
         {loading ? (
           [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
         ) : (
           <>
             {/* Next Month Revenue */}
             <Card
-              className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+              className="relative overflow-hidden border border-border p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               style={{ borderLeft: `4px solid ${T.secondary}` }}
             >
             
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#e9ede4" }}>
+              <div className="mb-3 flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: "#e9ede4" }}>
                   <TrendingUp size={22} style={{ color: T.secondary }} />
                 </div>
                 <ColorBadge
@@ -707,10 +721,10 @@ export default function SellerPrediction() {
                   {summary.growthPct >= 0 ? "+" : ""}{summary.growthPct ?? 0}%
                 </ColorBadge>
               </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2 font-medium">
+              <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Next Month Forecast
               </p>
-              <p className="text-3xl font-extrabold text-foreground mb-2">
+              <p className="mb-1 text-3xl font-extrabold text-foreground">
                 {formatCurrency(summary.nextMonthForecast)}
               </p>
               <div className="flex items-center gap-2 text-xs">
@@ -730,13 +744,13 @@ export default function SellerPrediction() {
 
             {/* Best Seller */}
             <Card
-              className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+              className="relative overflow-hidden border border-border p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               style={{ borderLeft: `4px solid ${T.primary}` }}
             >
              
-              <div className="flex items-start justify-between mb-4">
+              <div className="mb-3 flex items-start justify-between">
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-2xl"
                   style={{ backgroundColor: "#f5e6d8" }}
                 >
                   🏆
@@ -745,12 +759,12 @@ export default function SellerPrediction() {
                   🔥 Top Seller
                 </ColorBadge>
               </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2 font-medium">
+              <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 This Month's Best Seller
               </p>
               {summary.bestSeller ? (
                 <>
-                  <p className="text-xl font-bold text-foreground mb-1">{summary.bestSeller.name}</p>
+                  <p className="mb-0.5 text-xl font-bold text-foreground">{summary.bestSeller.name}</p>
                   <p className="text-sm text-muted-foreground">
                     <span className="font-bold" style={{ color: T.primary }}>
                       {summary.bestSeller.units}
@@ -765,21 +779,21 @@ export default function SellerPrediction() {
 
             {/* Products Tracked */}
             <Card
-              className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+              className="relative overflow-hidden border border-border p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               style={{ borderLeft: `4px solid #64748b` }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-100">
+              <div className="mb-3 flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
                   <Package size={22} className="text-slate-500" />
                 </div>
                 <ColorBadge color="#64748b" bg="#f1f5f9">
                   Inventory
                 </ColorBadge>
               </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2 font-medium">
+              <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Products Tracked
               </p>
-              <p className="text-3xl font-extrabold text-foreground mb-2">{inventory.length}</p>
+              <p className="mb-1 text-3xl font-extrabold text-foreground">{inventory.length}</p>
               <p className="text-xs font-semibold" style={{ color: inventory.filter((i) => i.urgency === "high").length > 0 ? T.red : T.green }}>
                 {inventory.filter((i) => i.urgency === "high").length > 0
                   ? `🔴 ${inventory.filter((i) => i.urgency === "high").length} need restocking`
@@ -789,7 +803,7 @@ export default function SellerPrediction() {
 
             {/* Needs Attention */}
             <Card
-              className="p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+              className="relative overflow-hidden border border-border p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               style={{
                 borderLeft: `4px solid ${highUrgencyItem ? T.red : T.green}`,
                 background: highUrgencyItem
@@ -797,9 +811,9 @@ export default function SellerPrediction() {
                   : `linear-gradient(135deg, ${T.greenBg}60 0%, transparent 70%)`,
               }}
             >
-              <div className="flex items-start justify-between mb-4">
+              <div className="mb-3 flex items-start justify-between">
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
                   style={{ backgroundColor: highUrgencyItem ? T.redBg : T.greenBg }}
                 >
                   <AlertTriangle
@@ -808,13 +822,13 @@ export default function SellerPrediction() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2 font-medium">
+              <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Needs Attention
               </p>
               {highUrgencyItem ? (
                 <>
-                  <p className="text-xl font-bold text-foreground mb-1">{highUrgencyItem.product}</p>
-                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{highUrgencyItem.reason}</p>
+                  <p className="mb-0.5 text-xl font-bold text-foreground">{highUrgencyItem.product}</p>
+                  <p className="mb-1.5 line-clamp-2 text-sm text-muted-foreground">{highUrgencyItem.reason}</p>
                   <ColorBadge color={T.red} bg={T.redBg}>
                     <ArrowDownRight size={10} /> Action required
                   </ColorBadge>
@@ -833,14 +847,25 @@ export default function SellerPrediction() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Category Performance Chart */}
-        <Card className="lg:col-span-2 p-6" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-          <div className="mb-5">
+        <Card className="lg:col-span-2 border border-border p-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+          <div className="mb-4">
             <h2 className={`${SECTION_TITLE_CLASS} mb-1`}>Category Performance Forecast</h2>
             <p className={SECTION_SUBTITLE_CLASS}>Current vs predicted revenue by product category</p>
           </div>
 
           {loading ? (
-            <div className="h-[300px] animate-pulse rounded-xl" style={{ backgroundColor: "#f0ebe2" }} />
+            <div className="rounded-2xl border border-border bg-card p-6 animate-pulse">
+              <div className="mb-5 h-5 w-44 rounded bg-background" />
+              <div className="h-[220px] rounded-2xl bg-background" />
+              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-5 sm:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="rounded-xl bg-background p-3">
+                    <div className="mb-2 h-3 w-3/4 rounded bg-card" />
+                    <div className="h-5 w-1/2 rounded bg-card" />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : categories.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
               <div className="text-center">
@@ -915,21 +940,17 @@ export default function SellerPrediction() {
         </Card>
 
         {/* Smart Inventory Panel */}
-        <Card className="p-6" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-          <div className="flex items-center gap-2 mb-1">
+        <Card className="border border-border p-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+          <div className="mb-1 flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#f5e6d8" }}>
               <Package size={14} style={{ color: T.primary }} />
             </div>
             <h2 className="text-lg font-semibold text-text">Smart Inventory</h2>
           </div>
-          <p className="text-sm text-muted mb-5">AI-optimised stock levels</p>
+          <p className="mb-4 text-sm text-muted">AI-optimised stock levels</p>
 
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: "#f0ebe2" }} />
-              ))}
-            </div>
+            <PanelSkeleton rows={4} rowHeight="h-20" />
           ) : inventory.length === 0 ? (
             <div className="text-center py-10">
               <div className="text-4xl mb-2">📭</div>
@@ -983,9 +1004,9 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ AI SUGGESTIONS PANEL ━━━━━━━━━━━━━━━━ */}
-      <Card className="p-6" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+      <Card className="border border-border p-5" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div
               className="w-11 h-11 rounded-xl flex items-center justify-center"
               style={{
@@ -1012,11 +1033,7 @@ export default function SellerPrediction() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 rounded-xl animate-pulse" style={{ backgroundColor: "#f0ebe2" }} />
-            ))}
-          </div>
+          <PanelSkeleton rows={4} rowHeight="h-24" />
         ) : suggestions.length === 0 ? (
           <div className="text-center py-14">
             <div className="text-5xl mb-3">🔮</div>
@@ -1040,7 +1057,7 @@ export default function SellerPrediction() {
               return (
                 <div
                   key={index}
-                  className="flex items-start gap-4 p-5 rounded-xl transition-all duration-200 cursor-pointer group"
+                  className="group flex items-start gap-3 p-4 rounded-xl transition-all duration-200 cursor-pointer"
                   style={{
                     border: `1.5px solid ${T.border}40`,
                     backgroundColor: "transparent",
@@ -1068,7 +1085,7 @@ export default function SellerPrediction() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="mb-1.5 flex items-start justify-between gap-3">
                       <h3 className="font-bold text-foreground text-sm leading-snug group-hover:text-current transition-colors">
                         {suggestion.title}
                       </h3>
@@ -1077,7 +1094,7 @@ export default function SellerPrediction() {
                         <PriorityBadge priority={suggestion.priority} />
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                    <p className="mb-2 text-sm leading-relaxed text-muted-foreground">
                       {suggestion.description}
                     </p>
                     <div className="flex items-center gap-3 text-xs">
@@ -1146,3 +1163,4 @@ export default function SellerPrediction() {
     </div>
   );
 }
+

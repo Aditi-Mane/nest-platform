@@ -173,7 +173,6 @@ const SellerSettings = () => {
       setPasswordError("");
       const res = await api.put("/users/updatePassword", { password: newPassword });
 
-      setPasswordSuccess(res.data.message || "Password updated successfully");
       setNewPassword("");
       setTimeout(() => {
         setIsPasswordModalOpen(false);

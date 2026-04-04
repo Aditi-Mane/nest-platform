@@ -137,7 +137,7 @@ const SellerMessages = () => {
     <div className="bg-background min-h-screen p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">All Buyer Requests</h1>
-          <p className="text-muted">
+          <p className="text-muted mt-1">
             Complete list of all conversations and negotiations with potential buyers
           </p>
       </div>
