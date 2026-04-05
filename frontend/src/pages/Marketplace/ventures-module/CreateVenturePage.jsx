@@ -15,7 +15,7 @@ import { UserCheck, Search } from "lucide-react";
 import { toast } from "sonner";
 import { createVenture } from "@/api/venturesApi";
 import api from "../../../api/axios";
-
+import { useUser } from "../../../context/UserContext";
 const CATEGORIES = [
   "EdTech", "Social Impact", "Marketplace", "E-commerce",
   "Health & Wellness", "Sustainability", "Fintech", "Entertainment", "Other",
@@ -28,7 +28,7 @@ export default function CreateVenturePage() {
   const [description,     setDescription]     = useState("");
   const [fullDescription, setFullDescription] = useState("");
   const [category,        setCategory]        = useState("");
-  const [stage,           setStage]           = useState("ideation");
+  const [stage,           setStage]           = useState("draft");
   const [teamLimit,       setTeamLimit]       = useState("5");
   const [isRecruiting,    setIsRecruiting]    = useState(false);
   const [tags,            setTags]            = useState([]);
@@ -48,6 +48,7 @@ const [searchingUser,   setSearchingUser]   = useState(false);
 const [userSearchErr,   setUserSearchErr]   = useState("");
 const [teamMembers,     setTeamMembers]     = useState([]);
 
+const { user } = useUser();
 const handleEmailSearch = async () => {
   if (!memberEmail.trim()) return;
   setSearchingUser(true);
@@ -56,7 +57,7 @@ const handleEmailSearch = async () => {
   try {
     const { data } = await api.get('/users/search', { params: { email: memberEmail.trim() } });
     // Don't allow adding yourself or duplicates
-    if (data.user._id === req?.user?._id) {
+   if (data.user._id === user?._id){
       setUserSearchErr("You're already the founder.");
     } else if (teamMembers.some((m) => m._id === data.user._id)) {
       setUserSearchErr("This person is already added.");
@@ -118,8 +119,8 @@ const removeMember = (id) => setTeamMembers(teamMembers.filter((m) => m._id !== 
      const { data } = await createVenture({
   title, description, fullDescription, category,
   stage, teamLimit: Number(teamLimit),
-  openRoles, tags, isRecruiting,
-  teamMembers: teamMembers.map((m) => ({   
+  openRoles, tags, isRecruiting, milestones: [], 
+  teamMembers: (teamMembers || []).map((m) => ({   
     email: m.email,
     role: m.role,
     collegeName: m.collegeName,
@@ -291,7 +292,7 @@ const progress = Math.round((completedSteps / 6) * 100);
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="ideation">Ideation – Just an idea</SelectItem>
+                      <SelectItem value="draft">Ideation – Just an idea</SelectItem>
                       <SelectItem value="building">Building – Actively developing</SelectItem>
                       <SelectItem value="ready-to-pitch">Ready to Pitch – Looking for investors</SelectItem>
                     </SelectContent>
