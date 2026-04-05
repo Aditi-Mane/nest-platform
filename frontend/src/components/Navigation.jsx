@@ -74,11 +74,15 @@ export function Navigation({ currentPage, onNavigate, wishlistCount }) {
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => onNavigate("marketplace")}
           >
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
-              <span className="text-white text-xl font-bold">N</span>
+            <div className="rounded-xl flex items-center justify-center">
+              <img
+                src="/NEST_logo.png"  
+                alt="NEST Logo"
+                className="size-10 object-contain"
+              />
             </div>
 
-            <span className="text-xl font-semibold text-text">
+            <span className="text-xl font-bold text-text">
               NEST
             </span>
           </div>

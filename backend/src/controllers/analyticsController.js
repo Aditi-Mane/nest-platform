@@ -173,8 +173,8 @@ export const getTopProducts = async (req, res) => {
 
     const formatted = rawData.map((item, index) => ({
       id: item._id,
-      name: item.productName || "Unknown",
-      image: item.productImage || "",
+      name: item.product?.name || "Unknown",
+      image: item.product?.images?.[0]?.url || "",
       sales: item.totalSales,
       revenue: item.revenue,
       rank: index + 1,
@@ -255,8 +255,8 @@ export const getDashboard = async (req, res) => {
 
     const topProducts = topProductsRaw.map((item, index) => ({
       id: item._id,
-      name: item.productName || "Unknown",
-      image: item.productImage || "",
+      name: item.product?.name || "Unknown",
+      image: item.product?.images?.[0]?.url || "",
       sales: item.totalSales,
       revenue: item.revenue,
       rank: index + 1,
