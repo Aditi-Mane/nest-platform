@@ -60,11 +60,15 @@ const SellerSidebar = () => {
       <div>
         {/* LOGO */}
         <div className="flex items-center gap-3 p-5 border-b border-border">
-          <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center text-lg">
-            <GoPackage size={27} />
+          <div className="rounded-xl text-white flex items-center justify-center text-lg">
+            <img
+              src="/NEST_logo.png"  
+              alt="NEST Logo"
+              className="size-12 object-contain"
+            />
           </div>
           <div>
-            <h1 className="font-bold text-lg">NEST</h1>
+            <h1 className="font-bold text-lg text-text">NEST</h1>
             <p className="text-sm text-muted">
               Seller Dashboard
             </p>

@@ -58,6 +58,9 @@ export default function ProductDetailPage() {
   const [loadingRecs, setLoadingRecs] = useState(true);   
   const location = useLocation();
 
+  const conversationStatus = conversation?.status || null;
+  const productStatus = product?.status;
+
 
   //selected photo
   const [selectedImage, setSelectedImage] = useState(null);
@@ -124,7 +127,7 @@ const getHoverStyle = (status, productStatus) => {
 
 const isContactButtonDisabled = (status, productStatus) => {
   return (
-    status === "deal_confirmed" ||
+   
     productStatus === "sold" ||
     productStatus === "reserved"
   );
@@ -171,12 +174,15 @@ const getSoftHover = (productStatus, conversationStatus, type = "contact") => {
 
 
 const fetchConversation = async () => {
-        try {
-          const res = await api.get(`/conversations/product/${id}`);
-          setConversation(res.data.conversation);
-        } catch (err) {
-          // no conversation exists → fine
-        }
+  try {
+    const res = await api.get("/conversations/buyer");  // same as CartPage
+    const matched = res.data.conversations.find(
+      (c) => c.productId?._id === id
+    );
+    setConversation(matched || null);
+  } catch (err) {
+    // no conversation → fine
+  }
 };
 
   //fetch product details from backend
@@ -559,10 +565,10 @@ if (!product) {
           <Button
                   size="lg"
                   className={`w-full rounded-xl border 
-                    ${getButtonStyle(conversation?.status, product?.status)}
-                    ${getHoverStyle(conversation?.status, product?.status)}
+                    ${getButtonStyle(conversationStatus, productStatus)}
+                    ${getHoverStyle(conversationStatus, productStatus)}
                     shadow-none! transition-all`}
-                  disabled={isContactButtonDisabled(conversation?.status, product?.status)}
+                    disabled={isContactButtonDisabled(conversationStatus, productStatus)}
                   onClick={async () => {
                           try {
 
@@ -596,7 +602,7 @@ if (!product) {
                 }}
                 >
                   <MessageSquare className="h-5 w-5 mr-2" />
-                  {getContactButtonText(conversation?.status, product?.status)}
+                  {getContactButtonText(conversationStatus, productStatus)}
                 </Button>
 
                 <div className="text-center text-sm text-muted-foreground">

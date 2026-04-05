@@ -5,29 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Heart, Share2, Users, CheckCircle2, Clock,
-  TrendingUp, MessageSquare, Loader2, ChevronRight, Star,
-  Plus, Trash2, Pencil, X, Check, AlertCircle, ExternalLink,
-  Send, Settings, ToggleLeft, ToggleRight, UserPlus, Award,
+  TrendingUp, Loader2, ChevronRight, Star,
+  Trash2, Pencil, X, Check, AlertCircle, ExternalLink,
+  Send, ToggleLeft, ToggleRight, UserPlus, Award, Plus, MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchVentureById, toggleLike, toggleFollow, toggleEndorse, applyToVenture,
   fetchApplications, updateApplication,
-  addMilestone, updateMilestone, deleteMilestone,
   postUpdate, addComment,
   updateVenture, removeTeamMember,
   getApplicationStatus,
 } from "@/api/venturesApi";
 import { useUser } from "@/context/UserContext";
 import api from "../../../api/axios";
-
-
 
 // ── Stage config ──────────────────────────────────────────────────────────────
 const stageConfig = {
@@ -38,6 +34,40 @@ const stageConfig = {
   recruiting:       { label: "Recruiting",      className: "bg-orange-100 text-orange-700 border-orange-200" },
 };
 
+// ── Generic Confirm Modal ─────────────────────────────────────────────────────
+function ConfirmModal({ title, description, onConfirm, onCancel, loading }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onCancel}>
+      <Card className="w-full max-w-sm rounded-2xl shadow-xl border border-border" onClick={(e) => e.stopPropagation()}>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">{title}</p>
+              <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={onCancel} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white gap-2"
+              onClick={onConfirm}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Confirm
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ── Apply Modal (3-step) ──────────────────────────────────────────────────────
 function ApplyModal({ venture, onClose, onSuccess }) {
   const [step, setStep]             = useState(1);
@@ -47,7 +77,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [resumeUrl, setResumeUrl]   = useState("");
   const [submitting, setSubmitting] = useState(false);
- 
+
   const selectedRole = role === "Other" ? customRole : role;
 
   const handleSubmit = async () => {
@@ -63,6 +93,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
       });
       setStep(3);
       onSuccess(data.application);
+      toast.success("Application Sent!")
     } catch (err) {
       toast.error(err?.response?.data?.message ?? "Failed to send application.");
     } finally {
@@ -89,30 +120,24 @@ function ApplyModal({ venture, onClose, onSuccess }) {
             </div>
           )}
         </CardHeader>
-
         <CardContent className="p-6">
           {step === 1 && (
             <div className="space-y-4">
               <p className="text-sm font-medium">Which role are you applying for?</p>
               <div className="space-y-2">
                 {venture.openRoles?.map((r) => (
-                  <button
-                    key={r._id}
-                    onClick={() => setRole(r.title)}
+                  <button key={r._id} onClick={() => setRole(r.title)}
                     className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${
                       role === r.title ? "border-primary bg-primary/5 text-primary font-medium" : "border-border hover:border-primary/50"
-                    }`}
-                  >
+                    }`}>
                     <span className="font-medium">{r.title}</span>
                     <span className="text-muted-foreground ml-2">— {r.skills?.join(", ")}</span>
                   </button>
                 ))}
-                <button
-                  onClick={() => setRole("Other")}
+                <button onClick={() => setRole("Other")}
                   className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${
                     role === "Other" ? "border-primary bg-primary/5 text-primary font-medium" : "border-border hover:border-primary/50"
-                  }`}
-                >
+                  }`}>
                   Other (specify)
                 </button>
               </div>
@@ -120,16 +145,13 @@ function ApplyModal({ venture, onClose, onSuccess }) {
                 <Input placeholder="Describe your role..." value={customRole}
                   onChange={(e) => setCustomRole(e.target.value)} className="rounded-xl" autoFocus />
               )}
-              <Button
-                className="w-full rounded-xl gap-2"
+              <Button className="w-full rounded-xl gap-2"
                 disabled={!role || (role === "Other" && !customRole.trim())}
-                onClick={() => setStep(2)}
-              >
+                onClick={() => setStep(2)}>
                 Continue <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}
-
           {step === 2 && (
             <div className="space-y-4">
               <div>
@@ -137,12 +159,9 @@ function ApplyModal({ venture, onClose, onSuccess }) {
                   Why do you want to join? *
                   <span className="text-muted-foreground font-normal ml-1">(max 200 chars)</span>
                 </Label>
-                <Textarea
-                  placeholder="Tell the creator what you'll bring to the team..."
-                  value={whyJoin}
-                  onChange={(e) => setWhyJoin(e.target.value.slice(0, 200))}
-                  rows={4} className="mt-1.5 rounded-xl"
-                />
+                <Textarea placeholder="Tell the creator what you'll bring to the team..."
+                  value={whyJoin} onChange={(e) => setWhyJoin(e.target.value.slice(0, 200))}
+                  rows={4} className="mt-1.5 rounded-xl" />
                 <p className="text-xs text-muted-foreground mt-1 text-right">{whyJoin.length}/200</p>
               </div>
               <div>
@@ -159,7 +178,6 @@ function ApplyModal({ venture, onClose, onSuccess }) {
                 </Label>
                 <Input placeholder="Link to your resume (Google Drive, Notion, etc.)" value={resumeUrl}
                   onChange={(e) => setResumeUrl(e.target.value)} className="mt-1.5 rounded-xl" />
-                <p className="text-xs text-muted-foreground mt-1">A portfolio link carries more weight for most student roles.</p>
               </div>
               <div className="flex gap-3 pt-2">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStep(1)}>Back</Button>
@@ -169,7 +187,6 @@ function ApplyModal({ venture, onClose, onSuccess }) {
               </div>
             </div>
           )}
-
           {step === 3 && (
             <div className="text-center py-4 space-y-4">
               <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
@@ -196,25 +213,6 @@ function ApplicationsTab({ ventureId, onVentureUpdate }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [actionId, setActionId]         = useState(null);
-  const [status, setStatus] = useState(null);
-
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await api.get(`/applications/${ventureId}/status`);
-        setStatus(res.data.status);
-      } catch (error) {
-        console.log("Error fetching status:", error);
-        setStatus(null); // means not applied or error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (ventureId) {
-      fetchStatus();
-    }
-  }, [ventureId]);
 
   useEffect(() => {
     const load = async () => {
@@ -235,9 +233,7 @@ function ApplicationsTab({ ventureId, onVentureUpdate }) {
     try {
       setActionId(appId);
       await updateApplication(ventureId, appId, { status });
-      setApplications((prev) =>
-        prev.map((a) => (a._id === appId ? { ...a, status } : a))
-      );
+      setApplications((prev) => prev.map((a) => (a._id === appId ? { ...a, status } : a)));
       toast.success(status === "accepted" ? "Application accepted!" : "Application rejected.");
       if (onVentureUpdate) onVentureUpdate();
     } catch {
@@ -247,14 +243,11 @@ function ApplicationsTab({ ventureId, onVentureUpdate }) {
     }
   };
 
-  const statusBadge = (status) => {
-    const map = {
-      pending:  "bg-yellow-100 text-yellow-700 border-yellow-200",
-      accepted: "bg-green-100 text-green-700 border-green-200",
-      rejected: "bg-red-100 text-red-700 border-red-200",
-    };
-    return map[status] ?? map.pending;
-  };
+  const statusBadge = (s) => ({
+    pending:  "bg-yellow-100 text-yellow-700 border-yellow-200",
+    accepted: "bg-green-100 text-green-700 border-green-200",
+    rejected: "bg-red-100 text-red-700 border-red-200",
+  }[s] ?? "bg-yellow-100 text-yellow-700 border-yellow-200");
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -278,7 +271,6 @@ function ApplicationsTab({ ventureId, onVentureUpdate }) {
           <span>{applications.filter((a) => a.status === "accepted").length} accepted</span>
         </div>
       </div>
-
       {applications.map((app) => (
         <div key={app._id} className="p-4 bg-gray-50 rounded-xl border border-border">
           <div className="flex items-start gap-3">
@@ -289,58 +281,37 @@ function ApplicationsTab({ ventureId, onVentureUpdate }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-medium text-sm">{app.applicant?.name}</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${statusBadge(app.status)}`}>
-                  {app.status}
-                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${statusBadge(app.status)}`}>{app.status}</span>
                 <Badge variant="outline" className="text-xs">{app.roleAppliedFor}</Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">{app.applicant?.major}</p>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{app.whyJoin}</p>
               <div className="flex gap-3 mt-2">
                 {app.portfolioUrl && (
-                  <a
-                    href={app.portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <a href={app.portfolioUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
                     <ExternalLink className="h-3 w-3" /> Portfolio
                   </a>
                 )}
                 {app.resumeUrl && (
-                  <a
-                    href={app.resumeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
                     <ExternalLink className="h-3 w-3" /> Resume
                   </a>
                 )}
               </div>
             </div>
           </div>
-
           {app.status === "pending" && (
             <div className="flex gap-2 mt-4">
-              <Button
-                size="sm"
-                className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 gap-1.5"
-                disabled={actionId === app._id}
-                onClick={() => handleAction(app._id, "accepted")}
-              >
+              <Button size="sm" className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 gap-1.5"
+                disabled={actionId === app._id} onClick={() => handleAction(app._id, "accepted")}>
                 {actionId === app._id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                 Accept
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
+              <Button size="sm" variant="outline"
                 className="flex-1 rounded-xl text-red-600 border-red-200 hover:bg-red-50 gap-1.5"
-                disabled={actionId === app._id}
-                onClick={() => handleAction(app._id, "rejected")}
-              >
+                disabled={actionId === app._id} onClick={() => handleAction(app._id, "rejected")}>
                 <X className="h-3.5 w-3.5" /> Reject
               </Button>
             </div>
@@ -352,35 +323,43 @@ function ApplicationsTab({ ventureId, onVentureUpdate }) {
 }
 
 // ── Manage Tab (creator only) ─────────────────────────────────────────────────
-function ManageTab({ venture, onVentureUpdate }) {
-  const [editMode, setEditMode]         = useState(false);
-  const [saving, setSaving]             = useState(false);
-  const [editData, setEditData]         = useState({
-    title:        venture.title,
-    description:  venture.description,
+function ManageTab({ venture, onVentureUpdate, onArchiveClick }) {
+  const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving]     = useState(false);
+
+  const [editData, setEditData] = useState({
+    title:           venture.title,
+    description:     venture.description,
     fullDescription: venture.fullDescription ?? "",
-    category:     venture.category,
-    stage:        venture.stage,
-    isRecruiting: venture.isRecruiting,
+    stage:           venture.stage,
+    teamLimit:       venture.teamLimit ?? 5,
   });
 
-  // Milestones
-  const [milestones, setMilestones]     = useState(venture.milestones ?? []);
-  const [newMilestone, setNewMilestone] = useState({ title: "", targetDate: "" });
-  const [addingMilestone, setAddingMilestone] = useState(false);
-  const [milestoneLoading, setMilestoneLoading] = useState(null);
+  // Roles
+  const [openRoles, setOpenRoles]   = useState(venture.openRoles ?? []);
+  const [newRole, setNewRole]       = useState({ title: "", skills: "", spots: 1 });
+  const [addingRole, setAddingRole] = useState(false);
+  const [roleError, setRoleError]   = useState("");
 
-  // Update feed
-  const [updateText, setUpdateText]     = useState("");
+  // Progress update
+  const [updateText, setUpdateText]       = useState("");
   const [postingUpdate, setPostingUpdate] = useState(false);
-  const [updates, setUpdates]           = useState(venture.updates ?? []);
+  const [updates, setUpdates]             = useState(venture.updates ?? []);
 
   const set = (field, value) => setEditData((prev) => ({ ...prev, [field]: value }));
 
+  // ── Save venture details ──
   const handleSaveInfo = async () => {
+    if (!editData.title.trim()) { toast.error("Title is required."); return; }
     try {
       setSaving(true);
-      const { data } = await updateVenture(venture._id, editData);
+      const { data } = await updateVenture(venture._id, {
+        title:           editData.title,
+        description:     editData.description,
+        fullDescription: editData.fullDescription,
+        stage:           editData.stage,
+        teamLimit:       Number(editData.teamLimit),
+      });
       onVentureUpdate(data.venture);
       setEditMode(false);
       toast.success("Venture updated!");
@@ -391,6 +370,7 @@ function ManageTab({ venture, onVentureUpdate }) {
     }
   };
 
+  // ── Toggle recruiting ──
   const handleToggleRecruiting = async () => {
     try {
       const { data } = await updateVenture(venture._id, { isRecruiting: !venture.isRecruiting });
@@ -401,52 +381,52 @@ function ManageTab({ venture, onVentureUpdate }) {
     }
   };
 
-  const handleAddMilestone = async () => {
-    if (!newMilestone.title.trim()) { toast.error("Enter a milestone title."); return; }
+  // ── Add role ──
+  const handleAddRole = async () => {
+    setRoleError("");
+    if (!newRole.title.trim()) { setRoleError("Role title is required."); return; }
+    if (Number(newRole.spots) < 1) { setRoleError("Openings must be at least 1."); return; }
     try {
-      setAddingMilestone(true);
-      const { data } = await addMilestone(venture._id, newMilestone);
-      setMilestones((prev) => [...prev, data.milestone]);
-      setNewMilestone({ title: "", targetDate: "" });
-      toast.success("Milestone added.");
+      setAddingRole(true);
+      const skillsArray = newRole.skills.split(",").map((s) => s.trim()).filter(Boolean);
+      const updatedRoles = [
+        ...openRoles,
+        { title: newRole.title.trim(), skills: skillsArray, spots: Number(newRole.spots) },
+      ];
+      const { data } = await updateVenture(venture._id, { openRoles: updatedRoles });
+      setOpenRoles(data.venture.openRoles);
+      onVentureUpdate(data.venture);
+      setNewRole({ title: "", skills: "", spots: 1 });
+      toast.success("Role added.");
     } catch {
-      toast.error("Failed to add milestone.");
+      toast.error("Failed to add role.");
     } finally {
-      setAddingMilestone(false);
+      setAddingRole(false);
     }
   };
 
-  const handleToggleMilestone = async (mid, completed) => {
+  // ── Delete role ──
+  const handleDeleteRole = async (roleId) => {
     try {
-      setMilestoneLoading(mid);
-      const { data } = await updateMilestone(venture._id, mid, { completed: !completed });
-      setMilestones((prev) => prev.map((m) => (m._id === mid ? data.milestone : m)));
+      const updatedRoles = openRoles.filter((r) => (r._id ?? r.title) !== (roleId ?? r.title));
+      const { data } = await updateVenture(venture._id, { openRoles: updatedRoles });
+      setOpenRoles(data.venture.openRoles);
+      onVentureUpdate(data.venture);
+      toast.success("Role removed.");
     } catch {
-      toast.error("Failed to update milestone.");
-    } finally {
-      setMilestoneLoading(null);
+      toast.error("Failed to remove role.");
     }
   };
 
-  const handleDeleteMilestone = async (mid) => {
-    try {
-      setMilestoneLoading(mid);
-      await deleteMilestone(venture._id, mid);
-      setMilestones((prev) => prev.filter((m) => m._id !== mid));
-      toast.success("Milestone removed.");
-    } catch {
-      toast.error("Failed to delete milestone.");
-    } finally {
-      setMilestoneLoading(null);
-    }
-  };
-
+  // ── Post progress update ──
   const handlePostUpdate = async () => {
     if (!updateText.trim()) { toast.error("Write something first."); return; }
     try {
       setPostingUpdate(true);
       const { data } = await postUpdate(venture._id, { text: updateText });
-      setUpdates((prev) => [data.update, ...prev]);
+      // backend returns { venture } — grab the first update
+      const newUpdate = data.update ?? data.venture?.updates?.[0];
+      if (newUpdate) setUpdates((prev) => [newUpdate, ...prev]);
       setUpdateText("");
       toast.success("Update posted!");
     } catch {
@@ -459,21 +439,104 @@ function ManageTab({ venture, onVentureUpdate }) {
   return (
     <div className="space-y-8">
 
-      {/* ── Quick Controls ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── Venture Details ── */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Venture Details</h3>
+          {!editMode
+            ? <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={() => setEditMode(true)}>
+                <Pencil className="h-3.5 w-3.5" /> Edit
+              </Button>
+            : <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setEditMode(false)} disabled={saving}>
+                  Cancel
+                </Button>
+                <Button size="sm" className="rounded-xl gap-1" onClick={handleSaveInfo} disabled={saving}>
+                  {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Save Changes
+                </Button>
+              </div>
+          }
+        </div>
+
+        {editMode ? (
+          <div className="space-y-4">
+            <div>
+              <Label>Title *</Label>
+              <Input value={editData.title} onChange={(e) => set("title", e.target.value)} className="mt-1.5 rounded-xl" />
+            </div>
+            <div>
+              <Label>Short Description</Label>
+              <Textarea
+                value={editData.description}
+                onChange={(e) => set("description", e.target.value.slice(0, 300))}
+                rows={3} className="mt-1.5 rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground mt-1 text-right">{editData.description.length}/300</p>
+            </div>
+            <div>
+              <Label>Full Description</Label>
+              <Textarea
+                value={editData.fullDescription}
+                onChange={(e) => set("fullDescription", e.target.value)}
+                rows={6} className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Stage</Label>
+                <select
+                  className="mt-1.5 w-full text-sm border border-border rounded-xl px-3 py-2 bg-white"
+                  value={editData.stage}
+                  onChange={(e) => set("stage", e.target.value)}
+                >
+                  <option value="ideation">Ideation</option>
+                  <option value="building">Building</option>
+                  <option value="ready-to-pitch">Ready to Pitch</option>
+                  <option value="recruiting">Recruiting</option>
+                  <option value="active">Active</option>
+                </select>
+              </div>
+              <div>
+                <Label>Max Team Size</Label>
+                <Input
+                  type="number" min={1} max={50}
+                  value={editData.teamLimit}
+                  onChange={(e) => set("teamLimit", e.target.value)}
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-gray-50 rounded-xl border border-border space-y-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <p className="font-medium text-sm">{venture.title}</p>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full border ${stageConfig[venture.stage]?.className ?? ""}`}>
+                {stageConfig[venture.stage]?.label}
+              </span>
+              <span className="text-xs text-muted-foreground">Team limit: {venture.teamLimit}</span>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">{venture.description}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Recruiting Toggle + Roles ── */}
+      <div>
+        <h3 className="font-semibold mb-4">Recruiting</h3>
+
         <div
           onClick={handleToggleRecruiting}
-          className={`p-4 rounded-xl border cursor-pointer transition-colors ${
-            venture.isRecruiting
-              ? "bg-orange-50 border-orange-200"
-              : "bg-gray-50 border-border hover:border-orange-200"
+          className={`p-4 rounded-xl border cursor-pointer transition-colors mb-4 ${
+            venture.isRecruiting ? "bg-orange-50 border-orange-200" : "bg-gray-50 border-border hover:border-orange-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">Actively Recruiting</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {venture.isRecruiting ? "Students can submit join requests" : "Applications paused"}
+                {venture.isRecruiting ? "Students can submit join requests" : "Applications are paused"}
               </p>
             </div>
             {venture.isRecruiting
@@ -483,154 +546,87 @@ function ManageTab({ venture, onVentureUpdate }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border bg-gray-50 border-border">
-          <p className="font-medium text-sm">Stage</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Current: {stageConfig[venture.stage]?.label}</p>
-          <select
-            className="mt-2 w-full text-sm border border-border rounded-lg px-2 py-1.5 bg-white"
-            value={editData.stage}
-            onChange={(e) => set("stage", e.target.value)}
-          >
-            <option value="ideation">Ideation</option>
-            <option value="building">Building</option>
-            <option value="ready-to-pitch">Ready to Pitch</option>
-            <option value="recruiting">Recruiting</option>
-            <option value="active">Active</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ── Edit Venture Info ── */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Venture Details</h3>
-          {!editMode
-            ? <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={() => setEditMode(true)}>
-                <Pencil className="h-3.5 w-3.5" /> Edit
-              </Button>
-            : <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
-                <Button size="sm" className="rounded-xl" onClick={handleSaveInfo} disabled={saving}>
-                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                  Save
-                </Button>
-              </div>
-          }
-        </div>
-
-        {editMode ? (
+        {/* Roles — shown only when recruiting is ON */}
+        {venture.isRecruiting && (
           <div className="space-y-4">
-            <div>
-              <Label>Title</Label>
-              <Input value={editData.title} onChange={(e) => set("title", e.target.value)} className="mt-1.5 rounded-xl" />
-            </div>
-            <div>
-              <Label>Short Description</Label>
-              <Textarea value={editData.description} onChange={(e) => set("description", e.target.value.slice(0, 300))}
-                rows={3} className="mt-1.5 rounded-xl" />
-              <p className="text-xs text-muted-foreground mt-1">{editData.description.length}/300</p>
-            </div>
-            <div>
-              <Label>Full Description</Label>
-              <Textarea value={editData.fullDescription} onChange={(e) => set("fullDescription", e.target.value)}
-                rows={6} className="mt-1.5 rounded-xl" />
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 bg-gray-50 rounded-xl border border-border">
-            <p className="font-medium text-sm mb-1">{venture.title}</p>
-            <p className="text-sm text-muted-foreground line-clamp-3">{venture.description}</p>
-          </div>
-        )}
-      </div>
 
-      {/* ── Milestones ── */}
-      <div>
-        <h3 className="font-semibold mb-4">Milestones</h3>
+            {openRoles.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-2">No roles added yet. Add one below.</p>
+            )}
 
-        {/* Add milestone */}
-        <div className="flex gap-2 mb-4">
-          <Input
-            placeholder="Milestone title..."
-            value={newMilestone.title}
-            onChange={(e) => setNewMilestone((m) => ({ ...m, title: e.target.value }))}
-            className="rounded-xl"
-            onKeyDown={(e) => e.key === "Enter" && handleAddMilestone()}
-          />
-          <Input
-            type="date"
-            value={newMilestone.targetDate}
-            onChange={(e) => setNewMilestone((m) => ({ ...m, targetDate: e.target.value }))}
-            className="rounded-xl w-44"
-          />
-          <Button
-            variant="outline"
-            className="rounded-xl px-3 shrink-0"
-            onClick={handleAddMilestone}
-            disabled={addingMilestone || !newMilestone.title.trim()}
-          >
-            {addingMilestone ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          </Button>
-        </div>
-
-        {milestones.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">No milestones yet.</p>
-        )}
-
-        <div className="space-y-2">
-          {milestones.map((m) => (
-            <div
-              key={m._id}
-              className={`flex items-center gap-3 p-3 rounded-xl border ${
-                m.completed ? "bg-green-50 border-green-200" : "bg-gray-50 border-border"
-              }`}
-            >
-              <button
-                onClick={() => handleToggleMilestone(m._id, m.completed)}
-                disabled={milestoneLoading === m._id}
-                className="shrink-0"
-              >
-                {milestoneLoading === m._id
-                  ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  : m.completed
-                    ? <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    : <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors" />
-                }
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${m.completed ? "line-through text-muted-foreground" : ""}`}>
-                  {m.title}
-                </p>
-                {m.targetDate && (
-                  <p className="text-xs text-muted-foreground">
-                    {m.completed ? "Completed" : "Due"}: {new Date(m.targetDate).toLocaleDateString()}
+            {openRoles.map((role) => (
+              <div key={role._id ?? role.title} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-border">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{role.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {role.spots} opening{role.spots !== 1 ? "s" : ""}
+                    {role.skills?.length > 0 && ` · ${role.skills.join(", ")}`}
                   </p>
-                )}
+                </div>
+                <button
+                  onClick={() => handleDeleteRole(role._id)}
+                  className="p-1 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                onClick={() => handleDeleteMilestone(m._id)}
-                disabled={milestoneLoading === m._id}
-                className="shrink-0 p-1 rounded-lg hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-colors"
+            ))}
+
+            {/* Add role form */}
+            <div className="p-4 border border-dashed border-border rounded-xl space-y-3 bg-gray-50/50">
+              <p className="text-sm font-medium">Add a new role</p>
+              <div>
+                <Label className="text-xs">Role Title *</Label>
+                <Input
+                  placeholder="e.g. Frontend Developer"
+                  value={newRole.title}
+                  onChange={(e) => { setNewRole((r) => ({ ...r, title: e.target.value })); setRoleError(""); }}
+                  className="mt-1 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">
+                  Required Skills{" "}
+                  <span className="text-muted-foreground font-normal">(comma-separated)</span>
+                </Label>
+                <Input
+                  placeholder="e.g. React, TypeScript, CSS"
+                  value={newRole.skills}
+                  onChange={(e) => setNewRole((r) => ({ ...r, skills: e.target.value }))}
+                  className="mt-1 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Number of Openings</Label>
+                <Input
+                  type="number" min={1} value={newRole.spots}
+                  onChange={(e) => setNewRole((r) => ({ ...r, spots: e.target.value }))}
+                  className="mt-1 rounded-xl w-28"
+                />
+              </div>
+              {roleError && <p className="text-xs text-red-600">{roleError}</p>}
+              <Button
+                variant="outline" size="sm" className="rounded-xl gap-1.5"
+                onClick={handleAddRole}
+                disabled={addingRole || !newRole.title.trim()}
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
+                {addingRole ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                Add Role
+              </Button>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* ── Post Update ── */}
+      {/* ── Post Progress Update ── */}
       <div>
         <h3 className="font-semibold mb-4">Post Progress Update</h3>
-        <div className="flex gap-2">
-          <Textarea
-            placeholder="Share a milestone, achievement, or any update with your followers…"
-            value={updateText}
-            onChange={(e) => setUpdateText(e.target.value)}
-            rows={3}
-            className="rounded-xl flex-1"
-          />
-        </div>
+        <Textarea
+          placeholder="Share a milestone, achievement, or any update with your followers…"
+          value={updateText}
+          onChange={(e) => setUpdateText(e.target.value)}
+          rows={3} className="rounded-xl"
+        />
         <Button
           className="mt-2 gap-2 rounded-xl"
           onClick={handlePostUpdate}
@@ -642,10 +638,12 @@ function ManageTab({ venture, onVentureUpdate }) {
 
         {updates.length > 0 && (
           <div className="mt-4 space-y-3">
-            {updates.slice(0, 5).map((u) => (
-              <div key={u._id} className="border-l-2 border-primary pl-4 py-1">
-                <p className="text-xs text-muted-foreground mb-1">{new Date(u.postedAt ?? u.createdAt).toLocaleDateString()}</p>
-                <p className="text-sm">{u.text}</p>
+            {updates.slice(0, 5).map((u, i) => (
+              <div key={u?._id ?? i} className="border-l-2 border-primary pl-4 py-1">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {new Date(u?.postedAt ?? u?.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-sm">{u?.text}</p>
               </div>
             ))}
           </div>
@@ -658,8 +656,15 @@ function ManageTab({ venture, onVentureUpdate }) {
           <AlertCircle className="h-4 w-4 text-red-600" />
           <p className="font-medium text-sm text-red-700">Danger Zone</p>
         </div>
-        <p className="text-sm text-red-600 mb-3">Archiving will hide this venture from all listings.</p>
-        <Button variant="outline" size="sm" className="rounded-xl text-red-600 border-red-300 hover:bg-red-100">
+        <p className="text-sm text-red-600 mb-3">
+          Archiving will permanently hide this venture from all listings and revoke team access.
+        </p>
+        <Button
+          variant="outline" size="sm"
+          className="rounded-xl text-red-600 border-red-300 hover:bg-red-100 gap-2"
+          onClick={onArchiveClick}
+        >
+          <AlertCircle className="h-3.5 w-3.5" />
           Archive Venture
         </Button>
       </div>
@@ -689,45 +694,33 @@ function CommentsTab({ ventureId, initialComments = [] }) {
 
   return (
     <div className="space-y-6">
-      {/* Comment box */}
       <div>
         <Textarea
           placeholder="Ask a question, give feedback, or show interest…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={3}
-          className="rounded-xl"
+          value={text} onChange={(e) => setText(e.target.value)}
+          rows={3}  className="rounded-xl border-border focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-border"
         />
-        <Button
-          className="mt-2 gap-2 rounded-xl"
-          onClick={handlePost}
-          disabled={posting || !text.trim()}
-        >
+        <Button className="mt-2 gap-2 rounded-xl" onClick={handlePost} disabled={posting || !text.trim()}>
           {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Post Comment
         </Button>
       </div>
-
-      {/* Comments list */}
       {comments.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
           No comments yet. Be the first to start the conversation!
         </p>
       )}
-
       <div className="space-y-4">
         {comments.map((c, i) => (
           <div key={c._id ?? i} className="flex gap-3">
             <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage src={c.author?.avatar} />
-              <AvatarFallback>{c.author?.name?.charAt(0)}</AvatarFallback>
+              <AvatarImage src={c.user?.avatar} />
+              <AvatarFallback>{c.user?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 p-3 bg-gray-50 rounded-xl border border-border">
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-sm font-medium">{c.author?.name ?? "Anonymous"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleDateString()}
-                </p>
+                <p className="text-sm font-medium">{c.user?.name ?? "Anonymous"}</p>
+                <p className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</p>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{c.text}</p>
             </div>
@@ -740,25 +733,32 @@ function CommentsTab({ ventureId, initialComments = [] }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function VentureDetailPage() {
-  const navigate          = useNavigate();
-  const { id }            = useParams();
-  const [searchParams]    = useSearchParams();
-  const { user }          = useUser(); // { _id, name, ... }
+  const navigate       = useNavigate();
+  const { id }         = useParams();
+  const [searchParams] = useSearchParams();
+  const { user }       = useUser();
 
-  const [venture, setVenture]             = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState(null);
-  const [hasLiked, setHasLiked]           = useState(false);
-  const [hasFollowed, setHasFollowed]     = useState(false);
-  const [hasEndorsed, setHasEndorsed]     = useState(false);
-  const [hasApplied, setHasApplied]       = useState(false);
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [likeCount, setLikeCount]         = useState(0);
-  const [endorseCount, setEndorseCount]   = useState(0);
+  const [venture, setVenture]                 = useState(null);
+  const [loading, setLoading]                 = useState(true);
+  const [error, setError]                     = useState(null);
+  const [hasLiked, setHasLiked]               = useState(false);
+  const [hasFollowed, setHasFollowed]         = useState(false);
+  const [hasEndorsed, setHasEndorsed]         = useState(false);
+  const [showApplyModal, setShowApplyModal]   = useState(false);
+  const [likeCount, setLikeCount]             = useState(0);
+  const [endorseCount, setEndorseCount]       = useState(0);
   const [userApplication, setUserApplication] = useState(null);
 
+  // Remove-member modal
+  const [removingMember, setRemovingMember] = useState(null); // member object
+  const [removeLoading, setRemoveLoading]   = useState(false);
+
+  // Archive confirm modal
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [archiveLoading, setArchiveLoading]         = useState(false);
+
   const defaultTab = searchParams.get("tab") ?? "overview";
-  const [activeTab, setActiveTab]         = useState(defaultTab);
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   useEffect(() => {
     const load = async () => {
@@ -769,21 +769,14 @@ export default function VentureDetailPage() {
         setVenture(v);
         setLikeCount(v.likes?.length ?? 0);
         setEndorseCount(v.endorsements?.length ?? 0);
-        // Seed UI state from server if user data is embedded
         if (user) {
           setHasLiked(v.likes?.includes(user._id) ?? false);
           setHasFollowed(v.followers?.includes(user._id) ?? false);
           setHasEndorsed(v.endorsements?.includes(user._id) ?? false);
-          // Fetch user's application status for this venture
           try {
-            const { data } = await getApplicationStatus(id);
-            if (data.status) {
-              setUserApplication(data);
-              setHasApplied(true);
-            }
-          } catch (err) {
-            // Not applied or error
-          }
+            const { data: appData } = await getApplicationStatus(id);
+            if (appData.status) setUserApplication(appData);
+          } catch { /* not applied */ }
         }
       } catch {
         setError("Failed to load venture.");
@@ -806,41 +799,73 @@ export default function VentureDetailPage() {
         setHasFollowed(v.followers?.includes(user._id) ?? false);
         setHasEndorsed(v.endorsements?.includes(user._id) ?? false);
       }
-    } catch {
-      // Silent refetch error
-    }
+    } catch { /* silent */ }
   };
 
-  const isCreator = venture && user && (venture.creator?._id === user._id || venture.creator === user._id);
+  const isCreator = venture && user &&
+    (venture.creator?._id === user._id || venture.creator === user._id);
 
   const handleLike = async () => {
-    try {
-      const { data } = await toggleLike(id);
-      setHasLiked(data.liked);
-      setLikeCount(data.likes);
-    } catch { toast.error("Failed to update like."); }
+    try { const { data } = await toggleLike(id); setHasLiked(data.liked); setLikeCount(data.likes); }
+    catch { toast.error("Failed to update like."); }
   };
 
   const handleFollow = async () => {
-    try {
-      const { data } = await toggleFollow(id);
-      setHasFollowed(data.following);
-      toast.success(data.following ? "Following this venture!" : "Unfollowed.");
-    } catch { toast.error("Failed to update follow."); }
+    try { const { data } = await toggleFollow(id); setHasFollowed(data.following); toast.success(data.following ? "Following!" : "Unfollowed."); }
+    catch { toast.error("Failed to update follow."); }
   };
 
   const handleEndorse = async () => {
-    try {
-      const { data } = await toggleEndorse(id);
-      setHasEndorsed(data.endorsed);
-      setEndorseCount(data.endorsements);
-      toast.success(data.endorsed ? "Endorsed!" : "Endorsement removed.");
-    } catch { toast.error("Failed to update endorsement."); }
+    try { const { data } = await toggleEndorse(id); setHasEndorsed(data.endorsed); setEndorseCount(data.endorsements); toast.success(data.endorsed ? "Endorsed!" : "Endorsement removed."); }
+    catch { toast.error("Failed to update endorsement."); }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Link copied to clipboard!");
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) { await navigator.share({ title: venture.title, text: venture.description, url }); return; }
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    } catch {
+      try {
+        const ta = document.createElement("textarea"); ta.value = url;
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+        toast.success("Link copied!");
+      } catch { toast.error("Failed to share."); }
+    }
+  };
+
+  // ── Confirm remove team member ──
+  const handleConfirmRemove = async () => {
+    if (!removingMember) return;
+    try {
+      setRemoveLoading(true);
+      await removeTeamMember(venture._id, removingMember.user._id);
+      setVenture((prev) => ({
+        ...prev,
+        teamMembers: prev.teamMembers.filter((m) => m.user._id !== removingMember.user._id),
+      }));
+      toast.success(`${removingMember.user.name} removed from the team.`);
+    } catch {
+      toast.error("Failed to remove member.");
+    } finally {
+      setRemoveLoading(false);
+      setRemovingMember(null);
+    }
+  };
+
+  // ── Confirm archive ──
+  const handleConfirmArchive = async () => {
+    try {
+      setArchiveLoading(true);
+      await api.delete(`/ventures/${venture._id}`);
+      toast.success("Venture archived successfully.");
+      navigate("/marketplace/buyer/ventures");
+    } catch {
+      toast.error("Failed to archive venture.");
+      setArchiveLoading(false);
+      setShowArchiveConfirm(false);
+    }
   };
 
   if (loading) {
@@ -865,18 +890,12 @@ export default function VentureDetailPage() {
   const stage          = stageConfig[venture.stage] ?? stageConfig.ideation;
   const confirmedCount = venture.teamMembers?.filter((m) => m.confirmed).length ?? 0;
   const spotsLeft      = venture.teamLimit - confirmedCount;
-  const progress       = venture.milestones?.length
-    ? Math.round((venture.milestones.filter((m) => m.completed).length / venture.milestones.length) * 100)
-    : 0;
 
-  // Tabs: always show overview, team, progress, updates, comments
-  // Creator also sees: manage, applications
   const tabs = [
-    { key: "overview",      label: "Overview"      },
-    { key: "team",          label: "Team"          },
-    { key: "progress",      label: "Progress"      },
-    { key: "updates",       label: "Updates"       },
-    { key: "comments",      label: "Discussion"    },
+    { key: "overview",  label: "Overview"  },
+    { key: "team",      label: "Team"      },
+    { key: "updates",   label: "Updates"   },
+    { key: "comments",  label: "Comments"  },
     ...(isCreator ? [
       { key: "applications", label: "Applications" },
       { key: "manage",       label: "Manage"       },
@@ -885,536 +904,341 @@ export default function VentureDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Always single-column, max-w-4xl */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
         <Button variant="ghost" className="mb-6 gap-2" onClick={() => navigate("/marketplace/buyer/ventures")}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to Ventures
+          <ArrowLeft className="h-4 w-4" /> Back to Ventures
         </Button>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="flex flex-col gap-6">
 
-          {/* ════ MAIN ════ */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* ── Hero Card ── */}
+          <Card className="rounded-2xl shadow-md border border-border/60 bg-card/50">
+            <CardContent className="p-8">
 
-  <Card className="rounded-2xl shadow-md border border-border/60 bg-card/50">
-  <CardContent className="p-8">
+              <div className="flex items-start justify-between mb-5">
+                <div className="flex gap-2 flex-wrap items-center">
+                  <span className={`text-xs font-medium px-3 py-1 rounded-full border flex items-center justify-center ${stage.className}`}>
+                    {stage.label}
+                  </span>
+                  <span className="text-xs font-medium px-3 py-1 rounded-full border bg-card text-gray-700 border-primary/70 flex items-center justify-center">
+                    {venture.category}
+                  </span>
+                  {venture.isRecruiting && (
+                    <span className="text-xs font-medium px-3 py-1 rounded-full border bg-orange-100 text-orange-700 border-orange-200 flex items-center gap-1">
+                      🚀 Hiring
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon"
+                    className={`rounded-xl transition-all hover:scale-105 ${hasLiked ? "text-red-500 border-red-300 bg-red-50" : ""}`}
+                    onClick={handleLike}>
+                    <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
+                  </Button>
+                  <Button variant="outline" size="icon"
+                    className={`rounded-xl transition-all hover:scale-105 ${hasEndorsed ? "text-yellow-500 border-yellow-400 bg-yellow-50" : ""}`}
+                    onClick={handleEndorse}>
+                    <Award className={`h-4 w-4 ${hasEndorsed ? "fill-current" : ""}`} />
+                  </Button>
+                  <Button variant="outline" size="icon"
+                    className={`rounded-xl transition-all hover:scale-105 ${hasFollowed ? "text-primary border-primary/40 bg-primary/10" : ""}`}
+                    onClick={handleFollow}>
+                    <TrendingUp className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="rounded-xl hover:scale-105 transition-all" onClick={handleShare}>
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-    {/* ── Top Section ── */}
-    <div className="flex items-start justify-between mb-5">
-      
-      {/* Left */}
-      <div className="flex gap-2 flex-wrap items-center">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 leading-tight tracking-tight">{venture.title}</h1>
+              <p className="text-muted-foreground text-[15px] leading-relaxed mb-6 max-w-3xl">{venture.description}</p>
 
-        {/* Stage */}
-        <span
-          className={`text-xs font-medium px-3 py-1 rounded-full border 
-                      flex items-center justify-center ${stage.className}`}
-        >
-          {stage.label}
-        </span>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {venture.tags?.map((tag) => (
+                  <span key={tag} className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
 
-        {/* Category */}
-        <span
-          className="text-xs font-medium px-3 py-1 rounded-full border 
-                    bg-card text-gray-700 border-primary/70
-                    flex items-center justify-center"
-        >
-          {venture.category}
-        </span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{confirmedCount}/{venture.teamLimit}</span>
+                  <span className="text-muted-foreground text-xs">Members</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Heart className="h-4 w-4 text-red-500" />
+                  <span className="font-medium">{likeCount}</span>
+                  <span className="text-muted-foreground text-xs">Likes</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Award className="h-4 w-4 text-yellow-500" />
+                  <span className="font-medium">{endorseCount}</span>
+                  <span className="text-muted-foreground text-xs">Endorsements</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs">{new Date(venture.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+              {/* ── Team Chat shortcut — visible to creator and accepted members ── */}
+              {(isCreator || userApplication?.status === "accepted") && (
+                <div className="mt-4 pt-4 border-t border-border/60">
+                  <Button
+                    variant="outline"
+                    className="gap-2 rounded-xl w-full sm:w-auto"
+                    onClick={() =>
+                      navigate("/marketplace/buyer/ventures/chats", {
+                        state: { selectedVentureId: venture._id },
+                      })
+                    }
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Go to Team Chat
+                  </Button>
+                </div>
+              )}
 
-        {/* Hiring */}
-        {venture.isRecruiting && (
-          <span
-            className="text-xs font-medium px-3 py-1 rounded-full border 
-                      bg-orange-100 text-orange-700 border-orange-200 
-                      flex items-center gap-1"
-          >
-            🚀 Hiring
-          </span>
-        )}
+            </CardContent>
+          </Card>
 
-      </div>
+          {/* ── Tabs ── */}
+          <Card className="rounded-2xl shadow-sm border border-border">
+            <CardContent className="p-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="flex w-full bg-muted/50 p-1 rounded-xl mb-6 backdrop-blur-sm overflow-x-auto">
+                  {tabs.map(({ key, label }) => (
+                    <TabsTrigger key={key} value={key}
+                      className="flex-1 text-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                        data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm
+                        text-muted-foreground hover:text-foreground whitespace-nowrap">
+                      {label}
+                      {key === "applications" && (
+                        <span className="ml-1.5 text-xs bg-primary/20 text-primary rounded-full px-1.5 py-0.5">•</span>
+                      )}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-      {/* Right Actions */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className={`rounded-xl transition-all hover:scale-105 ${
-            hasLiked ? "text-red-500 border-red-300 bg-red-50" : ""
-          }`}
-          onClick={handleLike}
-        >
-          <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
-        </Button>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className={`rounded-xl transition-all hover:scale-105 ${
-            hasEndorsed ? "text-yellow-500 border-yellow-400 bg-yellow-50" : ""
-          }`}
-          onClick={handleEndorse}
-        >
-          <Award className={`h-4 w-4 ${hasEndorsed ? "fill-current" : ""}`} />
-        </Button>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className={`rounded-xl transition-all hover:scale-105 ${
-            hasFollowed ? "text-primary border-primary/40 bg-primary/10" : ""
-          }`}
-          onClick={handleFollow}
-        >
-          <TrendingUp className="h-4 w-4" />
-        </Button>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-xl hover:scale-105 transition-all"
-          onClick={handleShare}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-
-    {/* ── Title ── */}
-    <h1 className="text-3xl md:text-4xl font-bold mb-3 leading-tight tracking-tight">
-      {venture.title}
-    </h1>
-
-    {/* ── Description ── */}
-    <p className="text-muted-foreground text-[15px] leading-relaxed mb-6 max-w-3xl">
-      {venture.description}
-    </p>
-
-    {/* ── Tags ── */}
-    <div className="flex flex-wrap gap-2 mb-6">
-      {venture.tags?.map((tag) => (
-        <span
-          key={tag}
-          className="text-xs px-3 py-1 rounded-full 
-                     bg-primary/10 text-primary hover:bg-primary/20 transition"
-        >
-          #{tag}
-        </span>
-      ))}
-    </div>
-
-    {/* ── Stats Section ── */}
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-border">
-
-      <div className="flex items-center gap-2 text-sm">
-        <Users className="h-4 w-4 text-primary" />
-        <span className="font-medium">
-          {confirmedCount}/{venture.teamLimit}
-        </span>
-        <span className="text-muted-foreground text-xs">Members</span>
-      </div>
-
-      <div className="flex items-center gap-2 text-sm">
-        <Heart className="h-4 w-4 text-red-500" />
-        <span className="font-medium">{likeCount}</span>
-        <span className="text-muted-foreground text-xs">Likes</span>
-      </div>
-
-      <div className="flex items-center gap-2 text-sm">
-        <Award className="h-4 w-4 text-yellow-500" />
-        <span className="font-medium">{endorseCount}</span>
-        <span className="text-muted-foreground text-xs">Endorsements</span>
-      </div>
-
-      <div className="flex items-center gap-2 text-sm">
-        <Clock className="h-4 w-4 text-muted-foreground" />
-        <span className="text-xs">
-          {new Date(venture.createdAt).toLocaleDateString()}
-        </span>
-      </div>
-
-    </div>
-
-  </CardContent>
-</Card>
-            {/* Tabs */}
-            <Card className="rounded-2xl shadow-sm border border-border">
-              <CardContent className="p-6">
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="flex w-full bg-muted/50 p-1 rounded-xl mb-6 backdrop-blur-sm overflow-x-auto">
-                    {tabs.map(({ key, label }) => (
-                      <TabsTrigger
-                        key={key}
-                        value={key}
-                        className="flex-1 text-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                          data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm
-                          text-muted-foreground hover:text-foreground whitespace-nowrap"
-                      >
-                        {label}
-                        {key === "applications" && (
-                          <span className="ml-1.5 text-xs bg-primary/20 text-primary rounded-full px-1.5 py-0.5">
-                            •
-                          </span>
-                        )}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-
-                  {/* Overview */}
-                  <TabsContent value="overview" className="space-y-6">
+                {/* Overview */}
+                <TabsContent value="overview" className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Full Description</h3>
+                    <p className="text-muted-foreground whitespace-pre-line text-sm leading-relaxed">{venture.fullDescription}</p>
+                  </div>
+                  {venture.openRoles?.length > 0 && (
                     <div>
-                      <h3 className="font-semibold mb-3">Full Description</h3>
-                      <p className="text-muted-foreground whitespace-pre-line text-sm leading-relaxed">
-                        {venture.fullDescription}
-                      </p>
-                    </div>
-                    {venture.openRoles?.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold mb-3">We're Looking For</h3>
-                        <div className="space-y-3">
-                          {venture.openRoles.map((role) => (
-                            <div key={role._id} className="p-4 bg-gray-50 rounded-xl border border-border">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="font-medium text-sm">{role.title}</p>
-                                <Badge variant="secondary" className="rounded-lg !text-white">
-                                  {role.spots} spot{role.spots > 1 ? "s" : ""}
-                                </Badge>
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {role.skills?.map((s) => (
-                                  <Badge key={s} variant="outline" className="text-xs rounded-full">{s}</Badge>
-                                ))}
-                              </div>
+                      <h3 className="font-semibold mb-3">We're Looking For</h3>
+                      <div className="space-y-3">
+                        {venture.openRoles.map((role) => (
+                          <div key={role._id} className="p-4 bg-gray-50 rounded-xl border border-border">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-medium text-sm">{role.title}</p>
+                              <Badge variant="secondary" className="rounded-lg !text-white">
+                                {role.spots} spot{role.spots > 1 ? "s" : ""}
+                              </Badge>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  {/* Team */}
-                  <TabsContent value="team" className="space-y-4">
-                    <h3 className="font-semibold">Team Members ({venture.teamMembers?.length ?? 0})</h3>
-                    {venture.teamMembers?.map((member, i) => (
-                      <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-border">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={member.user?.avatar} />
-                          <AvatarFallback>{member.user?.name?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.4">
-                            <p className="font-medium text-sm text-primary">{member.user?.name}</p>
-                            {!member.confirmed && (
-                              <Badge variant="outline" className="text-xs">Pending Confirmation</Badge>
-                            )}
+                            <div className="flex flex-wrap gap-1.5">
+                              {role.skills?.map((s) => (
+                                <Badge key={s} variant="outline" className="text-xs rounded-full">{s}</Badge>
+                              ))}
+                            </div>
                           </div>
-                          <p className="text-[12px] text-muted-foreground">{member.role}</p>
-                          <p className="text-[10px] text-muted/80">{member.user?.collegeName}</p>
-                        </div>
-                        {isCreator && member.user?._id !== user?._id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                            title="Remove member"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                    {(!venture.teamMembers || venture.teamMembers.length === 0) && (
-                      <p className="text-sm text-muted-foreground text-center py-8">No team members yet.</p>
-                    )}
-                  </TabsContent>
-
-                  {/* Progress */}
-                  <TabsContent value="progress" className="space-y-6">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">Overall Progress</h3>
-                        <span className="text-sm font-semibold">{progress}%</span>
-                      </div>
-                      <Progress value={progress} className="h-2" />
                     </div>
-                    {venture.milestones?.length > 0 ? (
-                      <div>
-                        <h3 className="font-semibold mb-4">Milestones</h3>
-                        <div className="space-y-3">
-                          {venture.milestones.map((m) => (
-                            <div
-                              key={m._id}
-                              className={`flex items-start gap-3 p-4 rounded-xl border ${
-                                m.completed ? "bg-green-50 border-green-200" : "bg-gray-50 border-border"
-                              }`}
-                            >
-                              {m.completed
-                                ? <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
-                                : <Clock className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                              }
-                              <div>
-                                <p className="font-medium text-sm">{m.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {m.completed ? "Completed" : "Target"}:{" "}
-                                  {m.targetDate ? new Date(m.targetDate).toLocaleDateString() : "No date set"}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+                  )}
+                </TabsContent>
+
+                {/* Team */}
+                <TabsContent value="team" className="space-y-4">
+                  <h3 className="font-semibold">Team Members ({venture.teamMembers?.length ?? 0})</h3>
+                  {venture.teamMembers?.map((member, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-border">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={member.user?.avatar} />
+                        <AvatarFallback>{member.user?.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-medium text-sm text-primary">{member.user?.name}</p>
+                          {!member.confirmed && <Badge variant="outline" className="text-xs">Pending</Badge>}
                         </div>
+                        <p className="text-[12px] text-muted-foreground">{member.role}</p>
+                        <p className="text-[11px] text-muted-foreground/70">{member.user?.collegeName}</p>
                       </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No milestones added yet.</p>
-                    )}
-                  </TabsContent>
+                      {/* Remove button — creator only, not for self */}
+                      {isCreator && member.user?._id !== user?._id && (
+                        <Button variant="ghost" size="icon"
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                          title="Remove member"
+                          onClick={() => setRemovingMember(member)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {(!venture.teamMembers || venture.teamMembers.length === 0) && (
+                    <p className="text-sm text-muted-foreground text-center py-8">No team members yet.</p>
+                  )}
+                </TabsContent>
 
-                  {/* Updates */}
-                  <TabsContent value="updates" className="space-y-4">
-                    <h3 className="font-semibold">Progress Updates</h3>
-                    {venture.updates?.length > 0 ? (
-                      venture.updates.map((u) => (
-                        <div key={u._id} className="border-l-2 border-primary pl-4 py-1">
-                          <p className="text-xs text-muted-foreground mb-1">
-                            {new Date(u.postedAt ?? u.createdAt).toLocaleDateString()}
-                          </p>
-                          <p className="text-sm">{u.text}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No updates posted yet.</p>
-                    )}
-                  </TabsContent>
+                {/* Updates */}
+                <TabsContent value="updates" className="space-y-4">
+                  <h3 className="font-semibold">Progress Updates</h3>
+                  {venture.updates?.length > 0 ? (
+                    venture.updates.map((u) => (
+                      <div key={u._id} className="border-l-2 border-primary pl-4 py-1">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {new Date(u.postedAt ?? u.createdAt).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm">{u.text}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No updates posted yet.</p>
+                  )}
+                </TabsContent>
 
-                  {/* Comments */}
-                  <TabsContent value="comments">
-                    <CommentsTab
-                      ventureId={venture._id}
-                      initialComments={venture.comments ?? []}
+                {/* Comments */}
+                <TabsContent value="comments">
+                  <CommentsTab ventureId={venture._id} initialComments={venture.comments ?? []} />
+                </TabsContent>
+
+                {/* Applications — creator only */}
+                {isCreator && (
+                  <TabsContent value="applications">
+                    <ApplicationsTab ventureId={venture._id} onVentureUpdate={refetchVenture} />
+                  </TabsContent>
+                )}
+
+                {/* Manage — creator only */}
+                {isCreator && (
+                  <TabsContent value="manage">
+                    <ManageTab
+                      venture={venture}
+                      onVentureUpdate={(updated) => setVenture(updated)}
+                      onArchiveClick={() => setShowArchiveConfirm(true)}
                     />
                   </TabsContent>
-
-                  {/* Applications (creator only) */}
-                  {isCreator && (
-                    <TabsContent value="applications">
-                      <ApplicationsTab ventureId={venture._id} onVentureUpdate={refetchVenture} />
-                    </TabsContent>
-                  )}
-
-                  {/* Manage (creator only) */}
-                  {isCreator && (
-                    <TabsContent value="manage">
-                      <ManageTab
-                        venture={venture}
-                        onVentureUpdate={(updated) => setVenture(updated)}
-                      />
-                    </TabsContent>
-                  )}
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* ════ SIDEBAR ════ */}
-          <div className="space-y-6">
-
-            {/* Creator */}
-            <Card className="rounded-2xl shadow-sm border border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Project Creator</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3 mb-4">
-                  <Avatar className="h-14 w-14">
-                    <AvatarImage src={venture.creator?.avatar} />
-                    <AvatarFallback>{venture.creator?.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{venture.creator?.name}</p>
-                    <p className="text-sm text-muted-foreground">{venture.creator?.major}</p>
-                    <p className="text-xs text-muted-foreground">{venture.creator?.year}</p>
-                  </div>
-                </div>
-                {!isCreator && (
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 rounded-xl"
-                    onClick={() => navigate("/marketplace/buyer/messages")}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Contact Creator
-                  </Button>
                 )}
-                {isCreator && (
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 rounded-xl"
-                    onClick={() => setActiveTab("manage")}
-                  >
-                    <Settings className="h-4 w-4" />
-                    Manage Venture
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+              </Tabs>
+            </CardContent>
+          </Card>
 
-            {/* Join Team Status (non-creator) */}
-            {!isCreator && (
-              <>
-                {userApplication?.status === 'pending' && (
-                  <Card className="rounded-2xl shadow-sm border border-yellow-300 bg-yellow-50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="h-5 w-5 text-yellow-600" />
-                        <p className="font-semibold text-yellow-700">Application Pending</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Your application has been sent. The creator will review it soon.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-                {userApplication?.status === 'accepted' && (
-                  <Card className="rounded-2xl shadow-sm border border-green-300 bg-green-50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        <p className="font-semibold text-green-700">Welcome to the Team!</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Congratulations! Your application has been accepted. Check the Team tab for details.
-                      </p>
-                      <Button className="w-full rounded-xl" variant="outline" onClick={() => setActiveTab("team")}>
-                        View Team
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-                {userApplication?.status === 'rejected' && (
-                  <Card className="rounded-2xl shadow-sm border border-red-300 bg-red-50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <X className="h-5 w-5 text-red-600" />
-                        <p className="font-semibold text-red-700">Application Not Accepted</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Unfortunately, your application was not accepted at this time. You can try again if spots open up.
-                      </p>
+          {/* ── Non-creator: application status / join CTA ── */}
+          {!isCreator && (
+            <>
+              {userApplication?.status === "pending" && (
+                <Card className="rounded-2xl shadow-sm border border-yellow-300 bg-yellow-50">
+                  <CardContent className="p-6 flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-yellow-600 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-yellow-700">Application Pending</p>
+                      <p className="text-sm text-muted-foreground">Your application has been sent. The creator will review it soon.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {userApplication?.status === "accepted" && (
+                <Card className="rounded-2xl shadow-sm border border-green-300 bg-green-50">
+                  <CardContent className="p-6 flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-green-700">Welcome to the Team!</p>
+                      <p className="text-sm text-muted-foreground mb-3">Congratulations! Your application has been accepted.</p>
+                      <Button className="rounded-xl" variant="outline" onClick={() => setActiveTab("team")}>View Team</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {userApplication?.status === "rejected" && (
+                <Card className="rounded-2xl shadow-sm border border-red-300 bg-red-50">
+                  <CardContent className="p-6 flex items-start gap-3">
+                    <X className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-red-700">Application Not Accepted</p>
+                      <p className="text-sm text-muted-foreground mb-3">Unfortunately, your application was not accepted at this time.</p>
                       {userApplication.creatorNote && (
                         <div className="p-3 bg-white rounded-lg border">
                           <p className="text-xs font-medium text-muted-foreground mb-1">Creator's Note:</p>
                           <p className="text-sm">{userApplication.creatorNote}</p>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
-                {!userApplication && spotsLeft > 0 && venture.isRecruiting && (
-                  <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="h-5 w-5 text-primary" />
-                        <p className="font-semibold">Join This Team</p>
-                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {!userApplication && spotsLeft > 0 && venture.isRecruiting && (
+                <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
+                  <CardContent className="p-6 flex items-start gap-3">
+                    <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold">Join This Team</p>
                       <p className="text-sm text-muted-foreground mb-4">
                         {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
                       </p>
-                      <Button className="w-full rounded-xl" onClick={() => setShowApplyModal(true)}>
-                        Request to Join
+                      <Button className="rounded-xl" onClick={() => setShowApplyModal(true)}>Request to Join</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {!venture.isRecruiting && !userApplication && (
+                <Card className="rounded-2xl shadow-sm border border-border bg-gray-50">
+                  <CardContent className="p-6 flex items-start gap-3">
+                    <TrendingUp className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium mb-1">Not currently recruiting</p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Follow this venture to get notified when they open applications.
+                      </p>
+                      <Button variant="outline"
+                        className={`rounded-xl ${hasFollowed ? "border-primary text-primary" : ""}`}
+                        onClick={handleFollow}>
+                        {hasFollowed ? "Following ✓" : "Follow Venture"}
                       </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
 
-            {/* Follow (non-creator, not recruiting) */}
-            {!isCreator && !venture.isRecruiting && (
-              <Card className="rounded-2xl shadow-sm border border-border bg-gray-50">
-                <CardContent className="p-6">
-                  <p className="text-sm font-medium mb-1">Not currently recruiting</p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Follow this venture to get notified when they open applications.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className={`w-full mt-1 rounded-xl ${hasFollowed ? "border-primary text-primary" : ""}`}
-                    onClick={handleFollow}
-                  >
-                    {hasFollowed ? "Following ✓" : "Follow Venture"}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Endorsement social proof */}
-            <Card className="rounded-2xl shadow-sm border border-border">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Award className="h-5 w-5 text-yellow-500" />
-                  <p className="font-semibold">Endorse This Venture</p>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {endorseCount} endorsement{endorseCount !== 1 ? "s" : ""} — help this idea get discovered by investors.
-                </p>
-                <Button
-                  variant="outline"
-                  className={`w-full rounded-xl gap-2 ${hasEndorsed ? "border-yellow-400 text-yellow-600" : ""}`}
-                  onClick={handleEndorse}
-                >
-                  <Star className={`h-4 w-4 ${hasEndorsed ? "fill-current" : ""}`} />
-                  {hasEndorsed ? "Endorsed ✓" : "Endorse"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Investor Ready (creator only, pitch-ready stage) */}
-            {isCreator && venture.stage === "ready-to-pitch" && (
-              <Card className="rounded-2xl shadow-sm border border-border">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-5 w-5 text-secondary" />
-                    <p className="font-semibold">Ready to Pitch?</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Connect with investors who fund student ventures.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-xl"
-                    onClick={() => navigate("/marketplace/buyer/ventures/investors")}
-                  >
-                    View Investors
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Share */}
-            <Card className="rounded-2xl shadow-sm border border-border">
-              <CardContent className="p-6">
-                <p className="font-semibold mb-2">Help Us Grow</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Share this idea with students who might be interested!
-                </p>
-                <Button variant="outline" className="w-full rounded-xl gap-2" onClick={handleShare}>
-                  <Share2 className="h-4 w-4" /> Copy Link
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
 
+      {/* Apply modal */}
       {showApplyModal && (
         <ApplyModal
           venture={venture}
           onClose={() => setShowApplyModal(false)}
-          onSuccess={(application) => {
-            setHasApplied(true);
-            setUserApplication(application);
-          }}
+          onSuccess={(application) => setUserApplication(application)}
+        />
+      )}
+
+      {/* Remove member confirmation */}
+      {removingMember && (
+        <ConfirmModal
+          title={`Remove ${removingMember.user?.name}?`}
+          description="This will remove them from the team and revoke their access to the team chat. This cannot be undone."
+          loading={removeLoading}
+          onConfirm={handleConfirmRemove}
+          onCancel={() => setRemovingMember(null)}
+        />
+      )}
+
+      {/* Archive confirmation */}
+      {showArchiveConfirm && (
+        <ConfirmModal
+          title="Archive this venture?"
+          description="This will permanently hide the venture from all listings and cannot be reversed."
+          loading={archiveLoading}
+          onConfirm={handleConfirmArchive}
+          onCancel={() => setShowArchiveConfirm(false)}
         />
       )}
     </div>

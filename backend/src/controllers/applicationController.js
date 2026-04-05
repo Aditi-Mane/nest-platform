@@ -27,6 +27,16 @@ export const applyToVenture = async (req, res) => {
 
     const { roleAppliedFor, whyJoin, portfolioUrl, resumeUrl } = req.body;
 
+      const roleExists = venture.openRoles.some(
+        (r) => r.title === roleAppliedFor
+      );
+
+      if (!roleExists) {
+        return res.status(400).json({
+          message: "Invalid role selected. Please choose from available roles.",
+        });
+        }
+
     const application = await Application.create({
       venture: venture._id,
       applicant: req.user._id,
@@ -94,16 +104,32 @@ export const respondToApplication = async (req, res) => {
     await application.save();
 
     if (status === "accepted") {
-      const alreadyMember = venture.teamMembers.some(
-        (m) => m.user.toString() === application.applicant.toString()
+        //Find the role in openRoles
+        const role = venture.openRoles.find(
+          (r) => r.title === application.roleAppliedFor
+        );
+
+        if (!role) {
+          return res.status(400).json({ message: "Role not found in venture" });
+        }
+
+        // No spots left
+        if (role.spots <= 0) {
+          return res.status(400).json({ message: "No spots left for this role" });
+        }
+
+  // Decrement spot
+  role.spots -= 1;
+        const alreadyMember = venture.teamMembers.some(
+    (m) => m.user.toString() === application.applicant.toString()
       );
       if (!alreadyMember) {
-        venture.teamMembers.push({
-          user: application.applicant,
-          role: application.roleAppliedFor,
-          confirmed: true,
-          joinedAt: null,
-        });
+      venture.teamMembers.push({
+      user: application.applicant,
+      role: application.roleAppliedFor,
+      confirmed: true,
+      joinedAt: new Date(),
+    });
         await venture.save();
 
         const ventureMessage = await VentureMessage.create({
@@ -208,6 +234,7 @@ export const getApplicationStatus = async (req, res) => {
   }
 };
 
+// applicationController.js
 export const getAcceptedApplications = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -218,18 +245,20 @@ export const getAcceptedApplications = async (req, res) => {
     })
       .populate({
         path: "venture",
-        select: "title description category stage creator teamMembers teamLimit",
-        populate: {
-          path: "creator",
-          select: "name avatar collegeName",
-        },
+        select: "title description category stage creator teamMembers teamLimit isArchived",
+        populate: { path: "creator", select: "name avatar collegeName" },
       })
       .select("venture roleAppliedFor respondedAt");
 
-    res.status(200).json({
-      count: applications.length,
-      applications,
+    await Application.populate(applications, {
+      path: "venture.teamMembers.user",
+      select: "name avatar collegeName",
     });
+
+    // ✅ filter out archived ventures so they vanish from chat list
+    const active = applications.filter((app) => !app.venture?.isArchived);
+
+    res.status(200).json({ count: active.length, applications: active });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });

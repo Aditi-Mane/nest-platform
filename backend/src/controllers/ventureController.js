@@ -2,7 +2,7 @@ import Venture from "../models/Venture.js";
 import Notification from "../models/Notification.js";
 import VentureMessage from "../models/VentureMessage.js";
 import { getIO } from "../config/socket.js";
-
+import User from "../models/User.js";
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,6 +45,7 @@ export const getVentures = async (req, res) => {
   .skip((page - 1) * limit)
   .limit(Number(limit))
   .populate("creator", "name email collegeName avatar")
+  .populate("teamMembers.user", "name avatar collegeName")
   .select("-comments -updates -pitchDeckUrl -pitchDeckAccessList");
 
   if (sort === "popular") {
@@ -121,7 +122,11 @@ export const getVentures = async (req, res) => {
 
 export const getMyVentures = async (req, res) => {
   try {
-    const ventures = await Venture.find({ creator: req.user._id })
+    const ventures = await Venture.find({ creator: req.user._id,
+      isArchived: false,
+     })
+      .populate("creator", "name email collegeName avatar")
+      .populate("teamMembers.user", "name avatar collegeName")
       .sort({ createdAt: -1 })
       .select("-pitchDeckUrl -pitchDeckAccessList");
       
@@ -166,9 +171,30 @@ export const createVenture = async (req, res) => {
       stage, teamLimit, openRoles, milestones, tags, isRecruiting,
     } = req.body;
 
-    const similar = await Venture.find({ $text: { $search: title }, isArchived: false })
-      .limit(3)
-      .select("title _id");
+    let similar = [];
+    try {
+      similar = await Venture.find({ $text: { $search: title }, isArchived: false })
+        .limit(3)
+        .select("title _id");
+    } catch (_) {
+      // Text index not ready or query failed — silently skip similarity check
+    }
+
+    const existingMembers = [];
+
+for (const member of (req.body.teamMembers || [])) {
+  const user = await User.findOne({ email: member.email });
+
+  if (user) {
+    existingMembers.push({
+      user: user._id,
+      role: member.role,
+      collegeName: user.collegeName,
+      confirmed: true,
+      joinedAt: new Date(),
+    });
+  }
+}
 
     const venture = await Venture.create({
       title,
@@ -183,13 +209,21 @@ export const createVenture = async (req, res) => {
       tags,
       isRecruiting: isRecruiting || false,
       teamMembers: [
-        { user: req.user._id, role: "Founder", confirmed: true, joinedAt: new Date() },
-      ],
+          {
+            user: req.user._id,
+            role: "Founder",
+            collegeName: req.user.collegeName,
+            confirmed: true,
+            joinedAt: new Date(),
+          },
+          ...existingMembers,
+        ],
     });
 
     res.status(201).json({ venture, similarVentures: similar });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+      console.log("CREATE VENTURE ERROR:", err);
+      res.status(400).json({ message: err.message });
   }
 };
 
@@ -453,19 +487,22 @@ export const addComment = async (req, res) => {
     const venture = await Venture.findById(req.params.id);
     if (!venture) return res.status(404).json({ message: "Venture not found" });
 
-    venture.comments.push({ user: req.user._id, text: req.body.text });
+    const newComment = {
+      user: req.user._id,
+      text: req.body.text,
+      createdAt: new Date(),
+    };
+
+    venture.comments.push(newComment);
     await venture.save();
 
-    await notify({
-      recipient: venture.creator,
-      type: "new_comment",
-      message: `${req.user.name} commented on "${venture.title}"`,
-      link: `/marketplace/buyer/ventures/${venture._id}`,
-      venture: venture._id,
-      triggeredBy: req.user._id,
-    });
+    // populate ONLY the latest comment
+    const populatedVenture = await Venture.findById(venture._id)
+      .populate("comments.user", "name avatar");
 
-    res.json({ venture });
+    const addedComment = populatedVenture.comments.at(-1);
+
+    res.json({ comment: addedComment }); 
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

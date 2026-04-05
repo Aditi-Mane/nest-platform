@@ -194,6 +194,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
       </div>
 
       {/* ── Creator ── */}
+      
       <div className="flex items-center gap-3 py-3 border-t border-border/60">
 
         <Avatar className="h-8 w-8 ring-2 ring-primary/10">
@@ -207,35 +208,9 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
           <p className="text-[9px] text-muted truncate">{idea.creator?.collegeName}</p>
         </div>
 
-        {/* Owner Actions */}
-        {isOwner && (
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
-              }}
-            >
-              <Settings className="h-3.5 w-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg text-red-500 hover:bg-red-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(idea._id, idea.title);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
+       
       </div>
+      
 
       {/* ── Footer Stats ── */}
       <div className="flex items-center justify-between text-xs text-muted mt-2">
@@ -264,7 +239,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
       {!isOwner  && (
         <Button
           className="w-full mt-4 rounded-xl text-sm 
-                     bg-primary/90 hover:bg-primary transition"
+                     bg-primary/90 hover:bg-primary transition text-card"
           onClick={(e) => {
             e.stopPropagation();
             onNavigate(`/marketplace/buyer/ventures/${idea._id}`);
@@ -278,7 +253,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
         <div className="grid grid-cols-2 gap-2 mt-4">
           <Button
             variant="outline"
-            className="rounded-xl text-sm gap-2 hover:bg-muted transition"
+            className="rounded-xl text-sm gap-2 hover:bg-card border-border transition"
             onClick={(e) => {
               e.stopPropagation();
               onOpenChatroom(idea);
@@ -288,7 +263,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
           </Button>
           <Button
             variant="outline"
-            className="rounded-xl text-sm gap-2 hover:bg-muted transition"
+            className="rounded-xl text-sm gap-2 hover:bg-card transition border-border"
             onClick={(e) => {
               e.stopPropagation();
               onNavigate(`/marketplace/buyer/ventures/${idea._id}?tab=manage`);
@@ -449,6 +424,8 @@ export default function VenturesPage() {
     }
   };
 
+  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -461,20 +438,19 @@ export default function VenturesPage() {
               <h1 className="text-4xl font-bold">Student Ventures</h1>
             </div>
             <div className="flex items-center gap-2">
-              <NotificationBell />
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-xl border-border text-text"
                 onClick={() => navigate("/marketplace/buyer/ventures/chats")}
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4 text-text" />
                 Chat Teams
               </Button>
               <Button
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-xl text-card"
                 onClick={() => navigate("/marketplace/buyer/ventures/create")}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 text-card" />
                 Post Your Idea
               </Button>
             </div>
@@ -506,7 +482,7 @@ export default function VenturesPage() {
         </div>
 
         {/* ── Main Tab Switcher ── */}
-        <div className="flex gap-1 p-1 bg-muted rounded-xl w-fit mb-6">
+        <div className="flex gap-1 p-1 bg-background rounded-xl w-fit mb-6">
           {[
             { key: "discover", label: "Discover" },
             { key: "mine",     label: "My Ventures" },
@@ -547,10 +523,10 @@ export default function VenturesPage() {
                 </div>
                 <div className="flex gap-2 flex-wrap items-center">
                   <Select value={sort} onValueChange={setSort}>
-                    <SelectTrigger className="w-40 rounded-xl">
+                    <SelectTrigger className="w-40 rounded-xl border-border">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted">
+                    <SelectContent className="bg-background">
                       <SelectItem value="recent">Most Recent</SelectItem>
                       <SelectItem value="popular">Most Popular</SelectItem>
                       <SelectItem value="views">Most Viewed</SelectItem>
@@ -558,10 +534,10 @@ export default function VenturesPage() {
                   </Select>
 
                   <Select value={selectedStage} onValueChange={setSelectedStage}>
-                    <SelectTrigger className="w-44 rounded-xl">
+                    <SelectTrigger className="w-44 rounded-xl border-border">
                       <SelectValue placeholder="All Stages" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted">
+                    <SelectContent className="bg-background">
                       <SelectItem value="all">All Stages</SelectItem>
                       <SelectItem value="ideation">Ideation</SelectItem>
                       <SelectItem value="building">Building</SelectItem>
@@ -571,10 +547,10 @@ export default function VenturesPage() {
                   </Select>
 
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-44 rounded-xl">
+                    <SelectTrigger className="w-44 rounded-xl border-border">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
-                    <SelectContent className="bg-muted">
+                    <SelectContent className="bg-background">
                       <SelectItem value="all">All Categories</SelectItem>
                       <SelectItem value="EdTech">EdTech</SelectItem>
                       <SelectItem value="Social Impact">Social Impact</SelectItem>
@@ -625,6 +601,7 @@ export default function VenturesPage() {
                       idea={idea}
                       onNavigate={navigate}
                       isOwner={idea.creator?._id === userId}
+                      onOpenChatroom={handleOpenChatroom}
                     />
                   ))}
                 </div>
@@ -657,7 +634,7 @@ export default function VenturesPage() {
 
             {!loading && !error && ventures.length === 0 && (
               <div className="text-center py-20">
-                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-background flex items-center justify-center mx-auto mb-4">
                   <Lightbulb className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold mb-1">No ideas found</h3>
@@ -683,7 +660,7 @@ export default function VenturesPage() {
 
             {!myLoading && myVentures.length === 0 && (
               <div className="text-center py-20">
-                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-background flex items-center justify-center mx-auto mb-4">
                   <Lightbulb className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold mb-1">No ventures yet</h3>

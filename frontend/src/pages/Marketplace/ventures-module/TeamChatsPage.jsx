@@ -4,6 +4,8 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import JoinedVentures from "./JoinedVentures";
 import { fetchMyVentures, getAcceptedApplications } from "@/api/venturesApi";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function TeamChatsPage() {
   const navigate = useNavigate();
@@ -66,9 +68,25 @@ export default function TeamChatsPage() {
     return [...ownerOnlyVentures, ...teams];
   }, [myVentures, teams]);
 
+  const resolvedInitialId = useMemo(() => {
+  if (!initialSelectedVentureId) return null;
+  // Direct match (member chats have the real _id)
+  const direct = joinedVenturesData.find((t) => t._id === initialSelectedVentureId);
+  if (direct) return direct._id;
+  // Owner chats are prefixed — find by venture._id
+  const ownerMatch = joinedVenturesData.find(
+    (t) => t.venture?._id === initialSelectedVentureId
+  );
+  return ownerMatch?._id ?? initialSelectedVentureId;
+}, [initialSelectedVentureId, joinedVenturesData]);
+
   return (
     <div className="h-[calc(100vh-72px)] overflow-hidden bg-gray-50">
       <div className="max-w-7xl mx-auto h-full px-4 py-0 md:px-4 md:py-4">
+        
+        <div className="mb-4">
+     
+    </div>
         {loading ? (
           <div className="flex h-full justify-center items-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -77,7 +95,7 @@ export default function TeamChatsPage() {
           <div className="h-full">
             <JoinedVentures
               teams={joinedVenturesData}
-              initialSelectedVentureId={initialSelectedVentureId}
+              initialSelectedVentureId={resolvedInitialId}
               onBack={() => navigate("/marketplace/buyer/ventures")}
             />
           </div>

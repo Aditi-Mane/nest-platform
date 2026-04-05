@@ -14,6 +14,13 @@ const LandingPage = () => {
 
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-background">
+      <div className="rounded-xl flex items-center justify-center">
+        <img
+          src="/NEST_logo.png"  
+          alt="NEST Logo"
+          className="size-25 object-contain mb-3"
+        />
+      </div>
       <h1 className="text-4xl font-bold mb-2 text-text">NEST</h1>
       <p className="text-muted mb-6">Empowering Campus Startups</p>
       <button

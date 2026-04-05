@@ -7,7 +7,8 @@ const { Schema } = mongoose;
 const TeamMemberSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    role: { type: String, required: true },          // "UI/UX Designer"
+    role: { type: String, required: true },// "UI/UX Designer"
+    collegeName: { type: String, },
     confirmed: { type: Boolean, default: false },    // must accept invite
     joinedAt: { type: Date },
   },

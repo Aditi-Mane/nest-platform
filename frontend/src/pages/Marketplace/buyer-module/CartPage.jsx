@@ -202,7 +202,7 @@ const getContactButtonVariant = (status) => {
 
   const isContactButtonDisabled = (status, productStatus) => {
     return (
-    status === "deal_confirmed" ||
+    
     productStatus === "sold" ||
     productStatus === "reserved"
     );

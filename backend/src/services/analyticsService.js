@@ -336,7 +336,7 @@ export const getLowProducts = async (sellerId) => {
   return await Product.aggregate([
     {
       $match: {
-        createdBy: new mongoose.Types.ObjectId(String(sellerId)),
+        createdBy: new mongoose.Types.ObjectId(sellerId),
       },
     },
     {
@@ -349,30 +349,10 @@ export const getLowProducts = async (sellerId) => {
     },
     {
       $addFields: {
-        verifiedOrders: {
-          $filter: {
-            input: "$orders",
-            as: "order",
-            cond: { $eq: ["$$order.status", "otp_verified"] },
-          },
-        },
-      },
-    },
-    {
-      $addFields: {
-        revenue: {
-          $sum: {
-            $map: {
-              input: "$verifiedOrders",
-              as: "o",
-              in: "$$o.totalPrice",
-            },
-          },
-        },
         sales: {
           $sum: {
             $map: {
-              input: "$verifiedOrders",
+              input: "$orders",
               as: "o",
               in: "$$o.quantity",
             },
@@ -380,20 +360,28 @@ export const getLowProducts = async (sellerId) => {
         },
       },
     },
-    
+    {
+      $addFields: {
+        conversionRate: {
+          $cond: [
+            { $gt: ["$views", 0] },
+            { $multiply: [{ $divide: ["$sales", "$views"] }, 100] },
+            0,
+          ],
+        },
+      },
+    },
     {
       $project: {
         name: 1,
         images: 1,
-        sales: { $ifNull: ["$sales", 0] },
-        revenue: { $ifNull: ["$revenue", 0] },
+        views: { $ifNull: ["$views", 0] },
+        sales: 1,
+        conversionRate: 1,
       },
     },
-
-    {
-      $sort: { revenue: 1 },
-    },
-
+    { $sort: { conversionRate: 1 } },
     { $limit: 5 },
   ]);
 };
+ 
