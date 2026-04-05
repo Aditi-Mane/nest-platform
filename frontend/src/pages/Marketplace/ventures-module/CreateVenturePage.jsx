@@ -625,13 +625,13 @@ const progress = Math.round((completedSteps / 6) * 100);
             <Button
               type="button"
               variant="outline"
-              className="flex-1 rounded-xl"
+              className="flex-1 rounded-xl border-border"
               onClick={() => navigate("/marketplace/buyer/ventures")}
               disabled={submitting}
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 rounded-xl" disabled={submitting}>
+            <Button type="submit" className="flex-1 rounded-xl text-card" disabled={submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {submitting ? "Posting..." : "Post Idea"}
             </Button>
