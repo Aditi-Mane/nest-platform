@@ -128,7 +128,7 @@ export const respondToApplication = async (req, res) => {
       user: application.applicant,
       role: application.roleAppliedFor,
       confirmed: true,
-      joinedAt: null,
+      joinedAt: new Date(),
     });
         await venture.save();
 
@@ -234,6 +234,7 @@ export const getApplicationStatus = async (req, res) => {
   }
 };
 
+// applicationController.js
 export const getAcceptedApplications = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -244,24 +245,20 @@ export const getAcceptedApplications = async (req, res) => {
     })
       .populate({
         path: "venture",
-        select: "title description category stage creator teamMembers teamLimit",
-        populate: [
-    {
-      path: "teamMembers.user",
-      select: "name avatar collegeName"
-    },
-    {
-      path: "creator",
-      select: "name avatar collegeName"
-    }
-  ]
+        select: "title description category stage creator teamMembers teamLimit isArchived",
+        populate: { path: "creator", select: "name avatar collegeName" },
       })
       .select("venture roleAppliedFor respondedAt");
 
-    res.status(200).json({
-      count: applications.length,
-      applications,
+    await Application.populate(applications, {
+      path: "venture.teamMembers.user",
+      select: "name avatar collegeName",
     });
+
+    // ✅ filter out archived ventures so they vanish from chat list
+    const active = applications.filter((app) => !app.venture?.isArchived);
+
+    res.status(200).json({ count: active.length, applications: active });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });

@@ -115,6 +115,8 @@ function TeamInfoPanel({ application, onClose }) {
   const stage = stageConfig[venture?.stage] || stageConfig.ideation;
   const confirmedMembers = venture?.teamMembers?.filter((m) => m.confirmed).length || 0;
 
+
+
   return (
     <div className="w-80 bg-white border-l border-border flex flex-col">
       <div className="px-4 py-4 border-b border-border flex items-center justify-between">
@@ -160,20 +162,29 @@ function TeamInfoPanel({ application, onClose }) {
             </p>
             <div className="space-y-2">
               {venture?.teamMembers
-                ?.filter((member) => member.confirmed)
-                .slice(0, 5)
-                .map((member, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.user?.avatar} />
-                      <AvatarFallback>{member.user?.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.user?.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{member.role}</p>
-                    </div>
-                  </div>
-                ))}
+  ?.filter((member) => member.confirmed)
+  .slice(0, 5)
+  .map((member, index) => {
+   
+    const userObj = member.user && typeof member.user === "object" && "name" in member.user
+      ? member.user
+      : null;
+
+    return (
+      <div key={index} className="flex items-center gap-2">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={userObj?.avatar} />
+          <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-semibold">
+            {userObj?.name?.charAt(0)?.toUpperCase() ?? "?"}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{userObj?.name ?? "Unknown"}</p>
+          <p className="text-xs text-muted-foreground truncate">{member.role}</p>
+        </div>
+      </div>
+    );
+  })}
               {confirmedMembers > 5 && (
                 <p className="text-xs text-muted-foreground py-2">+{confirmedMembers - 5} more members</p>
               )}
@@ -182,9 +193,9 @@ function TeamInfoPanel({ application, onClose }) {
 
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Creator</p>
-            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={venture?.creator?.avatar} />
+                <AvatarImage src={venture?.creator?.avatar || "/default-avatar.png"} />
                 <AvatarFallback>{venture?.creator?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>

@@ -45,6 +45,7 @@ export const getVentures = async (req, res) => {
   .skip((page - 1) * limit)
   .limit(Number(limit))
   .populate("creator", "name email collegeName avatar")
+  .populate("teamMembers.user", "name avatar collegeName")
   .select("-comments -updates -pitchDeckUrl -pitchDeckAccessList");
 
   if (sort === "popular") {
@@ -121,8 +122,11 @@ export const getVentures = async (req, res) => {
 
 export const getMyVentures = async (req, res) => {
   try {
-    const ventures = await Venture.find({ creator: req.user._id })
+    const ventures = await Venture.find({ creator: req.user._id,
+      isArchived: false,
+     })
       .populate("creator", "name email collegeName avatar")
+      .populate("teamMembers.user", "name avatar collegeName")
       .sort({ createdAt: -1 })
       .select("-pitchDeckUrl -pitchDeckAccessList");
       
@@ -167,9 +171,14 @@ export const createVenture = async (req, res) => {
       stage, teamLimit, openRoles, milestones, tags, isRecruiting,
     } = req.body;
 
-    const similar = await Venture.find({ $text: { $search: title }, isArchived: false })
-      .limit(3)
-      .select("title _id");
+    let similar = [];
+    try {
+      similar = await Venture.find({ $text: { $search: title }, isArchived: false })
+        .limit(3)
+        .select("title _id");
+    } catch (_) {
+      // Text index not ready or query failed — silently skip similarity check
+    }
 
     const existingMembers = [];
 
@@ -180,7 +189,7 @@ for (const member of (req.body.teamMembers || [])) {
     existingMembers.push({
       user: user._id,
       role: member.role,
-      collegeName: member.collegeName,
+      collegeName: user.collegeName,
       confirmed: true,
       joinedAt: new Date(),
     });
