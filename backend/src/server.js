@@ -23,8 +23,8 @@ import ventureRoutes from "./routes/ventureRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";   
 import notificationRoutes from "./routes/notificationRoutes.js";
 import salesPredictionRoutes from "./routes/salesPredictionRoutes.js";
-
-
+import complaintRoutes from "./routes/complaintRoutes.js";
+ 
 
 connectDB()
 
@@ -54,6 +54,7 @@ app.use("/api/ventures",      ventureRoutes);
 app.use("/api/applications",  applicationRoutes);   // separate prefix — fixes the /mine bug
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/sales-analytics", salesPredictionRoutes);
+app.use("/api/complaints", complaintRoutes);
 
 app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")

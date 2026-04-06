@@ -39,6 +39,7 @@ import {useEffect, useState} from "react";
 import axios from "axios";
 import api from "../../../api/axios.js";
 import { useCart } from "../../../context/CartContext.jsx";
+import ComplaintModal from "../../../components/ComplaintModal.jsx";
 
 export default function ProductDetailPage() {
   const { addToCart } = useCart();
