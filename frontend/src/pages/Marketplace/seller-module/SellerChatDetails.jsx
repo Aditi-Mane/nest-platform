@@ -105,37 +105,61 @@ const SellerChatDetails = () => {
     setNewMessage("");
   };
 
-  // DEAL HANDLERS (unchanged logic, just cleaner)
+  //confirm & cancel with error handling
   const handleConfirmDeal = async () => {
-    if (!pricePerItem || pricePerItem <= 0) {
+    if (!pricePerItem || Number(pricePerItem) <= 0) {
       return setDealError("Enter valid price");
     }
 
-    await api.put(`/seller/confirm/${conversationId}`, {
-      quantity,
-      pricePerItem,
-      paymentMethod,
-    });
+    if (!quantity || Number(quantity) <= 0) {
+      return setDealError("Enter valid quantity");
+    }
 
-    setConversationInfo((prev) => ({
-      ...prev,
-      status: "deal_confirmed",
-    }));
+    try {
+      await api.put(`/seller/confirm/${conversationId}`, {
+        quantity: Number(quantity),
+        pricePerItem: Number(pricePerItem),
+        paymentMethod,
+      });
 
-    toast.success("Deal confirmed");
-    setShowDealModal(false);
+      setConversationInfo((prev) => ({
+        ...prev,
+        status: "deal_confirmed",
+      }));
+
+      toast.success("Deal confirmed");
+      setShowDealModal(false);
+
+    } catch (err) {
+
+      const message = err.response?.data?.message;
+
+      if (message) {
+        toast.error(message);       
+      } else {
+        toast.error("Something went wrong");
+      }
+    }
   };
+
 
   const handleCancelDeal = async () => {
-    await api.put(`/seller/cancel/${conversationId}`);
+    try {
+      await api.put(`/seller/cancel/${conversationId}`);
 
-    setConversationInfo((prev) => ({
-      ...prev,
-      status: "cancelled",
-    }));
+      setConversationInfo((prev) => ({
+        ...prev,
+        status: "cancelled",
+      }));
 
-    toast.success("Deal cancelled");
-  };
+      toast.success("Deal cancelled");
+
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to cancel deal";
+      toast.error(message);        //backend message
+    }
+  };  
+  
   const isSeller =
   currentUser && conversationInfo
     ? String(currentUser._id) ===

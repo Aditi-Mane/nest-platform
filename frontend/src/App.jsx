@@ -12,7 +12,7 @@ import { CartProvider } from "./context/CartContext.jsx";
 import { UserProvider } from "./context/UserContext.jsx";
 
 
-import { Toaster } from "sonner";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
