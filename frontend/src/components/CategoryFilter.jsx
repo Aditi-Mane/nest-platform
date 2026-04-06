@@ -34,7 +34,7 @@ export function CategoryFilter({ selectedCategory, onSelectCategory }) {
           <Badge
             key={category.id}
             variant={isActive ? "default" : "outline"}
-            className={`cursor-pointer px-4 py-2 gap-2 rounded-full transition-all ${
+            className={`cursor-pointer px-4 py-3 gap-2 rounded-full transition-all ${
               isActive
                 ? "bg-primary hover:bg-primary/90 text-white"
                 : "hover:bg-background"

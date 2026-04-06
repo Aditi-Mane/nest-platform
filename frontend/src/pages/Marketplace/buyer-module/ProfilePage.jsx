@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import ComplaintModal from "../../../components/ComplaintModal.jsx";
 
 const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => {
   const showEdit = onEdit || isEditing;
@@ -95,7 +96,8 @@ export const ProfilePage = () => {
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
+  const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState(null);
 
   /* LOAD USER */
   useEffect(() => {
@@ -363,67 +365,128 @@ export const ProfilePage = () => {
           ) : (
             <div className="space-y-4">
               {purchaseHistory
-                .filter(order => order !== null)
-                .map((order) => (
-                  <Card key={order._id} className="rounded-2xl border-border hover:shadow-md">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-5">
+  .filter((order) => order !== null)
+  .map((order) => (
+    <div
+      key={order._id}
+      className="rounded-2xl overflow-hidden transition-all hover:shadow-lg border bg-white"
+      
+    >
+      {/* ── TOP STRIP: status + date ── */}
+      <div
+        className="flex items-center justify-between px-5 py-2.5 "
+        
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full" style={{ background: "#d97706" }} />
+          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92400e" }}>
+            Completed
+          </span>
+        </div>
+        <span className="text-xs" style={{ color: "#a16207" }}>
+          {order.createdAt
+            ? formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })
+            : "Recently"}
+        </span>
+      </div>
 
-                        {/* IMAGE */}
-                        <div className="w-20 h-20 rounded-xl overflow-hidden border">
-                          <img
-                            src={order.product?.images?.[0]?.url || "/placeholder.png"}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+      {/* ── MAIN BODY ── */}
+      <div className="flex gap-5 p-5 ">
+        {/* Product image */}
+        <div
+          className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0"
+          style={{ border: "1px solid #CFAE8E" }}
+        >
+          <img
+            src={order.product?.images?.[0]?.url || "/placeholder.png"}
+            className="w-full h-full object-cover"
+          />
+        </div>
 
-                        {/* INFO */}
-                        <div className="flex-1">
-                          <h4 className="font-semibold">
-                            {order.product?.name}
-                          </h4>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-bold text-base truncate text-primary" >
+            {order.product?.name}
+          </h4>
 
-                          <p className="text-sm text-muted-foreground">
-                            Seller: {order.seller?.name}
-                          </p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <div
+              className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0"
+              style={{ border: "1px solid #fde68a" }}
+            >
+              {order.seller?.avatar ? (
+                <img src={order.seller.avatar} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-muted/40"
+                    >
+                  {order.seller?.name?.[0]?.toUpperCase()}
+                </div>
+              )}
+            </div>
+            <p className="text-xs" style={{ color: "#a16207" }}>
+              {order.seller?.name}
+            </p>
+          </div>
 
-                          <p className="text-sm text-muted-foreground">
-                            Qty: {order.quantity}
-                          </p>
+          <div className="flex items-center gap-3 mt-3">
+            <span
+              className="text-xs font-medium px-2.5 py-1 rounded-full"
+              style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+            >
+              Qty: {order.quantity}
+            </span>
+            <span className="text-xl font-bold" style={{ color: "#d97706" }}>
+              ₹{order.totalPrice}
+            </span>
+          </div>
+        </div>
+      </div>
 
-                          <p className="text-xs text-muted mt-1">
-                            {order.createdAt
-                              ? formatDistanceToNow(new Date(order.createdAt), {
-                                  addSuffix: true,
-                                })
-                              : "Recently"}
-                          </p>
-                        </div>
+      {/* ── ACTION ROW ── */}
+      <div
+        className="flex items-center justify-end gap-2 px-5 py-3 "
+        style={{ borderTop: "1px solid  #CFAE8E", background: "#fffdf7" }}
+      >
+        {/* Leave Review */}
+        <button
+          disabled={order.reviewed}
+          onClick={() => {
+            setSelectedProduct(order.product._id);
+            setIsReviewModalOpen(true);
+          }}
+          className="px-4 py-1.5 text-xs font-semibold rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+          style={
+            order.reviewed
+              ? { background: "#a8a29e", color: "black", }
+              : {
+                  background: "#d97706",
+                  color: "white",
+                  border: "none",
+                  boxShadow: "0 2px 8px rgba(217,119,6,0.25)",
+                }
+          }
+        >
+          {order.reviewed ? "✓ Reviewed" : "Leave Review"}
+        </button>
 
-                        {/* PRICE */}
-                        <div className="text-right">
-                          <p className="text-lg font-semibold text-primary">
-                            ₹{order.totalPrice}
-                          </p>
+        {/* Divider */}
+        <div className="w-px h-4  bg-primary"/>
 
-                          <Button
-                            size="sm"
-                            className="border border-border hover:bg-card"
-                            variant="outline"
-                            disabled={order.reviewed}
-                            onClick={() => {
-                              setSelectedProduct(order.product._id);
-                              setIsReviewModalOpen(true);
-                            }}
-                          >
-                            {order.reviewed ? "Reviewed" : "Leave Review"}
-                          </Button>
-                        </div>
-
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+        {/* Report Seller */}
+        <button
+          onClick={() => {
+              setSelectedProduct(order.product?._id || order.product);
+              setSelectedSeller(order.seller?._id || order.seller);
+              setIsComplaintModalOpen(true);
+            }}
+          className="px-4 py-1.5 text-xs font-semibold rounded-full transition hover:bg-red-50"
+          style={{ border: "1px solid #fca5a5", color: "#dc2626", background: "white" }}
+        >
+          Report Seller
+        </button>
+      </div>
+    </div>
+  ))}
             </div>
           )}
         </Section>
@@ -492,6 +555,15 @@ export const ProfilePage = () => {
         <ReviewModal
           productId={selectedProduct}
           onClose={handleReviewSubmitted}
+        />
+      )}
+
+      {isComplaintModalOpen && (
+        <ComplaintModal
+          productId={selectedProduct}
+          sellerId={selectedSeller}
+          sellerName={purchaseHistory.find(o => o.seller?._id === selectedSeller)?.seller?.name}
+          onClose={() => setIsComplaintModalOpen(false)}
         />
       )}
 
