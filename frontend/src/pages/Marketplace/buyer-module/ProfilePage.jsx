@@ -4,7 +4,7 @@ import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../context/UserContext";
 import ReviewModal from "../../../components/ReviewModal.jsx";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   Tabs,
   TabsContent,
