@@ -4,6 +4,8 @@ import api from "../../../api/axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../context/UserContext";
+import toast from "react-hot-toast";
+import { clearStoredToken } from "../../../utils/authStorage.js";
 
 // /* ---------- REUSABLE COMPONENTS ---------- */
 
@@ -118,10 +120,11 @@ const SellerSettings = () => {
       if (storeLocation) formData.append("storeLocation", storeLocation);
 
       await api.put("/users/updateStore", formData);
+      toast.success("Store information updated")
 
       setEditingStore(false);
     } catch (error) {
-      console.log("Save store error:", error);
+      toast.error("Save store error:", error);
     }
   };
 
@@ -136,10 +139,11 @@ const SellerSettings = () => {
       if (payoutUPI) formData.append("payoutUPI", payoutUPI);
 
       await api.put("/users/updateProfile", formData);
+      toast.success("Profile information updated")
 
       setEditingProfile(false);
     } catch (error) {
-      console.log("Save profile error:", error);
+      toast.error("Save profile error:", error);
     }
   };
 
@@ -174,13 +178,13 @@ const SellerSettings = () => {
       const res = await api.put("/users/updatePassword", { password: newPassword });
 
       setNewPassword("");
+      toast.success("Password updated")
       setTimeout(() => {
         setIsPasswordModalOpen(false);
         setPasswordSuccess("");
       }, 1200);
     } catch (error) {
-      console.log("Change password error:", error);
-      setPasswordError(error?.response?.data?.message || "Failed to update password");
+      toast.error(error?.response?.data?.message || "Failed to update password");
     } finally {
       setPasswordLoading(false);
     }
@@ -266,12 +270,13 @@ const SellerSettings = () => {
         ...prev,
         activeRole: updatedRole,
       }));
+      toast.success("Switched to " + updatedRole + " profile");
 
       setShowSwitchModal(false);
 
       navigate(`/marketplace/${updatedRole}`);
     } catch (error) {
-      console.error(error.response?.data);
+      toast.error(error.response?.data);
     }
   };
 
@@ -280,8 +285,9 @@ const SellerSettings = () => {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem("token");
-    setUser(null);                   
+    clearStoredToken();
+    setUser(null);      
+    toast.success("Logged out")             
     navigate("/auth/login");              
   };
 
@@ -296,13 +302,14 @@ const SellerSettings = () => {
       await api.delete("/users/delete");
 
       //logout after delete
-      localStorage.removeItem("token");
+      clearStoredToken();
       setUser(null);
+      toast.success("User profile deleted successfully")
 
       navigate("/auth/login");
 
     } catch (error) {
-      console.error(error.response?.data);
+      toast.error(error.response?.data);
     } finally {
       setDeleteLoading(false);
     }

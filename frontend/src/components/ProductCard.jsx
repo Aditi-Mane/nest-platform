@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import api from "../api/axios";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 
 export function ProductCard({ 
   product, 
@@ -214,6 +214,7 @@ export function ProductCard({
           }`}
           onClick={(e) => {
             e.stopPropagation();
+            toast.success("Product added to cart");
             if (!isUnavailable) {
               onAddToCart(product._id);
             }

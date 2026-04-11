@@ -3,6 +3,7 @@ import api from "../../api/axios.js";
 import { MdEmail, MdLock } from "react-icons/md";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { setStoredToken } from "../../utils/authStorage.js";
 
 import AuthLayout from "../../components/auth/AuthLayout.jsx";
 import AuthCard from "../../components/auth/AuthCard.jsx";
@@ -37,7 +38,7 @@ const Login = () => {
       );
 
       //store JWT Token
-      localStorage.setItem("token", res.data.token);
+      setStoredToken(res.data.token);
 
       //navigate to marketplace
       navigate("/resolve");

@@ -112,6 +112,11 @@ const userSchema = new mongoose.Schema(
       default: false
     },
 
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+
     sellerStatus: {
       type: String,
       enum: ["none", "pending", "active"],

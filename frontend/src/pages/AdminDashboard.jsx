@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios.js";
 import {
+  ArrowLeft,
   ShieldCheck,
   Clock3,
   CheckCircle2,
@@ -11,11 +12,14 @@ import {
   CalendarDays,
   ExternalLink,
 } from "lucide-react";
+import { MdReport } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [loadingId, setLoadingId] = useState(null);
+  const navigate = useNavigate();
 
   const stats = useMemo(
     () => ({
@@ -80,13 +84,31 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <button
-              onClick={fetchUsers}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-text transition hover:bg-card"
-            >
-              <RefreshCcw className="h-4 w-4" />
-              Refresh List
-            </button>
+            <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+              <button
+                onClick={() => navigate("/marketplace/seller/dashboard")}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-text transition hover:bg-card"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Seller Dashboard
+              </button>
+
+              <button
+                onClick={fetchUsers}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-text transition hover:bg-card"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Refresh List
+              </button>
+
+              <button
+                onClick={() => navigate("/reported-sellers")}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-text transition hover:bg-card"
+              >
+                <MdReport size={20} />
+                Reported Sellers
+              </button>
+            </div>
           </div>
         </section>
 
