@@ -40,6 +40,10 @@ Priya Kumari
 
 ### 🚧 Current Progress (Modules Completed)
 
+✅ Seller-Buyer Module flow
+
+![Seller-Buyer modules flow](./assets/seller-buyer%20module.svg)
+
 ✅ Authentication Module
 - Staged signup flow with email verification
 - Secure authentication using JWT and bcrypt
