@@ -1,6 +1,7 @@
 import dotenv from "dotenv"
 dotenv.config()
 
+import app from "./app.js";
 import path from "path"
 import express from "express"
 import cors from "cors"
@@ -60,7 +61,8 @@ app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")
 })
 
-const PORT = process.env.PORT
+const PORT = 5000;
+//const PORT = process.env.PORT
 const server = app.listen(PORT,()=>{
   console.log(`Server is running on ${PORT}`);
   
