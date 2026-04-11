@@ -6,16 +6,6 @@ NEST is a full-stack web platform designed to empower students to start, manage,
 
 This project is being developed by a 4-member team as part of an academic initiative.
 
-### 🎯 Problem Statement
-
-Many students have innovative business ideas but lack:
-- Affordable and beginner-friendly platforms to buy and sell products/services
-- Tools to easily manage and grow their businesses
-- A supportive and student-focused ecosystem
-
-These limitations make it difficult for students to participate in marketplace activities and turn their ideas into real ventures.
-NEST aims to solve this by providing a simple, accessible platform for seamless buying, selling, and collaboration within a college environment.
-
 ### 🛠 Tech Stack
 
 Frontend: React.js, TailwindCSS
@@ -27,16 +17,6 @@ Database: MongoDB
 Authentication: JWT, bcrypt
 
 Tools: GitHub, Postman
-
-### 👥 Team
-
-Pranoti Chakwate
-
-Aditi Mane
-
-Siddhi Borawake
-
-Priya Kumari
 
 ### Modules Completed
 
@@ -52,27 +32,7 @@ Priya Kumari
 
 ![Seller-Buyer modules flow](./assets/ventures-flow.svg)
 
+3. Admin Dashboard 
 
-✅ Seller Module
-- Product listing and management
-- Seller-side transaction flow implemented
+![Seller-Buyer modules flow](./assets/admin-pages.svg)
 
-✅ Buyer Module
-- Basic buyer-side interaction with products
-
-### 💡 Features Implemented So Far
-
-- Secure authentication system
-- Seller transaction workflow
-- Buyer–seller interaction foundation
-- Modular MERN architecture
-
-### 🧠 Future Scope
-
-- Payment integration (Stripe / Razorpay)
-- AI-based recommendations
-- Sales prediction models
-- Sentiment analysis
-- Collaboration network
-
-### 📌 Status: Ongoing Development
