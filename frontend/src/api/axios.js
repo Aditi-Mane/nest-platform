@@ -22,12 +22,15 @@ api.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const message = error.response?.data?.message || "";
+    const requestUrl = error.config?.url || "";
     const isBannedResponse =
       status === 403 && message.toLowerCase().includes("you have been banned");
+    const isUserSessionCheck = requestUrl.includes("/users/me");
+    const shouldForceLogout = isBannedResponse || (status === 401 && isUserSessionCheck);
 
-    if (status === 401 || isBannedResponse) {
+    if (shouldForceLogout) {
       const isAuthRoute = window.location.pathname.startsWith("/auth");
-      const isResolverCall = error.config?.url?.includes("/users/me");
+      const isResolverCall = isUserSessionCheck;
 
       if (!isAuthRoute && !isResolverCall) {
         clearStoredToken();
