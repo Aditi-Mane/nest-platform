@@ -6,6 +6,7 @@ import PrimaryButton from "../../components/auth/PrimaryButton.jsx";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../../api/axios.js";
+import { clearStoredToken } from "../../utils/authStorage.js";
 
 import { FaClock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
@@ -52,7 +53,7 @@ const VerificationStatus = () => {
         "We are verifying your details. You will gain full access once approved.",
       buttonText: "Back to Login",
       buttonAction: () => {
-        localStorage.removeItem("token");
+        clearStoredToken();
         navigate("/auth/login");
       }
     },
@@ -75,7 +76,7 @@ const VerificationStatus = () => {
         "Please check your details and try submitting again or contact support.",
       buttonText: "Back to Login",
       buttonAction: () => {
-        localStorage.removeItem("token");
+        clearStoredToken();
         navigate("/auth/login");
       }
     }

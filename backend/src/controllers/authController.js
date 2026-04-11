@@ -274,6 +274,13 @@ export const login = async (req, res) => {
       });
     }
 
+    if (user.isBanned) {
+      return res.status(403).json({
+        message:
+          "You have been banned. For further enquiry, email aditimane549@gmail.com.",
+      });
+    }
+
     //compare password
     const isMatch = await bcrypt.compare(password, user.password);
 

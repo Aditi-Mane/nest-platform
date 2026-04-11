@@ -5,6 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../context/UserContext";
 import toast from "react-hot-toast";
+import { clearStoredToken } from "../../../utils/authStorage.js";
 
 // /* ---------- REUSABLE COMPONENTS ---------- */
 
@@ -284,7 +285,7 @@ const SellerSettings = () => {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem("token");
+    clearStoredToken();
     setUser(null);      
     toast.success("Logged out")             
     navigate("/auth/login");              
@@ -301,7 +302,7 @@ const SellerSettings = () => {
       await api.delete("/users/delete");
 
       //logout after delete
-      localStorage.removeItem("token");
+      clearStoredToken();
       setUser(null);
       toast.success("User profile deleted successfully")
 

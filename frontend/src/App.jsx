@@ -13,6 +13,7 @@ import { UserProvider } from "./context/UserContext.jsx";
 
 
 import { Toaster } from "react-hot-toast";
+import ReportedSellersList from "./pages/Marketplace/ReportedSellersList.jsx"
 
 function App() {
   return (
@@ -52,6 +53,15 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reported-sellers"
+            element={
+              <AdminProtectedRoute>
+                <ReportedSellersList />
               </AdminProtectedRoute>
             }
           />

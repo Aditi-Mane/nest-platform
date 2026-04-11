@@ -7,6 +7,7 @@ import { GrSecure } from "react-icons/gr";
 import { useState, useEffect } from 'react'
 import api from '../../api/axios.js'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { setStoredToken } from "../../utils/authStorage.js";
 
 const VerifyEmailOtp = () => {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const VerifyEmailOtp = () => {
       }
 
       localStorage.removeItem("signupEmail");
-      localStorage.setItem("token", token);
+      setStoredToken(token);
 
       navigate("/resolve", { replace: true });
 

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ComplaintModal from "../../../components/ComplaintModal.jsx";
+import { clearStoredToken } from "../../../utils/authStorage.js";
 
 const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => {
   const showEdit = onEdit || isEditing;
@@ -188,7 +189,7 @@ export const ProfilePage = () => {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem("token");
+    clearStoredToken();
     setUser(null);
     navigate("/auth/login");
     setShowLogoutModal(false);
@@ -203,7 +204,7 @@ export const ProfilePage = () => {
     try {
       setDeleteLoading(true);
       await api.delete("/users/delete");
-      localStorage.removeItem("token");
+      clearStoredToken();
       setUser(null);
       setShowDeleteModal(false);
       navigate("/auth/login");

@@ -1,8 +1,8 @@
 
 import Complaint from "../models/Complaint.js";
 import Order from "../models/Order.js";
+import User from "../models/User.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";        
-import { s3 } from "../utils/s3.js"              
  
 /* ─────────────────────────────────────────────
    POST /complaints
@@ -85,6 +85,233 @@ export const fileComplaint = async (req, res) => {
     }
     console.error("fileComplaint error:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getReportedSellers = async (req, res) => {
+  try {
+    const data = await Complaint.aggregate([
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+
+      // Join Seller
+      {
+        $lookup: {
+          from: "users",
+          localField: "seller",
+          foreignField: "_id",
+          as: "seller"
+        }
+      },
+      { $unwind: "$seller" },
+
+      // Join Buyer
+      {
+        $lookup: {
+          from: "users",
+          localField: "buyer",
+          foreignField: "_id",
+          as: "buyer"
+        }
+      },
+      { $unwind: "$buyer" },
+
+      // Join Product
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" },
+
+      // Group by Seller
+      {
+        $group: {
+          _id: "$seller._id",
+          seller: { $first: "$seller" },
+          complaints: {
+            $push: {
+              _id: "$_id",
+              buyer: "$buyer",
+              product: "$product",
+              category: "$category",
+              description: "$description",
+              status: "$status",
+              adminNote: "$adminNote",
+              resolvedAt: "$resolvedAt",
+              updatedAt: "$updatedAt",
+              evidence: "$evidence",
+              createdAt: "$createdAt"
+            }
+          },
+          totalComplaints: { $sum: 1 }
+        }
+      },
+
+      // Optional: sort by most reported sellers
+      { $sort: { totalComplaints: -1 } },
+
+      // Clean response
+      {
+        $project: {
+          _id: 0,
+          seller: 1,
+          complaints: 1,
+          totalComplaints: 1
+        }
+      }
+
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: data.length,
+      data
+    });
+
+  } catch (error) {
+    console.error("Error fetching reported sellers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch reported sellers"
+    });
+  }
+};
+
+const getPendingComplaintById = async (id) => {
+  const complaint = await Complaint.findById(id);
+
+  if (!complaint) {
+    return { error: { status: 404, message: "Complaint not found" } };
+  }
+
+  if (["resolved", "dismissed"].includes(complaint.status)) {
+    return {
+      error: {
+        status: 400,
+        message: `Complaint already ${complaint.status}`,
+      },
+    };
+  }
+
+  return { complaint };
+};
+
+export const resolveComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { complaint, error } = await getPendingComplaintById(id);
+
+    if (error) {
+      return res.status(error.status).json({ message: error.message });
+    }
+
+    complaint.status = "resolved";
+    complaint.resolvedAt = new Date();
+
+    await complaint.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Complaint resolved successfully",
+      complaint,
+    });
+
+  } catch (error) {
+    console.error("Resolve error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const dismissComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { complaint, error } = await getPendingComplaintById(id);
+
+    if (error) {
+      return res.status(error.status).json({ message: error.message });
+    }
+
+    complaint.status = "dismissed";
+    await complaint.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Complaint dismissed",
+      complaint,
+    });
+
+  } catch (error) {
+    console.error("Dismiss error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const banSellerFromComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { complaint, error } = await getPendingComplaintById(id);
+
+    if (error) {
+      return res.status(error.status).json({ message: error.message });
+    }
+
+    const seller = await User.findById(complaint.seller);
+
+    if (!seller) {
+      return res.status(404).json({ message: "Seller not found" });
+    }
+
+    seller.isBanned = true;
+    complaint.status = "resolved";
+    complaint.resolvedAt = new Date();
+
+    await Promise.all([seller.save(), complaint.save()]);
+
+    res.status(200).json({
+      success: true,
+      message: "Seller banned and complaint resolved successfully",
+      complaint,
+      seller: {
+        _id: seller._id,
+        isBanned: seller.isBanned,
+      },
+    });
+  } catch (error) {
+    console.error("Ban seller error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const unbanSeller = async (req, res) => {
+  try {
+    const { sellerId } = req.params;
+    const seller = await User.findById(sellerId);
+
+    if (!seller) {
+      return res.status(404).json({ message: "Seller not found" });
+    }
+
+    seller.isBanned = false;
+    await seller.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Seller unbanned successfully",
+      seller: {
+        _id: seller._id,
+        isBanned: seller.isBanned,
+      },
+    });
+  } catch (error) {
+    console.error("Unban seller error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
  
