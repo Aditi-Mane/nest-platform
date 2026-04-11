@@ -38,15 +38,20 @@ Siddhi Borawake
 
 Priya Kumari
 
-### 🚧 Current Progress (Modules Completed)
+### Modules Completed
 
-✅ Seller-Buyer Module flow
+1. Authentication flow
 
-![Seller-Buyer modules flow](./assets/seller-buyer%20module.svg)
+![Seller-Buyer modules flow](./assets/auth-flow.svg)
 
-✅ Authentication Module
-- Staged signup flow with email verification
-- Secure authentication using JWT and bcrypt
+2. Seller-Buyer Module flow
+
+![Seller-Buyer modules flow](./assets/seller-buyer-flow.svg)
+
+3. Ventures 
+
+![Seller-Buyer modules flow](./assets/ventures-flow.svg)
+
 
 ✅ Seller Module
 - Product listing and management
