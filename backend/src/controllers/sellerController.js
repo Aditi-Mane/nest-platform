@@ -34,7 +34,6 @@ export const setupSeller = async (req, res) => {
       });
     }
 
-    user.role = "seller";
     user.sellerStatus = "active";
 
     user.storeName = storeName;

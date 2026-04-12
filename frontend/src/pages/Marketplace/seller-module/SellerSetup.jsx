@@ -10,12 +10,14 @@ import AuthCard from "../../../components/auth/AuthCard.jsx";
 import AuthHeader from "../../../components/auth/AuthHeader.jsx";
 import InputField from "../../../components/auth/InputField.jsx";
 import PrimaryButton from "../../../components/auth/PrimaryButton.jsx";
+import { useUser } from "../../../context/UserContext.jsx";
 
 import api from "../../../api/axios.js";
 import toast from "react-hot-toast";
 
 const SellerSetup = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
 
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
@@ -42,6 +44,8 @@ const SellerSetup = () => {
       }
 
       await api.post("/seller/setup", formData);
+      const { data: refreshedUser } = await api.get("/users/me");
+      setUser(refreshedUser);
       toast.success("Store Setup done");
 
       navigate("/marketplace/seller");

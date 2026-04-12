@@ -29,7 +29,12 @@ const getFallbackPath = (user, allowedRoles) => {
   return "/resolve";
 };
 
-const RoleProtectedRoute = ({ allowedRole, allowedRoles, children }) => {
+const RoleProtectedRoute = ({
+  allowedRole,
+  allowedRoles,
+  allowInactiveSeller = false,
+  children,
+}) => {
   const { user, loading } = useUser();
   const permittedRoles = allowedRoles || allowedRole;
   const normalizedRoles = Array.isArray(permittedRoles)
@@ -52,7 +57,12 @@ const RoleProtectedRoute = ({ allowedRole, allowedRoles, children }) => {
     return <Navigate to={getFallbackPath(user, permittedRoles)} replace />;
   }
 
-  if (normalizedRoles.includes("seller") && user.activeRole === "seller" && user.sellerStatus !== "active") {
+  if (
+    !allowInactiveSeller &&
+    normalizedRoles.includes("seller") &&
+    user.activeRole === "seller" &&
+    user.sellerStatus !== "active"
+  ) {
     return <Navigate to="/marketplace/seller/setup" replace />;
   }
 

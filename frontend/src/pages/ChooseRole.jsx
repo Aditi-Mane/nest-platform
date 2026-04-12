@@ -3,9 +3,11 @@ import { GiSellCard} from "react-icons/gi";
 import { useState } from "react";
 import api from "../api/axios.js";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext.jsx";
 
 const ChooseRole = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
 
   const [selectedRole, setSelectedRole] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,11 @@ const ChooseRole = () => {
       )
 
       const { activeRole, sellerStatus } = res.data;
+      setUser((prev) => ({
+        ...(prev || {}),
+        activeRole,
+        sellerStatus,
+      }));
 
       if (activeRole === "seller") {
         if (sellerStatus === "active") {
