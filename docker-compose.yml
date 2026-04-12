@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+      - sentiment-service
+      - recommender-service
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/mydb
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  sentiment-service:
+    build: ./ml-services/sentiment_analysis
+    ports:
+      - "8000:8000"
+
+  recommender-service:
+    build: ./ml-services/recommender
+    ports:
+      - "8001:8001"
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"

@@ -4,7 +4,7 @@ import axios from "axios";
 import mongoose from "mongoose";
 
 const SENTIMENT_SERVICE_URL =
-  process.env.SENTIMENT_SERVICE_URL || "http://127.0.0.1:8000/predict-sentiment";
+  process.env.SENTIMENT_SERVICE_URL || "http://sentiment-service:8000";
 
 const analyzeSentiment = async (text) => {
   try {

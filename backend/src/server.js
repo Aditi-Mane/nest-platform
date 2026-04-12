@@ -26,7 +26,16 @@ import salesPredictionRoutes from "./routes/salesPredictionRoutes.js";
 import complaintRoutes from "./routes/complaintRoutes.js";
  
 
-connectDB()
+// connectDB()
+const PORT = process.env.PORT || 5000;
+
+const start = async () => {
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on ${PORT}`);
+  });
+};
 
 const app = express()
 
@@ -60,7 +69,7 @@ app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")
 })
 
-const PORT = process.env.PORT
+// const PORT = process.env.PORT
 const server = app.listen(PORT,()=>{
   console.log(`Server is running on ${PORT}`);
   
@@ -69,3 +78,4 @@ const server = app.listen(PORT,()=>{
 
 initSocket(server);
 
+export default app;
