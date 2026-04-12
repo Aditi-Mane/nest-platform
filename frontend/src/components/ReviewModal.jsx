@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Star, X, Sparkles } from "lucide-react";
 import api from "@/api/axios";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 const ReviewModal = ({ productId, onClose }) => {
 
@@ -43,6 +44,7 @@ const ReviewModal = ({ productId, onClose }) => {
         setHover(0);
 
         onClose();
+        toast.success("Product reviewed!")
 
       } catch (error) {
         console.error("Review failed:", error);
