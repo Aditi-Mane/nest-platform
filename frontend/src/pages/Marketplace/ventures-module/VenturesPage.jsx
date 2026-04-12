@@ -162,7 +162,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
           {idea.isRecruiting && (
             <span className="text-[11px] px-2 py-0.5 rounded-full 
                              bg-orange-100 text-orange-700 border border-orange-200 animate-pulse">
-              🚀 Hiring
+              Hiring
             </span>
           )}
           <Badge variant="outline" className="text-[11px]">{idea.category}</Badge>
