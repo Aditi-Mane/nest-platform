@@ -70,10 +70,16 @@ export function ProductCard({
         {/* Favourite Button (Heart Icon) */}
         <button
           onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavourite();
+          e.stopPropagation();
+
+          if (isFavourite) {
+            toast.success("💔 Product removed from wishlist!");
+          } else {
             toast.success("❤️ Product added to wishlist!");
-          }}
+          }
+
+          onToggleFavourite();
+        }}
           className="absolute top-3 right-3 transition-transform hover:scale-110"
           disabled={isUnavailable}
         >
