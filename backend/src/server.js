@@ -29,14 +29,6 @@ import complaintRoutes from "./routes/complaintRoutes.js";
 // connectDB()
 const PORT = process.env.PORT || 5000;
 
-const start = async () => {
-  await connectDB();
-
-  app.listen(PORT, () => {
-    console.log(`Server running on ${PORT}`);
-  });
-};
-
 const app = express()
 
 app.use(cors({
@@ -69,13 +61,21 @@ app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")
 })
 
-// const PORT = process.env.PORT
-const server = app.listen(PORT,()=>{
-  console.log(`Server is running on ${PORT}`);
-  
-  
-})
+const start = async () => {
+  try {
+    await connectDB(); 
 
-initSocket(server);
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on ${PORT}`);
+    });
+
+    initSocket(server);
+
+  } catch (error) {
+    console.error("Server failed to start:", error);
+  }
+};
+
+start(); 
 
 export default app;
