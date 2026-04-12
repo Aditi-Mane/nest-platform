@@ -8,7 +8,7 @@ import {
   Siren,
   UserX,
 } from "lucide-react";
-import api from "../../api/axios.js";
+import api from "../api/axios.js";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
