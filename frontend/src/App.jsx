@@ -13,8 +13,7 @@ import { UserProvider } from "./context/UserContext.jsx";
 
 
 import { Toaster } from "react-hot-toast";
-// import ReportedSellersList from "./pages/Marketplace/ReportedSellersList.jsx"
-import ReportedSellersList from "./pages/marketplace/ReportedSellersList.jsx";
+import ReportedSellersList from "./pages/ReportedSellersList.jsx"
 
 function App() {
   return (

@@ -19,8 +19,8 @@ import SellerChatDetails from "./marketplace/seller-module/SellerChatDetails.jsx
 import SellerVerifyOtp from "./marketplace/seller-module/SellerVerifyOtp.jsx";
 import BuyerChatDetails from "./marketplace/buyer-module/BuyerChatDetails.jsx";
 import MessagesLayout from "./marketplace/buyer-module/MessagesLayout.jsx";
-import VenturesPage from "./marketplace/ventures-module/VenturesPage.jsx";
 import VentureDetailPage from "./marketplace/ventures-module/VentureDetailPage.jsx";
+import VenturesPage from "./marketplace/ventures-module/VenturesPage.jsx";
 import InvestorsPage from "./marketplace/ventures-module/InvestorsPage.jsx";
 import CreateVenturePage from "./marketplace/ventures-module/CreateVenturePage.jsx";
 import CreateStartupPage from "./marketplace/ventures-module/CreateStartupPage.jsx";
