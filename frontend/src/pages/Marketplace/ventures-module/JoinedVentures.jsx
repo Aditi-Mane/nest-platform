@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useUser } from '@/context/UserContext';
-import { useSocket } from '@/context/SocketContext';
+import { useUser } from '../../../context/UserContext.jsx';
+import { useSocket } from '../../../context/SocketContext.jsx';
 import { fetchVentureMessages, sendVentureMessage } from '@/api/venturesApi';
 import { toast } from 'sonner';
 import {

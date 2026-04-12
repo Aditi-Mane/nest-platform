@@ -11,8 +11,8 @@ import {
   Trophy
 } from "lucide-react";
 import api from "../../../api/axios.js";
-import { useMessages } from "@/context/MessageContext";
-import { useSocket } from "@/context/SocketContext";
+import { useMessages } from "../../../context/MessageContext.jsx";
+import { useSocket } from "../../../context/SocketContext.jsx";
 
 
 

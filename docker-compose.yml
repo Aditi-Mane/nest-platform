@@ -1,35 +1,85 @@
 version: "3.8"
 
 services:
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
-    depends_on:
-      - mongo
-      - sentiment-service
-      - recommender-service
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/mydb
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-
-  sentiment-service:
-    build: ./ml-services/sentiment_analysis
-    ports:
-      - "8000:8000"
-
-  recommender-service:
-    build: ./ml-services/recommender
-    ports:
-      - "8001:8001"
 
   mongo:
     image: mongo
+    container_name: mongo
+    restart: always
     ports:
-      - "27017:27017"
+      - "27017:27017"          # remove this line in production — only needed for local DB GUIs
+    volumes:
+      - mongo_data:/data/db   # persists data across restarts
+    networks:
+      - app_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_net
+    # No ports exposed — only backend needs redis, and they share app_net
+
+  sentiment-service:
+    build: ./ml-services/sentiment_analysis
+    container_name: sentiment-service
+    restart: always
+    networks:
+      - app_net
+    # No ports exposed to host — backend calls it internally via http://sentiment-service:8000
+
+  recommender-service:
+    build: ./ml-services/recommender
+    container_name: recommender-service
+    restart: always
+    networks:
+      - app_net
+    # No ports exposed to host — backend calls it internally via http://recommender-service:8001
+
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    depends_on:
+      - mongo
+      - redis
+      - sentiment-service
+      - recommender-service
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/mydb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}       # passed from .env
+      - JWT_SECRET=${JWT_SECRET}
+      - SENTIMENT_SERVICE_URL=http://sentiment-service:8000
+      - RECOMMENDER_SERVICE_URL=http://recommender-service:8001
+    networks:
+      - app_net
+    # No ports exposed to host — nginx (frontend) proxies /api to backend
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "80:80"           # only service exposed to the internet
+    depends_on:
+      - backend
+    networks:
+      - app_net
+
+# ── Volumes ────────────────────────────────────────────────────
+volumes:
+  mongo_data:
+  redis_data:
+
+# ── Networks ───────────────────────────────────────────────────
+networks:
+  app_net:
+    driver: bridge

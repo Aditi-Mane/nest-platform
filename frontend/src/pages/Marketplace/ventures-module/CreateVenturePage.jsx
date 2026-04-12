@@ -15,7 +15,7 @@ import { UserCheck, Search } from "lucide-react";
 import { toast } from "sonner";
 import { createVenture } from "@/api/venturesApi";
 import api from "../../../api/axios";
-import { useUser } from "../../../context/UserContext";
+import { useUser } from "../../../context/UserContext.jsx";
 const CATEGORIES = [
   "EdTech", "Social Impact", "Marketplace", "E-commerce",
   "Health & Wellness", "Sustainability", "Fintech", "Entertainment", "Other",

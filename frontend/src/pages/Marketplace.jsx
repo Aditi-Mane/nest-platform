@@ -4,7 +4,7 @@ import SellerPanel from "./marketplace/seller-module/SellerPanel.jsx";
 import SellerDashboard from "./marketplace/seller-module/SellerDashboard.jsx";
 import SellerProducts from "./marketplace/seller-module/SellerProducts.jsx";
 import SellerOrders from "./marketplace/seller-module/SellerOrders.jsx";
-import SellerAnalytics from "./Marketplace/seller-module/SellerAnalytics.jsx";
+import SellerAnalytics from "./marketplace/seller-module/SellerAnalytics.jsx";
 import SellerMessages from "./marketplace/seller-module/SellerMessages.jsx";
 import SellerSetup from "./marketplace/seller-module/SellerSetup.jsx";
 import BuyerMarketPlace from "./marketplace/buyer-module/BuyerMarketPlace.jsx";

@@ -31,7 +31,8 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs";
-import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
+// import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
+import ImageWithFallback from "../../../components/figma/ImageWithFallback.jsx";
 import { Separator } from "@/components/ui/separator";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";

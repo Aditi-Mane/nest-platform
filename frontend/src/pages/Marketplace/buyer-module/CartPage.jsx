@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
   import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext"; 
-import { ImageWithFallback } from "../../../components/figma/ImageWithFallBack.jsx";
+import ImageWithFallback from "../../../components/figma/ImageWithFallback.jsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

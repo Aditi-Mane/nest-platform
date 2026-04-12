@@ -3,7 +3,7 @@ import axios from "axios";
 import { clearStoredToken, getStoredToken } from "../utils/authStorage.js";
 
 const api = axios.create({
-  baseURL: "http://backend:5000/api"
+  baseURL: "/api"
 });
 
 api.interceptors.request.use(

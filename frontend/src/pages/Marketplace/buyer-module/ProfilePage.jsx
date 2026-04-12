@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { MdEdit } from "react-icons/md";
-import api from "../../../api/axios";
+import api from "../../../api/axios.js";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../../../context/UserContext";
+import { useUser } from "../../../context/UserContext.jsx";
 import ReviewModal from "../../../components/ReviewModal.jsx";
 import {
   Tabs,
