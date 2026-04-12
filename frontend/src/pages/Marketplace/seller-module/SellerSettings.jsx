@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { MdEdit } from "react-icons/md";
-import api from "../../../api/axios";
+import api from "../../../api/axios.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../../../context/UserContext";
+import { useUser } from "../../../context/UserContext.jsx";
 import toast from "react-hot-toast";
 import { clearStoredToken } from "../../../utils/authStorage.js";
 
