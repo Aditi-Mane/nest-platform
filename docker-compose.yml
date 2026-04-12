@@ -63,16 +63,16 @@ services:
       - app_net
     # No ports exposed to host — nginx (frontend) proxies /api to backend
 
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    restart: always
-    ports:
-      - "80:80"           # only service exposed to the internet
-    depends_on:
-      - backend
-    networks:
-      - app_net
+  # frontend:
+  #   build: ./frontend
+  #   container_name: frontend
+  #   restart: always
+  #   ports:
+  #     - "80:80"           # only service exposed to the internet
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - app_net
 
 # ── Volumes ────────────────────────────────────────────────────
 volumes:

@@ -6,5 +6,6 @@ scikit-learn
 joblib
 pymongo
 python-dotenv
-transformers
+sentence-transformers
 torch
+transformers
