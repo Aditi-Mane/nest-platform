@@ -40,7 +40,7 @@ export const getMLRecommendations = async (req, res) => {
     try {
       //Call ML service
       const mlRes = await axios.post(
-        "http://127.0.0.1:8000/recommend",
+        "http://127.0.0.1:8001/recommend",
         {
           query: queryText,
           products: productsForML,

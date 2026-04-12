@@ -97,7 +97,7 @@ const formattedItems = useMemo(() => {
   }
 
   
-}, [location, formattedItems]);
+}, [location, cartItems.length]);
 
 
 //handleContactSeller
@@ -475,18 +475,13 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                         Recommended for you
                       </h4>
 
-                      {/* Loading */}
-                      {loadingRecs && recommendations.length === 0 && (
+                     {loadingRecs ? (
                         <p className="text-sm text-muted">Finding best matches...</p>
-                      )}
-                      
-
-                      {/* Empty */}
-                      {!loadingRecs && recommendations.length === 0 && (
+                      ) : recommendations.length === 0 ? (
                         <p className="text-sm text-muted">
                           No recommendations available
                         </p>
-                      )}
+                      ) : null}
 
                       {/* List */}
                       <div className="space-y-3">

@@ -889,7 +889,11 @@ export default function VentureDetailPage() {
 
   const stage          = stageConfig[venture.stage] ?? stageConfig.ideation;
   const confirmedCount = venture.teamMembers?.filter((m) => m.confirmed).length ?? 0;
-  const spotsLeft      = venture.teamLimit - confirmedCount;
+
+  const totalSpotsLeft = venture.openRoles?.reduce(
+    (acc, role) => acc + (role.spots || 0),
+    0
+  );
 
   const tabs = [
     { key: "overview",  label: "Overview"  },
@@ -927,7 +931,7 @@ export default function VentureDetailPage() {
                   </span>
                   {venture.isRecruiting && (
                     <span className="text-xs font-medium px-3 py-1 rounded-full border bg-orange-100 text-orange-700 border-orange-200 flex items-center gap-1">
-                      🚀 Hiring
+                       Hiring
                     </span>
                   )}
                 </div>
@@ -1173,20 +1177,25 @@ export default function VentureDetailPage() {
                   </CardContent>
                 </Card>
               )}
-              {!userApplication && spotsLeft > 0 && venture.isRecruiting && (
-                <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
-                  <CardContent className="p-6 flex items-start gap-3">
-                    <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-semibold">Join This Team</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
-                      </p>
-                      <Button className="rounded-xl" onClick={() => setShowApplyModal(true)}>Request to Join</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {!userApplication && totalSpotsLeft > 0 && venture.isRecruiting && (
+              <Card className="rounded-2xl shadow-sm border border-primary/20 bg-blue-50">
+                <CardContent className="p-6 flex items-start gap-3">
+                  <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold">Join This Team</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {totalSpotsLeft} spot{totalSpotsLeft > 1 ? "s" : ""} remaining. Collaborate and bring this idea to life!
+                    </p>
+                    <Button
+                      className="rounded-xl"
+                      onClick={() => setShowApplyModal(true)}
+                    >
+                      Request to Join
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
               {!venture.isRecruiting && !userApplication && (
                 <Card className="rounded-2xl shadow-sm border border-border bg-gray-50">
                   <CardContent className="p-6 flex items-start gap-3">

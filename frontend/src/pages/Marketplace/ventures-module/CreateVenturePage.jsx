@@ -132,7 +132,7 @@ const removeMember = (id) => setTeamMembers(teamMembers.filter((m) => m._id !== 
         setShowSimilarWarning(true);
         setTimeout(() => navigate("/marketplace/buyer/ventures"), 4000);
       } else {
-        toast.success("Your idea has been posted!");
+        toast.success("🎉 Your idea has been posted!");
         navigate("/marketplace/buyer/ventures");
       }
     } catch (err) {
