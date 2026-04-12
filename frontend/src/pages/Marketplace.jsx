@@ -33,7 +33,7 @@ function Marketplace() {
       <Route
         path="seller/setup"
         element={
-          <RoleProtectedRoute allowedRole="seller">
+          <RoleProtectedRoute allowedRole="seller" allowInactiveSeller>
             <SellerSetup />
           </RoleProtectedRoute>
         }
