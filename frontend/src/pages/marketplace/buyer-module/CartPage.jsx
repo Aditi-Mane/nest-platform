@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
   import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext"; 
-import ImageWithFallback from "../../../components/figma/ImageWithFallback.jsx";
+import ImageWithFallBack from "../../../components/figma/ImageWithFallBack.jsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -284,7 +284,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                     className="w-32 h-32 rounded-xl overflow-hidden cursor-pointer"
                     onClick={() => navigate(`/product/${item.id}`)}
                   >
-                    <ImageWithFallback
+                    <ImageWithFallBack
                       src={item.image}
                       alt={item.name}
                       className="w-full h-full object-cover"

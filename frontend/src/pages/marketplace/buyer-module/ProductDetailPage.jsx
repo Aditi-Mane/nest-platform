@@ -32,7 +32,7 @@ import {
   TabsTrigger
 } from "@/components/ui/tabs";
 // import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
-import ImageWithFallback from "../../../components/figma/ImageWithFallback.jsx";
+import ImageWithFallBack from "../../../components/figma/ImageWithFallBack.jsx";
 import { Separator } from "@/components/ui/separator";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -331,7 +331,7 @@ if (!product) {
             <Card className="rounded-2xl overflow-hidden border-border shadow-sm hover:shadow-lg transition-shadow duration-300">
               <div className="h-96 w-full bg-backgroud rounded-xl overflow-hidden flex items-center justify-center py-3">
                 
-                <ImageWithFallback
+                <ImageWithFallBack
                   src={selectedImage}
                   alt={product.name}
                   className="w-full h-full object-contain transition-opacity duration-300"
@@ -351,7 +351,7 @@ if (!product) {
                       ${selectedImage === imgObj.url ? "border-primary" : ""}
                     `}
                   >
-                    <ImageWithFallback
+                    <ImageWithFallBack
                       src={imgObj.url}
                       alt={`View ${i + 1}`}
                       className="w-full h-full object-cover"
