@@ -33,7 +33,9 @@ const app = express()
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://main.d2s3j9j85nw93c.amplifyapp.com"
+  "https://main.d2s3j9j85nw93c.amplifyapp.com",
+  "https://nestplatform.website",
+  "https://www.nestplatform.website"
 ];
 
 app.use(cors({
