@@ -61,6 +61,10 @@ app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")
 })
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+
 const start = async () => {
   try {
     await connectDB(); 
