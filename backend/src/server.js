@@ -33,19 +33,22 @@ const app = express()
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://nestplatform.website"
+  "https://main.d2s3j9j85nw93c.amplifyapp.com"
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); 
     } else {
-      callback(new Error("Not allowed by CORS"));
+      return callback(null, false);
     }
-  },
-  credentials: true,
+  }
 }));
+
+app.options("*", cors());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
