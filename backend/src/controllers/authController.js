@@ -304,10 +304,12 @@ export const login = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      message: "Server error"
-    });
-  }
+  console.error("LOGIN ERROR:", error); // 🔥 CRITICAL
+  return res.status(500).json({
+    message: error.message,   // 👈 show real error
+    stack: error.stack        // 👈 optional (for debugging)
+  });
+}
 };
 
 export const forgotPassword = async (req, res) =>{

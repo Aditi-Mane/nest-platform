@@ -49,6 +49,8 @@ services:
       - redis
       - sentiment-service
       - recommender-service
+    env_file:                 
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=5000
