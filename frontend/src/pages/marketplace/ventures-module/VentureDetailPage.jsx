@@ -34,6 +34,9 @@ const stageConfig = {
   recruiting:       { label: "Recruiting",      className: "bg-orange-100 text-orange-700 border-orange-200" },
 };
 
+const getAvailableOpenRoles = (roles = []) =>
+  roles.filter((role) => Number(role?.spots) > 0);
+
 // ── Generic Confirm Modal ─────────────────────────────────────────────────────
 function ConfirmModal({ title, description, onConfirm, onCancel, loading }) {
   return (
@@ -78,6 +81,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
   const [resumeUrl, setResumeUrl]   = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const availableOpenRoles = getAvailableOpenRoles(venture.openRoles);
   const selectedRole = role === "Other" ? customRole : role;
 
   const handleSubmit = async () => {
@@ -125,7 +129,7 @@ function ApplyModal({ venture, onClose, onSuccess }) {
             <div className="space-y-4">
               <p className="text-sm font-medium">Which role are you applying for?</p>
               <div className="space-y-2">
-                {venture.openRoles?.map((r) => (
+                {availableOpenRoles.map((r) => (
                   <button key={r._id} onClick={() => setRole(r.title)}
                     className={`w-full text-left p-3 rounded-xl border text-sm transition-colors ${
                       role === r.title ? "border-primary bg-primary/5 text-primary font-medium" : "border-border hover:border-primary/50"
@@ -889,8 +893,9 @@ export default function VentureDetailPage() {
 
   const stage          = stageConfig[venture.stage] ?? stageConfig.ideation;
   const confirmedCount = venture.teamMembers?.filter((m) => m.confirmed).length ?? 0;
+  const availableOpenRoles = getAvailableOpenRoles(venture.openRoles);
 
-  const totalSpotsLeft = venture.openRoles?.reduce(
+  const totalSpotsLeft = availableOpenRoles.reduce(
     (acc, role) => acc + (role.spots || 0),
     0
   );
@@ -1034,11 +1039,11 @@ export default function VentureDetailPage() {
                     <h3 className="font-semibold mb-3">Full Description</h3>
                     <p className="text-muted-foreground whitespace-pre-line text-sm leading-relaxed">{venture.fullDescription}</p>
                   </div>
-                  {venture.openRoles?.length > 0 && (
+                  {availableOpenRoles.length > 0 && (
                     <div>
                       <h3 className="font-semibold mb-3">We're Looking For</h3>
                       <div className="space-y-3">
-                        {venture.openRoles.map((role) => (
+                        {availableOpenRoles.map((role) => (
                           <div key={role._id} className="p-4 bg-gray-50 rounded-xl border border-border">
                             <div className="flex items-center justify-between mb-2">
                               <p className="font-medium text-sm">{role.title}</p>

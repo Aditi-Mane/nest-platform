@@ -61,7 +61,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
-      - SENTIMENT_SERVICE_URL=http://sentiment-service:8000
+      - SENTIMENT_SERVICE_URL=http://sentiment-service:8000/predict-sentiment
       - RECOMMENDER_SERVICE_URL=http://recommender-service:8001
     ports:
       - "5000:5000"            # exposed for direct access

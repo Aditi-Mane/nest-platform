@@ -3,8 +3,130 @@ import Review from "../models/Review.js";
 import axios from "axios";
 import mongoose from "mongoose";
 
-const SENTIMENT_SERVICE_URL =
-  process.env.SENTIMENT_SERVICE_URL || "http://sentiment-service:8000";
+const SENTIMENT_PREDICT_PATH = "/predict-sentiment";
+
+const normalizeSentimentServiceUrl = (rawUrl) => {
+  const baseUrl = (rawUrl || "http://sentiment-service:8000").trim();
+  if (baseUrl.endsWith(SENTIMENT_PREDICT_PATH)) return baseUrl;
+  return `${baseUrl.replace(/\/+$/, "")}${SENTIMENT_PREDICT_PATH}`;
+};
+
+const SENTIMENT_SERVICE_URL = normalizeSentimentServiceUrl(
+  process.env.SENTIMENT_SERVICE_URL
+);
+
+const inferSentimentFromRating = (starRating) => {
+  if (starRating >= 4) return "positive";
+  if (starRating <= 2) return "negative";
+  return "neutral";
+};
+
+const buildEffectiveSentimentExpr = () => ({
+  $switch: {
+    branches: [
+      {
+        case: { $in: ["$sentiment", ["positive", "neutral", "negative"]] },
+        then: "$sentiment",
+      },
+      {
+        case: { $gte: ["$starRating", 4] },
+        then: "positive",
+      },
+      {
+        case: { $lte: ["$starRating", 2] },
+        then: "negative",
+      },
+    ],
+    default: "neutral",
+  },
+});
+
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "at",
+  "be",
+  "been",
+  "but",
+  "by",
+  "for",
+  "from",
+  "had",
+  "has",
+  "have",
+  "i",
+  "if",
+  "in",
+  "into",
+  "is",
+  "it",
+  "its",
+  "me",
+  "my",
+  "of",
+  "on",
+  "or",
+  "our",
+  "so",
+  "that",
+  "the",
+  "their",
+  "this",
+  "to",
+  "was",
+  "were",
+  "with",
+  "you",
+  "your",
+]);
+
+const formatTheme = (value) =>
+  value
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+const extractThemes = (texts = []) => {
+  const phraseCounts = new Map();
+  const wordCounts = new Map();
+
+  texts.forEach((text) => {
+    const tokens = String(text || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((token) => token.length > 2 && !STOP_WORDS.has(token));
+
+    const uniqueWords = new Set(tokens);
+    uniqueWords.forEach((word) => {
+      wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
+    });
+
+    const uniquePhrases = new Set();
+    for (let index = 0; index < tokens.length - 1; index += 1) {
+      const first = tokens[index];
+      const second = tokens[index + 1];
+      if (!first || !second) continue;
+      uniquePhrases.add(`${first} ${second}`);
+    }
+
+    uniquePhrases.forEach((phrase) => {
+      phraseCounts.set(phrase, (phraseCounts.get(phrase) || 0) + 1);
+    });
+  });
+
+  const rankedPhrases = [...phraseCounts.entries()]
+    .sort((left, right) => right[1] - left[1] || right[0].length - left[0].length)
+    .map(([phrase]) => formatTheme(phrase));
+
+  const rankedWords = [...wordCounts.entries()]
+    .sort((left, right) => right[1] - left[1] || right[0].localeCompare(left[0]))
+    .map(([word]) => formatTheme(word));
+
+  return [...new Set([...rankedPhrases, ...rankedWords])].slice(0, 5);
+};
 
 const analyzeSentiment = async (text) => {
   try {
@@ -19,7 +141,7 @@ const analyzeSentiment = async (text) => {
     };
   } catch (error) {
     console.warn(
-      "Sentiment service unavailable. Saving review without sentiment analysis.",
+      "Sentiment service unavailable. Falling back to rating-based sentiment.",
       error.message
     );
     return { sentiment: null, confidence: null };
@@ -53,13 +175,14 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ message: "You already reviewed this product" });
 
     const { sentiment, confidence } = await analyzeSentiment(text.trim());
+    const resolvedSentiment = sentiment ?? inferSentimentFromRating(starRating);
 
     const review = await Review.create({
       product: productId,
       user: userId,
       text: text.trim(),
       starRating,
-      sentiment,
+      sentiment: resolvedSentiment,
       confidence,
     });
 
@@ -68,9 +191,9 @@ export const createReview = async (req, res) => {
       (product.averageRating * (product.reviewCount - 1) + starRating) /
       product.reviewCount;
 
-    if (sentiment === "positive") product.sentimentStats.positive += 1;
-    if (sentiment === "neutral")  product.sentimentStats.neutral  += 1;
-    if (sentiment === "negative") product.sentimentStats.negative += 1;
+    if (resolvedSentiment === "positive") product.sentimentStats.positive += 1;
+    if (resolvedSentiment === "neutral")  product.sentimentStats.neutral  += 1;
+    if (resolvedSentiment === "negative") product.sentimentStats.negative += 1;
 
     await product.save();
 
@@ -136,13 +259,14 @@ export const getSentimentAnalytics = async (req, res) => {
       },
       { $unwind: "$productDetails" },
       { $match: { "productDetails.createdBy": sellerId } },
+      { $addFields: { effectiveSentiment: buildEffectiveSentimentExpr() } },
       {
         $group: {
           _id: null,
           total:    { $sum: 1 },
-          positive: { $sum: { $cond: [{ $eq: ["$sentiment", "positive"] }, 1, 0] } },
-          neutral:  { $sum: { $cond: [{ $eq: ["$sentiment", "neutral"]  }, 1, 0] } },
-          negative: { $sum: { $cond: [{ $eq: ["$sentiment", "negative"] }, 1, 0] } },
+          positive: { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "positive"] }, 1, 0] } },
+          neutral:  { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "neutral"]  }, 1, 0] } },
+          negative: { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "negative"] }, 1, 0] } },
         },
       },
     ]);
@@ -175,14 +299,15 @@ export const getSentimentAnalytics = async (req, res) => {
           createdAt: { $gte: thirtyDaysAgo },
         },
       },
+      { $addFields: { effectiveSentiment: buildEffectiveSentimentExpr() } },
       {
         $group: {
           _id: {
             date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
           },
           dayTotal:    { $sum: 1 },
-          dayPositive: { $sum: { $cond: [{ $eq: ["$sentiment", "positive"] }, 1, 0] } },
-          dayNeutral:  { $sum: { $cond: [{ $eq: ["$sentiment", "neutral"]  }, 1, 0] } },
+          dayPositive: { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "positive"] }, 1, 0] } },
+          dayNeutral:  { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "neutral"]  }, 1, 0] } },
         },
       },
       { $sort: { "_id.date": 1 } },
@@ -228,17 +353,23 @@ export const getProductSentimentBySeller = async (req, res) => {
       },
       { $unwind: "$productDetails" },
       { $match: { "productDetails.createdBy": sellerId } },
+      { $addFields: { effectiveSentiment: buildEffectiveSentimentExpr() } },
       {
         $group: {
           _id: "$product",
+          productId:     { $first: "$productDetails._id" },
           name:         { $first: "$productDetails.name" },
           image:        { $first: { $arrayElemAt: ["$productDetails.images", 0] } },
+          productCreatedAt: { $first: "$productDetails.createdAt" },
+          latestReviewAt: { $max: "$createdAt" },
           totalReviews: { $sum: 1 },
-          positive: { $sum: { $cond: [{ $eq: ["$sentiment", "positive"] }, 1, 0] } },
-          neutral:  { $sum: { $cond: [{ $eq: ["$sentiment", "neutral"]  }, 1, 0] } },
-          negative: { $sum: { $cond: [{ $eq: ["$sentiment", "negative"] }, 1, 0] } },
+          positive: { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "positive"] }, 1, 0] } },
+          neutral:  { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "neutral"]  }, 1, 0] } },
+          negative: { $sum: { $cond: [{ $eq: ["$effectiveSentiment", "negative"] }, 1, 0] } },
         },
       },
+      { $sort: { productCreatedAt: -1, latestReviewAt: -1 } },
+      { $limit: 5 },
     ]);
 
     const formatted = data.map((p) => {
@@ -246,6 +377,7 @@ export const getProductSentimentBySeller = async (req, res) => {
       const score = ((p.positive + p.neutral * 0.5) / total) * 10;
 
       return {
+        _id:          p.productId,
         name:         p.name,
         image:        p.image?.url,
         totalReviews: p.totalReviews,
@@ -288,14 +420,19 @@ export const getReviewInsights = async (req, res) => {
       {
         $match: {
           "productDetails.createdBy": sellerId,
-          sentiment: { $in: ["positive", "negative"] },
+        },
+      },
+      { $addFields: { effectiveSentiment: buildEffectiveSentimentExpr() } },
+      {
+        $match: {
+          effectiveSentiment: { $in: ["positive", "negative"] },
         },
       },
       // Most-confident reviews first so the top-5 are the most meaningful ones
       { $sort: { confidence: -1, createdAt: -1 } },
       {
         $group: {
-          _id: "$sentiment",
+          _id: "$effectiveSentiment",
           texts: { $push: "$text" },
         },
       },
@@ -303,10 +440,18 @@ export const getReviewInsights = async (req, res) => {
 
     const positiveEntry = results.find((r) => r._id === "positive");
     const negativeEntry = results.find((r) => r._id === "negative");
+    const positiveThemes = extractThemes(positiveEntry?.texts ?? []);
+    const negativeThemes = extractThemes(negativeEntry?.texts ?? []);
 
     res.json({
-      positive: (positiveEntry?.texts ?? []).slice(0, 5).map(truncate),
-      negative: (negativeEntry?.texts ?? []).slice(0, 5).map(truncate),
+      positive:
+        positiveThemes.length > 0
+          ? positiveThemes
+          : (positiveEntry?.texts ?? []).slice(0, 5).map(truncate),
+      negative:
+        negativeThemes.length > 0
+          ? negativeThemes
+          : (negativeEntry?.texts ?? []).slice(0, 5).map(truncate),
     });
   } catch (err) {
     console.error(err);

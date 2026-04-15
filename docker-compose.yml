@@ -59,7 +59,7 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}       # passed from .env
       - JWT_SECRET=${JWT_SECRET}
-      - SENTIMENT_SERVICE_URL=http://sentiment-service:8000
+      - SENTIMENT_SERVICE_URL=http://sentiment-service:8000/predict-sentiment
       - RECOMMENDER_SERVICE_URL=http://recommender-service:8001
     networks:
       - app_net

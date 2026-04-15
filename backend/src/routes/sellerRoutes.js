@@ -110,13 +110,13 @@ router.delete(
 // PRODUCT READS
 // ─────────────────────────────────────────────
 
-//  Cache seller's own product list for 2 minutes
+//  Cache seller's own product list for 80 sec
 // Short TTL because inventory changes are somewhat frequent
 router.get(
   "/my-products",
   protect,
   checkSeller,
-  cache(120, { userSpecific: true }),  // scoped to each seller's userId
+  cache(80, { userSpecific: true }),  // scoped to each seller's userId
   getMyProducts
 );
 

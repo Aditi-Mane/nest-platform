@@ -30,12 +30,22 @@ const COLORS = {
   negative: "var(--color-primary)",
 };
 
+const formatTrendLabel = (label) => {
+  if (!label || typeof label !== "string") return "N/A";
+  const weekParts = label.split("-W");
+  if (weekParts.length === 2) return `Week ${parseInt(weekParts[1], 10)}`;
+
+  const date = new Date(`${label}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return label;
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+};
+
 /* ─── Custom tooltip for line chart ───────────────────────────────────────── */
 const WeekTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-xl px-4 py-3 text-sm shadow-lg">
-      <p className="text-muted font-medium">{label}</p>
+      <p className="text-muted font-medium">{formatTrendLabel(label)}</p>
       <p className="text-2xl font-bold text-text mt-1">{payload[0].value}<span className="text-muted text-base font-normal">/10</span></p>
     </div>
   );
@@ -136,11 +146,11 @@ const SellerSentiment = () => {
     rows.push("Overview", "Metric,Value");
     rows.push(`Overall Score,${data?.overallScore || 0}/10`, `Positive Rate,${data?.positiveRate || 0}%`, `Total Reviews,${data?.totalReviews || 0}`);
     rows.push("", "Product Sentiment", "Product,Reviews,Positive%,Neutral%,Negative%,Score");
-    products.forEach(p => rows.push([escapeCsvValue(p?.name), p?.totalReviews, p?.positive, p?.neutral, p?.negative, p?.score].join(",")));
+    visibleProducts.forEach(p => rows.push([escapeCsvValue(p?.name), p?.totalReviews, p?.positive, p?.neutral, p?.negative, p?.score].join(",")));
     rows.push("", "What Customers Love", "Theme");
-    insights.positive.forEach(t => rows.push(escapeCsvValue(t)));
+    safeInsights.positive.forEach(t => rows.push(escapeCsvValue(t)));
     rows.push("", "Areas for Improvement", "Theme");
-    insights.negative.forEach(t => rows.push(escapeCsvValue(t)));
+    safeInsights.negative.forEach(t => rows.push(escapeCsvValue(t)));
     const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -155,16 +165,15 @@ const SellerSentiment = () => {
     { name: "Negative", value: sentimentDistribution.negative || 0, color: COLORS.negative },
   ];
   const totalSentimentCount = donutData.reduce((s, i) => s + (i.value || 0), 0);
-  const weeklyTrend = (data?.trend || []).filter(
-  (item) => item?.name && item?.value !== undefined
-);
+  const hasSentimentData = totalSentimentCount > 0;
+  const weeklyTrend = (data?.trend || []).filter((item) => item?.name && item?.value !== undefined);
   const trendAvg = weeklyTrend.length ? (weeklyTrend.reduce((s, w) => s + w.value, 0) / weeklyTrend.length).toFixed(1) : null;
-  const formatWeek = (weekStr) => {
-  if (!weekStr || typeof weekStr !== "string") return "Week ?";
-  const parts = weekStr.split("-W");
-  if (parts.length !== 2) return weekStr;
-  return `Week ${parseInt(parts[1], 10)}`;
-};
+  const safeInsights = {
+    positive: Array.isArray(insights?.positive) ? insights.positive : [],
+    negative: Array.isArray(insights?.negative) ? insights.negative : [],
+  };
+  const visibleProducts = (Array.isArray(products) ? products : []).slice(0, 5);
+
   return (
     <div className="p-6 min-h-screen bg-background text-text space-y-6">
 
@@ -236,13 +245,19 @@ const SellerSentiment = () => {
               <div className="flex items-center gap-6">
                 {/* Donut */}
                 <div className="relative w-48 h-48 shrink-0">
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie data={donutData} dataKey="value" innerRadius={52} outerRadius={84} stroke="none" startAngle={90} endAngle={-270}>
-                        {donutData.map(e => <Cell key={e.name} fill={e.color} />)}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {hasSentimentData ? (
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie data={donutData} dataKey="value" innerRadius={52} outerRadius={84} stroke="none" startAngle={90} endAngle={-270}>
+                          {donutData.map(e => <Cell key={e.name} fill={e.color} />)}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full border border-dashed border-border bg-background/40 text-center px-8">
+                      <p className="text-sm text-muted">No sentiment data yet</p>
+                    </div>
+                  )}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-3xl font-bold text-text">{data?.overallScore || 0}</span>
                     <span className="text-xs text-muted">/ 10</span>
@@ -278,7 +293,7 @@ const SellerSentiment = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="font-semibold text-base">Happiness Trend</h2>
-                  <p className="text-xs text-muted mt-0.5">Weekly averages</p>
+                  <p className="text-xs text-muted mt-0.5">Last 30 days</p>
                 </div>
                 {trendAvg && (
                   <div className="text-right">
@@ -289,32 +304,40 @@ const SellerSentiment = () => {
               </div>
 
               <div className="h-52">
-                <ResponsiveContainer>
-                  <LineChart data={weeklyTrend} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-                    <XAxis
-                      dataKey="name"
-                      tickFormatter={formatWeek}
-                      tick={{ fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <ReferenceLine y={5} stroke="var(--color-border)" strokeDasharray="4 4" />
-                    <Tooltip content={<WeekTooltip />} cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }} />
-                    <Line
-                      dataKey="value"
-                      stroke="var(--color-secondary)"
-                      strokeWidth={2.5}
-                      dot={{ r: 5, fill: "var(--color-secondary)", stroke: "var(--color-card)", strokeWidth: 2 }}
-                      activeDot={{ r: 7, fill: "var(--color-secondary)", stroke: "var(--color-card)", strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {weeklyTrend.length > 0 ? (
+                  <ResponsiveContainer>
+                    <LineChart data={weeklyTrend} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+                      <XAxis
+                        dataKey="name"
+                        tickFormatter={formatTrendLabel}
+                        tick={{ fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                      <ReferenceLine y={5} stroke="var(--color-border)" strokeDasharray="4 4" />
+                      <Tooltip content={<WeekTooltip />} cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }} />
+                      <Line
+                        dataKey="value"
+                        stroke="var(--color-secondary)"
+                        strokeWidth={2.5}
+                        dot={{ r: 5, fill: "var(--color-secondary)", stroke: "var(--color-card)", strokeWidth: 2 }}
+                        activeDot={{ r: 7, fill: "var(--color-secondary)", stroke: "var(--color-card)", strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full rounded-xl border border-dashed border-border bg-background/40 flex items-center justify-center px-6 text-center">
+                    <p className="text-sm text-muted">Trend data will appear once reviews are available for this seller.</p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-3 flex items-center gap-2 bg-background rounded-xl px-4 py-2.5 text-sm">
                 <TrendingUp size={14} className="text-secondary shrink-0" />
-                <span className="text-muted">Trending positive — sentiment improving steadily</span>
+                <span className="text-muted">
+                  {weeklyTrend.length > 0 ? "Sentiment trend is based on the latest seller reviews." : "No recent review trend to summarize yet."}
+                </span>
               </div>
             </div>
           </div>
@@ -326,15 +349,15 @@ const SellerSentiment = () => {
         <div className="flex justify-between items-center mb-5">
           <div>
             <h2 className="text-xl font-semibold">Product Sentiment</h2>
-            <p className="text-sm text-muted">Customer satisfaction by product</p>
+            <p className="text-sm text-muted">Latest 5 reviewed products</p>
           </div>
         </div>
 
-        {loadingProducts ? <ProductSentimentSkeleton /> : products.length === 0 ? (
+        {loadingProducts ? <ProductSentimentSkeleton /> : visibleProducts.length === 0 ? (
           <p className="text-sm text-muted">No product sentiment data available</p>
         ) : (
           <div className="space-y-3">
-            {products.map((product, index) => (
+            {visibleProducts.map((product, index) => (
               <ProductRow key={product._id || product.id || index} product={product} />
             ))}
           </div>
@@ -347,7 +370,7 @@ const SellerSentiment = () => {
           icon={<Heart size={16} fill="currentColor" />}
           title="What Customers Love"
           subtitle="Top positive themes"
-          items={insights.positive}
+          items={safeInsights.positive}
           loading={loadingInsights}
           badge="Good"
           badgeClass="bg-secondary/20 text-secondary"
@@ -357,7 +380,7 @@ const SellerSentiment = () => {
           icon={<AlertTriangle size={16} />}
           title="Areas to Improve"
           subtitle="Customer pain points"
-          items={insights.negative}
+          items={safeInsights.negative}
           loading={loadingInsights}
           badge="Alert"
           badgeClass="bg-primary/20 text-primary"
@@ -403,9 +426,9 @@ const ProductRow = ({ product }) => (
         </div>
       </div>
 
-      <div className="flex gap-4 text-xs font-medium mb-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium mb-2">
         <span className="text-green-600">▲ {product.positive}% positive</span>
-        <span className="text-gray-400">{product.neutral}% neutral</span>
+        <span className="text-gray-500">• {product.neutral}% neutral</span>
         <span className="text-orange-500">▼ {product.negative}% negative</span>
         <span className="text-muted ml-auto">{product.totalReviews} reviews</span>
       </div>

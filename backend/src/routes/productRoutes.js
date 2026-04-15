@@ -8,8 +8,8 @@ const router = express.Router();
 // Public route — global scope (same for all users)
 router.get("/", cache(300), getAllProducts);
 
-//Cache individual product for 10 minutes
-router.get("/:id", cache(600), getProductById);
+//Cache individual product for 60 sec
+router.get("/:id",cache(60), getProductById);
 
 // Cache ML recommendations per product for 10 minutes
 router.get("/recommend-ml/:id", cache(600), getMLRecommendations);
