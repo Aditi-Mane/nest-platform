@@ -12,7 +12,7 @@ import {
 import { ArrowLeft, Plus, X, Lightbulb, Users, TrendingUp, Loader2, AlertTriangle,Tag } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserCheck, Search } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { createVenture } from "@/api/venturesApi";
 import api from "../../../api/axios";
 import { useUser } from "../../../context/UserContext.jsx";
@@ -127,14 +127,14 @@ const removeMember = (id) => setTeamMembers(teamMembers.filter((m) => m._id !== 
   })),
 });
 
-      if (data.similarVentures?.length > 0) {
-        setSimilarVentures(data.similarVentures);
-        setShowSimilarWarning(true);
-        setTimeout(() => navigate("/marketplace/buyer/ventures"), 4000);
-      } else {
-        toast.success("🎉 Your idea has been posted!");
-        navigate("/marketplace/buyer/ventures");
-      }
+          toast.success("🎉 Your idea has been posted!");
+
+          if (data.similarVentures?.length > 0) {
+            setSimilarVentures(data.similarVentures);
+            setShowSimilarWarning(true);
+          }
+
+          setTimeout(()=>navigate("/marketplace/buyer/ventures"), 3000);
     } catch (err) {
       toast.error(err?.response?.data?.message ?? "Failed to post idea. Please try again.");
     } finally {

@@ -220,7 +220,7 @@ export function ProductCard({
           }`}
           onClick={(e) => {
             e.stopPropagation();
-            toast.success("Product added to cart");
+            toast.success("🛒 Product added to cart");
             if (!isUnavailable) {
               onAddToCart(product._id);
             }

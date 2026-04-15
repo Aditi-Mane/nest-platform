@@ -237,7 +237,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
 
   // Price Calculations (UNCHANGED)
   const subtotal = formattedItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + item.price ,
     0
   );
 
