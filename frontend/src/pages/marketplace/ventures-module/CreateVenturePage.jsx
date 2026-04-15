@@ -134,7 +134,7 @@ const removeMember = (id) => setTeamMembers(teamMembers.filter((m) => m._id !== 
             setShowSimilarWarning(true);
           }
 
-          setTimeout(()=>navigate("/marketplace/buyer/ventures"), 3000);
+          setTimeout(()=>navigate("/marketplace/buyer/ventures"), 1000);
     } catch (err) {
       toast.error(err?.response?.data?.message ?? "Failed to post idea. Please try again.");
     } finally {
