@@ -344,8 +344,7 @@ export default function VenturesPage() {
   const fetchUserCount = async () => {
     try {
       const res = await api.get("/users/count");
-      const data = await res.json();
-      setTotalUsers(data.totalUsers);
+      setTotalUsers(res.data.totalUsers);
     } catch (err) {
       console.error(err);
     }
