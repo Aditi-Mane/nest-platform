@@ -20,6 +20,7 @@ import {
   fetchVentures, fetchMyVentures, deleteVenture,
   fetchNotifications, markNotificationRead, markAllNotificationsRead,
 } from "@/api/venturesApi";
+import api from "../../../api/axios.js";
 
 // ── Stage config ──────────────────────────────────────────────────────────────
 const stageConfig = {
@@ -342,7 +343,7 @@ export default function VenturesPage() {
   useEffect(() => {
   const fetchUserCount = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/users/count");
+      const res = await api.get("/users/count");
       const data = await res.json();
       setTotalUsers(data.totalUsers);
     } catch (err) {
