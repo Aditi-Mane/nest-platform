@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    command: redis-server   # removed password for dev simplicity
+    ports:
+      - "6379:6379"         # exposed for debugging (optional)
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_net
+
+  sentiment-service:
+    build: ./ml-services/sentiment_analysis
+    container_name: sentiment-service
+    restart: always
+    ports:
+      - "8000:8000"         # exposed for testing
+    networks:
+      - app_net
+
+  recommender-service:
+    build: ./ml-services/recommender
+    container_name: recommender-service
+    restart: always
+    ports:
+      - "8001:8001"         # exposed for testing
+    networks:
+      - app_net
+
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    depends_on:
+      - mongo
+      - redis
+      - sentiment-service
+      - recommender-service
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development   # changed from production
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
+      - SENTIMENT_SERVICE_URL=http://sentiment-service:8000
+      - RECOMMENDER_SERVICE_URL=http://recommender-service:8001
+    ports:
+      - "5000:5000"            # exposed for direct access
+    networks:
+      - app_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf   # dev config
+    depends_on:
+      - backend
+    networks:
+      - app_net
+
+# ── Volumes ────────────────────────────────────────────────────
+volumes:
+  mongo_data:
+  redis_data:
+
+# ── Networks ───────────────────────────────────────────────────
+networks:
+  app_net:
+    driver: bridge
