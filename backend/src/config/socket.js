@@ -7,7 +7,9 @@ export const initSocket = (server) => {
   //attaches socket to server
   const allowedOrigins = [
     "http://localhost:5173",
-    "https://main.d2s3j9j85nw93c.amplifyapp.com"
+    "https://main.d2s3j9j85nw93c.amplifyapp.com",
+    "https://www.nestplatform.website",
+    "https://nestplatform.website"
   ];
 
   io = new Server(server, {
@@ -16,7 +18,7 @@ export const initSocket = (server) => {
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
-          return callback(null, origin);
+          return callback(null, true);
         } else {
           return callback(null, false);
         }
