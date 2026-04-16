@@ -376,17 +376,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 
 
-![Seller-Buyer modules flow](./assets/auth-flow.svg)
-
-
-
-![Seller-Buyer modules flow](./assets/seller-buyer-flow.svg)
-
-
-
-![Seller-Buyer modules flow](./assets/ventures-flow.svg)
-
-
-
-![Seller-Buyer modules flow](./assets/admin-pages.svg)
-
