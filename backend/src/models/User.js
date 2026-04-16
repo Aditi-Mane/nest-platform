@@ -97,7 +97,7 @@ const userSchema = new mongoose.Schema(
     availableRoles: {
       type: [String],
       enum: ["buyer", "seller", "admin"],
-      default: []
+      default: ["buyer", "seller"]
     },
 
     //currently active role
