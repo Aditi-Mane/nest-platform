@@ -8,6 +8,9 @@
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?logo=redis" />
   <img src="https://img.shields.io/badge/ML-Python%20FastAPI-009688" />
   <img src="https://img.shields.io/badge/AI-Gemini-4285F4?logo=google" />
+  <img src="https://img.shields.io/badge/AWS-S3-569A31?logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/AWS-EC2-FF9900?logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/AWS-Amplify-FF9900?logo=awsamplify&logoColor=white" />
 </p>
 
 > **NEST** is a full-stack web platform designed to empower students to start, manage, and grow their small businesses within a college ecosystem. It combines a peer-to-peer marketplace for buying and selling products with a collaborative hub for student startup ventures.
