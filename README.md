@@ -16,6 +16,7 @@
 > **NEST** is a full-stack web platform designed to empower students to start, manage, and grow their small businesses within a college ecosystem. It combines a peer-to-peer marketplace for buying and selling products with a collaborative hub for student startup ventures.
 
 ---
+🌐 Live Website: https://www.nestplatform.website/
 
 ## 📌 Table of Contents
 
