@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen" />
-  <img src="https://img.shields.io/badge/License-MIT-blue" />
   <img src="https://img.shields.io/badge/Stack-MERN-informational" />
   <img src="https://img.shields.io/badge/Containerized-Docker-2496ED?logo=docker" />
   <img src="https://img.shields.io/badge/Realtime-Socket.io-black?logo=socket.io" />
@@ -365,10 +364,6 @@ Please make sure your code follows the existing code style and that all existing
 ## 👩‍💻 Team
 
 NEST is developed by a 4-member student team as part of an academic initiative.
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ---
 
