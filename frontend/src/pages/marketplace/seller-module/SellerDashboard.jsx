@@ -620,9 +620,9 @@ export function SellerDashboard() {
       </div>
 
       {/* RECENT COMPLETED ORDERS & BUYER REQUESTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
         {/* ALL BUYER REQUESTS */}
-        <div>
+        <div className="flex h-full flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-6 h-6 text-primary" />
@@ -633,11 +633,11 @@ export function SellerDashboard() {
             </Link>
           </div>
 
-          <Card className="p-4 border-border">
+          <Card className="h-full flex-1 p-4 border-border">
             {requests?.length === 0 ? (
               <EmptyBuyerRequestsState />
             ) : (
-              <div className="overflow-x-auto">
+              <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-sm">
 
                 {/* TABLE HEADER */}
@@ -730,7 +730,7 @@ export function SellerDashboard() {
           </Card>
         </div>
         {/* RECENT COMPLETED ORDERS */}
-        <div>
+        <div className="flex h-full flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-6 h-6 text-secondary" />
@@ -741,7 +741,7 @@ export function SellerDashboard() {
             </Link>
           </div>
 
-          <Card className="p-4 border-border">
+          <Card className="h-full flex-1 p-4 border-border">
 
             {/* 🔄 LOADING STATE */}
             {loading ? (
@@ -761,7 +761,7 @@ export function SellerDashboard() {
             ) : (
 
               /* ✅ TABLE */
-              <div className="overflow-x-auto">
+              <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-sm">
 
                   <thead>
