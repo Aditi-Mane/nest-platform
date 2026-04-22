@@ -1,4 +1,4 @@
-# 🪺 NEST – Student Marketplace & Startup Innovation Hub
+# NEST – Student Marketplace & Startup Innovation Hub
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen" />
