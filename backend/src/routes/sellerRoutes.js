@@ -51,7 +51,9 @@ router.post(
       if (res.statusCode >= 200 && res.statusCode < 300) {
         await invalidateCache(
           "cache:global:/api/products*",                          // public product list
-          `cache:user:${req.user._id}:/api/seller/my-products*`  // seller's own product list
+          `cache:user:${req.user._id}:/api/seller/my-products*`, // seller's own product list
+          `cache:user:${req.user._id}:/api/seller/insights*`,    // seller insight cards
+          `cache:user:${req.user._id}:/api/seller/topProduct*`   // seller top product card
         );
       }
       return originalJson(data);
@@ -74,7 +76,9 @@ router.put(
         await invalidateCache(
           `cache:global:/api/products/${req.params.id}*`,         // specific product
           "cache:global:/api/products*",                           // product list
-          `cache:user:${req.user._id}:/api/seller/my-products*`   // seller's list
+          `cache:user:${req.user._id}:/api/seller/my-products*`,  // seller's list
+          `cache:user:${req.user._id}:/api/seller/insights*`,     // seller insight cards
+          `cache:user:${req.user._id}:/api/seller/topProduct*`    // seller top product card
         );
       }
       return originalJson(data);
@@ -96,7 +100,9 @@ router.delete(
         await invalidateCache(
           `cache:global:/api/products/${req.params.id}*`,
           "cache:global:/api/products*",
-          `cache:user:${req.user._id}:/api/seller/my-products*`
+          `cache:user:${req.user._id}:/api/seller/my-products*`,
+          `cache:user:${req.user._id}:/api/seller/insights*`,
+          `cache:user:${req.user._id}:/api/seller/topProduct*`
         );
       }
       return originalJson(data);

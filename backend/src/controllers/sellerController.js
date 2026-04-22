@@ -1297,6 +1297,7 @@ export const getInsights = async (req, res) => {
       {
         $match: {
           createdBy: sellerId,
+          status: { $ne: "deleted" },
         },
       },
       {
