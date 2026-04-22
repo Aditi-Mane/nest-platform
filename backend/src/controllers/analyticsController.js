@@ -173,10 +173,10 @@ export const getTopProducts = async (req, res) => {
 
     const formatted = rawData.map((item, index) => ({
       id: item._id,
-      name: item.product?.name || "Unknown",
-      image: item.product?.images?.[0]?.url || "",
-      sales: item.totalSales,
-      revenue: item.revenue,
+      name: item.name || "Unknown",
+      image: item.images?.[0]?.url || "",
+      sales: item.totalSales || 0,
+      revenue: item.revenue || 0,
       rank: index + 1,
     }));
 
@@ -193,10 +193,6 @@ export const getTopProducts = async (req, res) => {
   }
 };
 
-// FIX: getLowProducts was defined here directly using Product + mongoose
-//      without importing them, causing a ReferenceError at runtime.
-//      It now lives in analyticsService.js (see that file).
-//      This controller simply delegates to the service like every other handler.
 export const getLowProductsHandler = async (req, res) => {
   try {
     const sellerId = req.user._id;
@@ -206,9 +202,8 @@ export const getLowProductsHandler = async (req, res) => {
       id: item._id,
       name: item.name || "Unknown",
       image: item.images?.[0]?.url || "",
-      views: item.views || 0,
-      sales: item.sales || 0,
-      conversionRate: Number(item.conversionRate || 0).toFixed(1),
+      sales: item.totalSales || 0,
+      revenue: item.revenue || 0,
       rank: index + 1,
     }));
 
@@ -236,8 +231,7 @@ export const getDashboard = async (req, res) => {
       viewsRaw,
       funnel,
       conversations,
-      topProductsRaw,
-      lowProductsRaw,
+      productLists,
     ] = await Promise.all([
       analyticsService.getOverviewStats(sellerId, range),
       analyticsService.getRevenueTrend(sellerId, range),
@@ -245,9 +239,11 @@ export const getDashboard = async (req, res) => {
       analyticsService.getViewsTrend(sellerId, range),
       analyticsService.getConversionFunnel(sellerId),
       analyticsService.getConversationStats(sellerId),
-      analyticsService.getTopProducts(sellerId),
-      analyticsService.getLowProducts(sellerId), 
+      analyticsService.getProductRevenueLists(sellerId),
     ]);
+
+    const { topProducts: topProductsRaw, lowProducts: lowProductsRaw } =
+      productLists;
 
     const revenue = formatTrendData(revenueRaw, range, "revenue");
     const orders = formatTrendData(ordersRaw, range, "count");
@@ -255,9 +251,9 @@ export const getDashboard = async (req, res) => {
 
     const topProducts = topProductsRaw.map((item, index) => ({
       id: item._id,
-      name: item.product?.name || "Unknown",
-      image: item.product?.images?.[0]?.url || "",
-      sales: item.totalSales,
+      name: item.name || "Unknown",
+      image: item.images?.[0]?.url || "",
+      sales: item.totalSales || 0,
       revenue: item.revenue,
       rank: index + 1,
     }));
@@ -266,9 +262,8 @@ export const getDashboard = async (req, res) => {
       id: item._id,
       name: item.name || "Unknown",
       image: item.images?.[0]?.url || "",
-      views: item.views || 0,
-      sales: item.sales || 0,
-      conversionRate: Number(item.conversionRate || 0).toFixed(1),
+      sales: item.totalSales || 0,
+      revenue: item.revenue || 0,
       rank: index + 1,
     }));
 
