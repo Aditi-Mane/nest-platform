@@ -256,41 +256,8 @@ export const getConversationStats = async (sellerId) => {
 /* ---------------- TOP PRODUCTS ---------------- */
 
 export const getTopProducts = async (sellerId) => {
-  return await Order.aggregate([
-    {
-      $match: {
-        sellerId: new mongoose.Types.ObjectId(sellerId),
-        status: "otp_verified",
-      },
-    },
-
-    {
-      $group: {
-        _id: "$productId",
-        totalSales: { $sum: "$quantity" },
-        revenue: { $sum: "$totalPrice" },
-      },
-    },
-
-    { $sort: { revenue: -1 } },
-    { $limit: 5 },
-
-    {
-      $lookup: {
-        from: "products",
-        localField: "_id",
-        foreignField: "_id",
-        as: "product",
-      },
-    },
-
-    {
-      $unwind: {
-        path: "$product",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-  ]);
+  const { topProducts } = await getProductRevenueLists(sellerId);
+  return topProducts;
 };
 
 export const getViewsTrend = async (sellerId, range) => {
@@ -332,7 +299,7 @@ export const getViewsTrend = async (sellerId, range) => {
   return mergeDailySeries(buildDailySeries(range, "views"), data, "views");
 };
 
-export const getLowProducts = async (sellerId) => {
+const getProductsRevenueMetrics = async (sellerId) => {
   return await Product.aggregate([
     {
       $match: {
@@ -342,46 +309,71 @@ export const getLowProducts = async (sellerId) => {
     {
       $lookup: {
         from: "orders",
-        localField: "_id",
-        foreignField: "productId",
-        as: "orders",
-      },
-    },
-    {
-      $addFields: {
-        sales: {
-          $sum: {
-            $map: {
-              input: "$orders",
-              as: "o",
-              in: "$$o.quantity",
+        let: { productId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$productId", "$$productId"] },
+              sellerId: new mongoose.Types.ObjectId(sellerId),
+              status: "otp_verified",
             },
           },
-        },
+          {
+            $group: {
+              _id: null,
+              totalSales: { $sum: "$quantity" },
+              revenue: { $sum: "$totalPrice" },
+            },
+          },
+        ],
+        as: "orderMetrics",
       },
     },
     {
       $addFields: {
-        conversionRate: {
-          $cond: [
-            { $gt: ["$views", 0] },
-            { $multiply: [{ $divide: ["$sales", "$views"] }, 100] },
-            0,
-          ],
-        },
+        totalSales: { $ifNull: [{ $arrayElemAt: ["$orderMetrics.totalSales", 0] }, 0] },
+        revenue: { $ifNull: [{ $arrayElemAt: ["$orderMetrics.revenue", 0] }, 0] },
       },
     },
     {
       $project: {
         name: 1,
         images: 1,
-        views: { $ifNull: ["$views", 0] },
-        sales: 1,
-        conversionRate: 1,
+        totalSales: 1,
+        revenue: 1,
+        createdAt: 1,
       },
     },
-    { $sort: { conversionRate: 1 } },
-    { $limit: 5 },
   ]);
+};
+
+export const getProductRevenueLists = async (sellerId) => {
+  const products = await getProductsRevenueMetrics(sellerId);
+
+  const topProducts = [...products]
+    .sort((a, b) => {
+      if (b.revenue !== a.revenue) return b.revenue - a.revenue;
+      if (b.totalSales !== a.totalSales) return b.totalSales - a.totalSales;
+      return String(a._id).localeCompare(String(b._id));
+    })
+    .slice(0, 5);
+
+  const topProductIds = new Set(topProducts.map((item) => String(item._id)));
+
+  const lowProducts = products
+    .filter((item) => !topProductIds.has(String(item._id)))
+    .sort((a, b) => {
+      if (a.revenue !== b.revenue) return a.revenue - b.revenue;
+      if (a.totalSales !== b.totalSales) return a.totalSales - b.totalSales;
+      return String(a._id).localeCompare(String(b._id));
+    })
+    .slice(0, 5);
+
+  return { topProducts, lowProducts };
+};
+
+export const getLowProducts = async (sellerId) => {
+  const { lowProducts } = await getProductRevenueLists(sellerId);
+  return lowProducts;
 };
  

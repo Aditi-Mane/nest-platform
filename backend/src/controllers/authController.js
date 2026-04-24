@@ -56,7 +56,6 @@ export const signup = async (req, res) => {
       password: hashedPassword,
 
       verificationStatus: "pending_email",
-      availableRoles: [],
       activeRole: null,
     })
 
