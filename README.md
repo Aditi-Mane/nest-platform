@@ -29,14 +29,10 @@
   - [Installation (Local)](#installation-local)
   - [Running with Docker](#running-with-docker)
 - [Module Overviews](#-module-overviews)
-- [ML & AI Services](#-ml--ai-services)
-  - [Recommendation Engine](#1-recommendation-engine)
-  - [Sentiment Analysis](#2-sentiment-analysis)
-  - [Sales Analytics & Forecasting](#3-sales-analytics--forecasting)
 - [Environment Variables](#-environment-variables)
 - [Contributing](#-contributing)
 - [Team](#-team)
-- [License](#-license)
+
 
 ---
 
@@ -205,19 +201,13 @@ Role-based registration and login for Students (Buyers/Sellers) and Admins. JWT 
 ### 🛒 Seller–Buyer Module
 Sellers can create and manage product listings. Buyers can browse the marketplace, search by category, and place orders. Each user's dashboard reflects their active role.
 
-![Seller-Buyer Flow](assets/seller-buyer-flow.svg)
-
----
-
-### 💬 Real-time Messaging
+💬 Real-time Messaging
 Socket.io powers two distinct chat experiences on the platform. Buyers and sellers can message each other directly about a product or order from within the marketplace. Venture team members have a dedicated group chat channel tied to their venture, enabling async collaboration.
 
-Redis is used as the Socket.io adapter, allowing the pub/sub layer to work correctly across multiple server instances and persist presence data efficiently.
-
----
-
-### ✉️ OTP Order Verification
+✉️ OTP Order Verification
 When a buyer receives their order, the seller must confirm delivery by entering a one-time password sent to the buyer's email via Nodemailer. This prevents fraudulent order-completion claims and adds a layer of trust to every transaction on the platform.
+
+![Seller-Buyer Flow](assets/seller-buyer-flow.svg)
 
 ---
 
@@ -235,76 +225,6 @@ Admins can monitor and moderate the platform — reviewing new listings, managin
 
 ---
 
-## 🤖 ML & AI Services
-
-NEST runs two independent Python FastAPI microservices and one JS-based analytics engine — all communicating with the Node.js backend over HTTP.
-
----
-
-### 1. Recommendation Engine
-
-**Location:** `ml-services/` | **Framework:** FastAPI | **Model:** `all-MiniLM-L6-v2` (Sentence-BERT)
-
-When a buyer views a product, the platform shows semantically similar recommendations — not just same-category items, but products that are *meaningfully* related using NLP.
-
-**How it works:**
-
-1. The Node.js backend fetches the viewed product and up to 20 same-category candidates from MongoDB.
-2. It sends the product text (name + description + category) and all candidate texts to the Python service via `POST /recommend`.
-3. The FastAPI service encodes all texts into 384-dimensional embedding vectors using Sentence-BERT and computes **cosine similarity** between the query and each candidate.
-4. Ranked IDs are returned; the backend maps them back to full product objects and returns the top 6.
-
-**Fallback:** The ML call has a 5-second timeout wrapped in a `try/catch`. If the Python service is unavailable, it gracefully falls back to sorting candidates by `averageRating` and `reviewCount` — the user always gets a response.
-
-**Cart recommendations** (`recommendFromCart`) skip ML entirely — they extract unique categories from cart items and return top-rated available products from those categories directly via MongoDB query.
-
----
-
-### 2. Sentiment Analysis
-
-**Location:** `ml-services/` | **Framework:** FastAPI | **Model:** `cardiffnlp/twitter-roberta-base-sentiment` (RoBERTa)
-
-Sellers receive an AI-powered dashboard showing the overall sentiment of their product reviews, per-product breakdowns, and extracted themes — without reading a single review manually.
-
-**Three backend endpoints feed the seller dashboard:**
-
-| Endpoint | Returns |
-|---|---|
-| `GET /reviews/sentiment-analytics` | Overall score (0–10), positive rate %, sentiment distribution, weekly trend |
-| `GET /reviews/seller-product-sentiment` | Per-product positive/neutral/negative breakdown with scores |
-| `GET /reviews/review-insights` | Extracted positive and negative theme arrays (e.g. "fast delivery", "poor packaging") |
-
-**Scoring formula:** `score = ((positive × 1) + (neutral × 0.5)) / total × 10`
-
-Neutral reviews receive partial credit, producing a more nuanced score than a simple positive-rate percentage.
-
-**Model label mapping:** The RoBERTa model outputs `LABEL_0` (negative), `LABEL_1` (neutral), `LABEL_2` (positive). The model is loaded once at FastAPI startup — not per request — to avoid re-loading hundreds of MB on every call. CORS middleware allows the React frontend to call this Python service directly.
-
----
-
-### 3. Sales Analytics & Forecasting
-
-**Location:** `backend/` (JS) + Gemini API | **Method:** Linear Regression + Google Gemini AI
-
-Sellers get a dedicated analytics dashboard with revenue forecasts, inventory alerts, and AI-generated business suggestions.
-
-**Forecasting engine (pure JS, no ML library):**
-
-The backend implements `linearRegression()`, `stdDev()`, and `computeConfidence()` from scratch. MongoDB aggregation pipelines group orders by day/week/month, and a regression line (`y = mx + b`) is fit through the revenue time series to project future revenue.
-
-| Builder | Historical window | Predicted window |
-|---|---|---|
-| `build7DayForecast` | Last 7 days | Next 3 days |
-| `build30DayForecast` | Last 3 weeks | Next 2 weeks |
-| `build3MonthForecast` | Last 3 months | Next 3 months |
-
-The shaded confidence band on the chart is `predicted ± 1.645 × stdDev` — where 1.645 is the Z-score for a 90% confidence interval. Model accuracy is displayed as `70 + R² × 20` (clamped at 98%).
-
-**Inventory urgency** is calculated as `daysOfStock = currentStock / (unitsSold / 30)`, classified into high/medium/low urgency bands.
-
-**Gemini AI suggestions:** If `GEMINI_API_KEY` is set, the backend builds a data snapshot of the seller's last 30–60 days and sends it to Gemini, which returns 4 prioritized business suggestions (icon, title, description, type). If the key is absent or the call fails, it falls back to rule-based suggestions (low stock alerts, declining MoM, zero-sales overstock). The frontend badge shows "Gemini AI" or "Rule-based" accordingly.
-
----
 
 ## 🔑 Environment Variables
 
