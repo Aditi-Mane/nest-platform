@@ -26,13 +26,28 @@ import salesPredictionRoutes from "./routes/salesPredictionRoutes.js";
 import complaintRoutes from "./routes/complaintRoutes.js";
  
 
-connectDB()
+// connectDB()
+const PORT = process.env.PORT || 5000;
 
 const app = express()
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://main.d2s3j9j85nw93c.amplifyapp.com",
+  "https://nestplatform.website",
+  "https://www.nestplatform.website"
+];
+
 app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); 
+    } else {
+      return callback(null, false);
+    }
+  }
 }));
 
 app.use(express.urlencoded({ extended: true }));
@@ -60,12 +75,25 @@ app.get("/",(req, res)=>{
   res.send("NEST backend is currently running")
 })
 
-const PORT = process.env.PORT
-const server = app.listen(PORT,()=>{
-  console.log(`Server is running on ${PORT}`);
-  
-  
-})
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
 
-initSocket(server);
+const start = async () => {
+  try {
+    await connectDB(); 
 
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on ${PORT}`);
+    });
+
+    initSocket(server);
+
+  } catch (error) {
+    console.error("Server failed to start:", error);
+  }
+};
+
+start(); 
+
+export default app;

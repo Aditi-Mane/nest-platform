@@ -18,6 +18,7 @@ Thumbs.db
 .env
 .env.local
 .env.production
+.env.development
 
 # Editor/IDE
 .vsCode/

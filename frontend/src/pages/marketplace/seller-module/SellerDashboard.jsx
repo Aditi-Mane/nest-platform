@@ -1,7 +1,18 @@
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
-import { MessageSquare, CheckCircle, Clock, Plus, Eye, TrendingUp, Sparkles, ShieldCheck } from "lucide-react";
+import {
+  MessageSquare,
+  CheckCircle,
+  Clock,
+  Plus,
+  Eye,
+  TrendingUp,
+  Sparkles,
+  ShieldCheck,
+  Inbox,
+  ArrowRight,
+} from "lucide-react";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
@@ -413,9 +424,9 @@ export function SellerDashboard() {
           {/* Daily Earnings Chart */}
           <Card className="p-6 border-border border-2">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary" />
-              </div>
+              <DashboardIconShell tone="primary">
+                <TrendingUp className="w-6 h-6 text-primary" />
+              </DashboardIconShell>
               <div>
                 <h3 className="font-semibold text-lg text-text">
                   Daily Earnings
@@ -453,9 +464,9 @@ export function SellerDashboard() {
 
             {/* HEADER */}
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-secondary" />
-              </div>
+              <DashboardIconShell tone="secondary">
+                <TrendingUp className="w-6 h-6 text-secondary" />
+              </DashboardIconShell>
               <div>
                 <h3 className="font-semibold text-lg text-text">
                   💰 Top Product
@@ -523,9 +534,9 @@ export function SellerDashboard() {
           {/* Price Too High? */}
           <Card className="p-6 bg-linear-to-br from-blue-50 to-purple-50 border-2 border-blue-500/30">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Eye className="w-5 h-5 text-blue-600" />
-              </div>
+              <DashboardIconShell tone="info">
+                <Eye className="w-6 h-6 text-blue-600" />
+              </DashboardIconShell>
               <div>
                 <h3 className="font-semibold text-lg text-text">
                   👀 High Views, Few Inquiries
@@ -609,9 +620,9 @@ export function SellerDashboard() {
       </div>
 
       {/* RECENT COMPLETED ORDERS & BUYER REQUESTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
         {/* ALL BUYER REQUESTS */}
-        <div>
+        <div className="flex h-full flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-6 h-6 text-primary" />
@@ -622,9 +633,12 @@ export function SellerDashboard() {
             </Link>
           </div>
 
-          <Card className="p-4 border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+          <Card className="h-full flex-1 p-4 border-border">
+            {requests?.length === 0 ? (
+              <EmptyBuyerRequestsState />
+            ) : (
+              <div className="flex-1 overflow-x-auto">
+                <table className="w-full text-sm">
 
                 {/* TABLE HEADER */}
                 <thead>
@@ -638,15 +652,15 @@ export function SellerDashboard() {
                 </thead>
 
                 {/* TABLE BODY */}
-                <tbody>
-                  {requests?.slice(0, 5).map((request) => {
-                    const statusInfo = statusConfig[request.status];
+                  <tbody>
+                    {requests?.slice(0, 5).map((request) => {
+                      const statusInfo = statusConfig[request.status];
 
-                    return (
-                      <tr
-                        key={request._id}
-                        className="border-b border-border hover:bg-accent/20 transition"
-                      >
+                      return (
+                        <tr
+                          key={request._id}
+                          className="border-b border-border hover:bg-accent/20 transition"
+                        >
                         {/* PRODUCT */}
                         <td className="py-3 flex items-center gap-3">
                           {request.productId?.images?.[0]?.url ? (
@@ -705,17 +719,18 @@ export function SellerDashboard() {
                             </Button>
                           </Link>
                         </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
 
-              </table>
-            </div>
+                </table>
+              </div>
+            )}
           </Card>
         </div>
         {/* RECENT COMPLETED ORDERS */}
-        <div>
+        <div className="flex h-full flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-6 h-6 text-secondary" />
@@ -726,7 +741,7 @@ export function SellerDashboard() {
             </Link>
           </div>
 
-          <Card className="p-4 border-border">
+          <Card className="h-full flex-1 p-4 border-border">
 
             {/* 🔄 LOADING STATE */}
             {loading ? (
@@ -746,7 +761,7 @@ export function SellerDashboard() {
             ) : (
 
               /* ✅ TABLE */
-              <div className="overflow-x-auto">
+              <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-sm">
 
                   <thead>
@@ -829,6 +844,51 @@ export function SellerDashboard() {
 }
 
 export default SellerDashboard
+
+const DashboardIconShell = ({ children, tone = "primary" }) => {
+  const toneClasses = {
+    primary: "bg-primary/12",
+    secondary: "bg-secondary/18",
+    info: "bg-blue-100",
+  };
+
+  return (
+    <div
+      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${toneClasses[tone]}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+const EmptyBuyerRequestsState = () => (
+  <div className="rounded-2xl border border-dashed border-primary/25 bg-linear-to-br from-primary/8 via-card to-secondary/8 p-8 text-center">
+    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-primary/10">
+      <Inbox className="h-8 w-8 text-primary" />
+    </div>
+    <h3 className="text-lg font-semibold text-text">No buyer requests yet</h3>
+    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+      Your first enquiry will appear here. Clear titles, strong photos, and a sharp price usually help buyers reach out faster.
+    </p>
+    <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <Link to="/marketplace/seller/products">
+        <Button className="flex items-center gap-2 bg-primary text-card">
+          <Plus className="h-4 w-4" />
+          Improve Listings
+        </Button>
+      </Link>
+      <Link to="/marketplace/seller/messages">
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 border-border bg-card text-text hover:bg-background"
+        >
+          Open Inbox
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </Link>
+    </div>
+  </div>
+);
 
 const SellerDashboardSkeleton = () => (
   <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6 space-y-8">

@@ -2,7 +2,6 @@ import express from "express"
 import { getUserCart } from "../controllers/cartController.js"
 import { addToCart } from "../controllers/cartController.js";
 import { removeFromCart, updateCartQuantity, clearCart } from "../controllers/cartController.js";
-import { isAuthenticated } from "../../../frontend/utils/getToken.js"
 import { protect } from "../middleware/authMiddleware.js"
 const router =express.Router();
 

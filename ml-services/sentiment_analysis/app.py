@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from transformers import pipeline
 from fastapi.middleware.cors import CORSMiddleware
 from db import reviews_collection
 from collections import Counter, defaultdict
@@ -17,11 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load sentiment model
-sentiment_model = pipeline(
-    "sentiment-analysis",
-    model="cardiffnlp/twitter-roberta-base-sentiment"
-)
+# Simple keyword-based sentiment
+positive_words = ["good", "great", "excellent", "amazing", "love", "nice", "best"]
+negative_words = ["bad", "worst", "terrible", "awful", "hate", "poor"]
 
 class ReviewRequest(BaseModel):
     text: str
@@ -29,21 +26,24 @@ class ReviewRequest(BaseModel):
 # ---------------- SENTIMENT API ----------------
 @app.post("/predict-sentiment")
 def predict_sentiment(request: ReviewRequest):
-    result = sentiment_model(request.text)[0]
+    text = request.text.lower()
 
-    label = result["label"]
-    score = float(result["score"])
+    pos_score = sum(word in text for word in positive_words)
+    neg_score = sum(word in text for word in negative_words)
 
-    if label == "LABEL_2":
+    if pos_score > neg_score:
         sentiment = "positive"
-    elif label == "LABEL_1":
-        sentiment = "neutral"
-    else:
+        confidence = pos_score / (pos_score + neg_score + 1)
+    elif neg_score > pos_score:
         sentiment = "negative"
+        confidence = neg_score / (pos_score + neg_score + 1)
+    else:
+        sentiment = "neutral"
+        confidence = 0.5
 
     return {
         "sentiment": sentiment,
-        "confidence": score
+        "confidence": float(confidence)
     }
 
 # ---------------- GET REVIEWS ----------------
@@ -64,13 +64,9 @@ def get_analytics():
     neutral = sentiment_count.get("neutral", 0)
     negative = sentiment_count.get("negative", 0)
 
-    # Percentages
     positive_rate = (positive / total) * 100 if total else 0
-
-    # Overall score
     score = ((positive * 1) + (neutral * 0.5)) / total * 10 if total else 0
 
-    # -------- WEEKLY TREND --------
     trend = defaultdict(list)
 
     for r in reviews:
@@ -79,18 +75,15 @@ def get_analytics():
         if not date:
             continue
 
-        # Handle string date
         if isinstance(date, str):
             try:
                 date = datetime.fromisoformat(date.replace("Z", "+00:00"))
             except:
                 continue
 
-        # Group by week
         week = date.strftime("%Y-W%U")
         trend[week].append(r)
 
-    # Proper sorting function
     def week_key(week_str):
         year, week = week_str.split("-W")
         return int(year), int(week)
@@ -106,9 +99,6 @@ def get_analytics():
             "value": round(trend_score, 2)
         })
 
-    # OPTIONAL: limit to last 10 weeks (adjust if needed)
-    # trend_data = trend_data[-10:]
-
     return {
         "totalReviews": total,
         "positiveRate": round(positive_rate, 2),
@@ -119,4 +109,4 @@ def get_analytics():
             "negative": negative
         },
         "trend": trend_data
-}
+    }

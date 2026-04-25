@@ -9,8 +9,9 @@ export const SocketProvider = ({ children }) => {
   const { user } = useUser();
 
   useEffect(() => {
-    const socketInstance = io("http://localhost:5000", {
+    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
       withCredentials: true,
+      transports: ["websocket"],
     });
 
     setSocket(socketInstance);

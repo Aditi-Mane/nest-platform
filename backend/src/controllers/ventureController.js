@@ -62,7 +62,7 @@ export const getVentures = async (req, res) => {
   { $skip: (page - 1) * limit },
   { $limit: Number(limit) },
 
-  // 🔥 JOIN creator
+  //JOIN creator
   {
     $lookup: {
       from: "users", // collection name in MongoDB

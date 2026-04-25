@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
@@ -35,7 +35,7 @@ export function CartProvider({ children }) {
     try {
       await api.post("/cart/add", { productId });
       await fetchCart(); // sync state
-      toast.success("🛒 Item added to cart!");
+      
     } catch (error) {
       console.error("Add to cart error:", error);
     }
@@ -46,7 +46,7 @@ export function CartProvider({ children }) {
     try {
       await api.delete(`/cart/remove/${productId}`);
       await fetchCart();
-      toast.success("🛒 Item removed from cart!");
+      toast.success("🛒 Product removed from cart!");
     } catch (error) {
       console.error("Remove cart error:", error);
     }
