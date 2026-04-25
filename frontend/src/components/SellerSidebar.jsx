@@ -14,11 +14,12 @@ import { IoPeople } from "react-icons/io5";
 import { FaPeopleGroup } from "react-icons/fa6";
 import { useMessages } from "@/context/MessageContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { X } from "lucide-react";
 
 import { useEffect } from "react";
 import api from "../api/axios.js";
 
-const SellerSidebar = () => {
+const SellerSidebar = ({ onClose }) => {
   const [openAI, setOpenAI] = useState(true);
   const [user, setUser] = useState({});
   const [userLoading, setUserLoading] = useState(true);
@@ -59,20 +60,30 @@ const SellerSidebar = () => {
       {/* TOP SECTION */}
       <div>
         {/* LOGO */}
-        <div className="flex items-center gap-3 p-5 border-b border-border">
-          <div className="rounded-xl text-white flex items-center justify-center text-lg">
-            <img
-              src="/NEST_logo.png"  
-              alt="NEST Logo"
-              className="size-12 object-contain"
-            />
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl text-white flex items-center justify-center text-lg">
+              <img
+                src="/NEST_logo.png"  
+                alt="NEST Logo"
+                className="size-12 object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg text-text">NEST</h1>
+              <p className="text-sm text-muted">
+                Seller Dashboard
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-lg text-text">NEST</h1>
-            <p className="text-sm text-muted">
-              Seller Dashboard
-            </p>
-          </div>
+          
+          {/* MOBILE CLOSE BUTTON */}
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-lg hover:bg-border/50 transition-colors"
+          >
+            <X size={20} className="text-text" />
+          </button>
         </div>
 
         {/* MENU */}
@@ -83,6 +94,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={onClose}
           >
             <MdOutlineAnalytics size={20} />
             Dashboard
@@ -93,6 +105,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink} flex items-center justify-between`
             }
+            onClick={onClose}
           >
             <div className="flex items-center gap-2">
               <IoPeople size={20} />
@@ -111,6 +124,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={onClose}
           >
             <TbPackage size={20}/>
             My Products
@@ -121,6 +135,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={onClose}
           >
             <MdReplay size={20}/>
             Order History
@@ -131,6 +146,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={onClose}
           >
             <SiGoogleanalytics size={20}/>
             Analytics
@@ -141,6 +157,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={onClose}
           >
             <FaPeopleGroup size={20} />
             Ventures
@@ -171,6 +188,7 @@ const SellerSidebar = () => {
                       isActive ? activeLink : normalLink
                     }`
                   }
+                  onClick={onClose}
                 >
                   <MdAnalytics size={18} />
                   Sales Prediction
@@ -183,6 +201,7 @@ const SellerSidebar = () => {
                       isActive ? activeLink : normalLink
                     }`
                   }
+                  onClick={onClose}
                 >
                   <FaRegSmile size={18} />
                   Sentiment Analysis
@@ -196,6 +215,7 @@ const SellerSidebar = () => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={onClose}
           >
             <IoSettingsSharp size={20} />
             Settings

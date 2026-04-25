@@ -294,7 +294,7 @@ export function SellerDashboard() {
   }
 
   return (
-    <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* WELCOME BANNER */}
       <div className="mb-8 bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -891,7 +891,7 @@ const EmptyBuyerRequestsState = () => (
 );
 
 const SellerDashboardSkeleton = () => (
-  <div className="max-w-400 mx-auto sm:px-6 lg:px-6 p-6 space-y-8">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
     <div className="bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20 animate-pulse">
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-3">

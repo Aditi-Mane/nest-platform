@@ -91,9 +91,7 @@ const SellerSettings = () => {
   const [storeLogo, setStoreLogo] = useState("");
   const [storeLogoFile, setStoreLogoFile] = useState(null);
   const [payoutUPI, setPayoutUPI] = useState("");
-  const [role, setRole] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [notifications, setNotifications] = useState({});
 
   // Personal Info States
   const [name, setName] = useState("");
@@ -175,7 +173,7 @@ const SellerSettings = () => {
     try {
       setPasswordLoading(true);
       setPasswordError("");
-      const res = await api.put("/users/updatePassword", { password: newPassword });
+      await api.put("/users/updatePassword", { password: newPassword });
 
       setNewPassword("");
       toast.success("Password updated")
@@ -212,11 +210,7 @@ const SellerSettings = () => {
         const res = await api.get("/users/me");
 
         const user = res.data;
-        setRole(user.activeRole);
-
         if(user.avatar) setProfileImage(user.avatar);
-
-        if(user.notifications) setNotifications(user.notifications);
 
         /* NEW DATA LOAD */
 
@@ -276,7 +270,9 @@ const SellerSettings = () => {
 
       navigate(`/marketplace/${updatedRole}`);
     } catch (error) {
-      toast.error(error.response?.data);
+      toast.error(
+        error?.response?.data?.message || "Unable to switch profile"
+      );
     }
   };
 
@@ -317,10 +313,10 @@ const SellerSettings = () => {
 
   return (
     <div className="min-h-screen bg-background text-text">
-      <div className="p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-8">
 
         {/* HEADER ROW */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
           <div>
             <h1 className="text-3xl font-bold text-primary">Settings</h1>
@@ -329,18 +325,18 @@ const SellerSettings = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
 
-            <div className="text-right">
+            <div className="flex-1 sm:flex-initial text-left sm:text-right">
               <h2 className="text-sm font-semibold text-text">{name}</h2>
               <p className="text-xs text-muted">{email}</p>
             </div>
 
-            <div>
+            <div className="flex-shrink-0">
               <img
                 src={profileImage}
                 alt="Profile"
-                className="w-16 h-16 rounded-full object-cover border-2 border-border"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-border"
               />
             </div>
 
@@ -392,7 +388,7 @@ const SellerSettings = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                   label="Store Name"
                   value={storeName}
@@ -459,7 +455,7 @@ const SellerSettings = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input label="Full Name" value={name} disabled />
                 <Input
                   label="Email Address"
@@ -469,7 +465,7 @@ const SellerSettings = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                   label="College Name"
                   value={collegeName}
@@ -751,7 +747,7 @@ const SettingsSkeleton = () => (
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2].map((field) => (
               <div key={field} className="space-y-2">
                 <div className="h-4 w-24 rounded bg-background"></div>

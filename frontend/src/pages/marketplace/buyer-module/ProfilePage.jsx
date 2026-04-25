@@ -18,10 +18,9 @@ import { ShoppingBag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ComplaintModal from "../../../components/ComplaintModal.jsx";
 import { clearStoredToken } from "../../../utils/authStorage.js";
+import toast from "react-hot-toast";
 
 const Section = ({ title, children, onEdit, isEditing, onSave, onCancel }) => {
-  const showEdit = onEdit || isEditing;
-
   return(
     <div className="bg-card rounded-2xl border border-border p-8 shadow-sm hover:shadow-md transition">
       <div className="flex items-center justify-between mb-6">
@@ -178,7 +177,9 @@ export const ProfilePage = () => {
       setShowSwitchModal(false);
       navigate(`/marketplace/${res.data.role}`);
     } catch (error) {
-      console.log(error);
+      toast.error(
+        error?.response?.data?.message || "Unable to switch profile"
+      );
     }
   };
 

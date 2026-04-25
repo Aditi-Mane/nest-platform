@@ -374,7 +374,7 @@ const SellerProducts = () => {
     }
   };
   return (
-    <div className="p-6 text-text">
+    <div className="p-4 sm:p-6 text-text">
 
       {/* HEADER */}
       <div className="flex justify-between items-start mb-6">
@@ -612,23 +612,25 @@ const SellerProducts = () => {
                 </div>
 
                 {/* STATS BOX */}
-                <div className="grid grid-cols-3 gap-4 mt-4 bg-[#efe6d6] border border-border rounded-xl p-3 text-sm">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 bg-[#efe6d6] border border-border rounded-xl p-3 text-sm">
 
-                  <div>
-                    <p className="text-muted">Sales</p>
-                    <p className="font-semibold">{getProductAnalytics(p._id)?.sales || 0}</p>
+                  <div className="min-w-0">
+                    <p className="text-muted text-xs sm:text-sm">Sales</p>
+                    <p className="font-semibold text-sm sm:text-base truncate">
+                      {getProductAnalytics(p._id)?.sales || 0}
+                    </p>
                   </div>
 
-                  <div>
-                    <p className="text-muted">Revenue</p>
-                    <p className="font-semibold text-green-700">
+                  <div className="min-w-0">
+                    <p className="text-muted text-xs sm:text-sm">Revenue</p>
+                    <p className="font-semibold text-sm sm:text-base text-green-700 truncate">
                       ₹ {getProductAnalytics(p._id)?.revenue || 0}
                     </p>
                   </div>
 
-                  <div>
-                    <p className="text-muted">Views</p>
-                    <p className="font-semibold">{p.views}</p>
+                  <div className="min-w-0">
+                    <p className="text-muted text-xs sm:text-sm">Views</p>
+                    <p className="font-semibold text-sm sm:text-base truncate">{p.views}</p>
                   </div>
 
                 </div>
@@ -647,7 +649,7 @@ const SellerProducts = () => {
                 </div>
 
                 {/* ACTIONS */}
-                <div className="flex items-center justify-between mt-5">
+                <div className="flex flex-col sm:flex-row gap-3 mt-5">
 
                   <button onClick={() => handleEdit(p)} className="flex-1 border border-border rounded-xl py-2 hover:bg-[#f1e7d5] transition">
                     <span className="flex gap-2 justify-center items-center text-muted"><TfiPencilAlt size={20}/>Edit</span>
@@ -655,8 +657,8 @@ const SellerProducts = () => {
 
                   <button
                     onClick={() => handleDelete(p._id)}
-                    className="ml-3 flex items-center justify-center 
-                      w-10 h-10 rounded-xl
+                    className="flex items-center justify-center 
+                      w-full sm:w-10 h-10 rounded-xl
                       border border-border
                     
                       text-muted

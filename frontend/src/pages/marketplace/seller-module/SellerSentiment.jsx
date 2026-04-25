@@ -69,7 +69,7 @@ const AnimatedNumber = ({ value, suffix = "", decimals = 0 }) => {
       else prevRef.current = to;
     };
     requestAnimationFrame(step);
-  }, [value]);
+  }, [value, decimals]);
   return <span>{display}{suffix}</span>;
 };
 
@@ -175,18 +175,18 @@ const SellerSentiment = () => {
   const visibleProducts = (Array.isArray(products) ? products : []).slice(0, 5);
 
   return (
-    <div className="p-6 min-h-screen bg-background text-text space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-background text-text space-y-6">
 
       {/* ── Header ── */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Customer Sentiment</h1>
           <p className="text-muted mt-1 text-sm">AI-powered NLP across all your reviews</p>
         </div>
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card text-sm hover:bg-background transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-border bg-card text-sm hover:bg-background transition-colors"
           >
             <RefreshCcw size={14} className={refreshing ? "animate-spin" : ""} />
             Refresh
@@ -194,7 +194,7 @@ const SellerSentiment = () => {
           <button
             onClick={handleExport}
             disabled={loadingAnalytics || loadingProducts || loadingInsights}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-border bg-card text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background transition-colors"
           >
             <Download size={14} /> Export CSV
           </button>
@@ -204,7 +204,7 @@ const SellerSentiment = () => {
       {/* ── Stat Cards ── */}
       {loadingAnalytics ? <SentimentOverviewSkeleton /> : (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={<Star size={16} />}
               title="Overall Score"
@@ -236,15 +236,15 @@ const SellerSentiment = () => {
           </div>
 
           {/* ── Charts Row ── */}
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
 
             {/* Sentiment Distribution */}
-            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+            <div className="bg-card border border-border p-5 sm:p-6 rounded-2xl shadow-sm">
               <h2 className="font-semibold text-base mb-5">Sentiment Distribution</h2>
 
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-6">
                 {/* Donut */}
-                <div className="relative w-48 h-48 shrink-0">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48 shrink-0">
                   {hasSentimentData ? (
                     <ResponsiveContainer>
                       <PieChart>
@@ -265,7 +265,7 @@ const SellerSentiment = () => {
                 </div>
 
                 {/* Legend */}
-                <div className="flex-1 space-y-3">
+                <div className="flex-1 w-full space-y-3">
                   {donutData.map(item => {
                     const pct = totalSentimentCount ? Math.round((item.value / totalSentimentCount) * 100) : 0;
                     return (
@@ -289,7 +289,7 @@ const SellerSentiment = () => {
             </div>
 
             {/* Weekly Happiness Trend */}
-            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+            <div className="bg-card border border-border p-5 sm:p-6 rounded-2xl shadow-sm">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="font-semibold text-base">Happiness Trend</h2>
@@ -345,7 +345,7 @@ const SellerSentiment = () => {
       )}
 
       {/* ── Product Sentiment ── */}
-      <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+      <div className="bg-card border border-border p-5 sm:p-6 rounded-2xl shadow-sm">
         <div className="flex justify-between items-center mb-5">
           <div>
             <h2 className="text-xl font-semibold">Product Sentiment</h2>
@@ -365,7 +365,7 @@ const SellerSentiment = () => {
       </div>
 
       {/* ── Insight Columns ── */}
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
         <InsightPanel
           icon={<Heart size={16} fill="currentColor" />}
           title="What Customers Love"
@@ -396,19 +396,21 @@ export default SellerSentiment;
 
 /* ─── Sub-components ──────────────────────────────────────────────────────────── */
 
-const StatCard = ({ icon, title, value, sub, accent }) => (
+const StatCard = ({ icon, title, value, sub }) => (
   <div className="bg-card border border-border p-5 rounded-2xl group hover:border-secondary/40 transition-colors">
-    <div className="flex items-center gap-2 text-muted text-xs mb-3">
-      <span className="text-secondary opacity-70 group-hover:opacity-100 transition-opacity">{icon}</span>
-      <span className="uppercase tracking-wider font-medium">{title}</span>
+    <div className="flex items-start gap-3 text-muted mb-3">
+      <span className="text-secondary opacity-70 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5">{icon}</span>
+      <div className="min-w-0">
+        <div className="text-[11px] sm:text-xs uppercase tracking-wider font-medium">{title}</div>
+        <h2 className="text-xl sm:text-2xl font-bold text-text mt-1">{value}</h2>
+      </div>
     </div>
-    <h2 className="text-2xl font-bold text-text">{value}</h2>
     <p className="text-xs text-muted mt-1">{sub}</p>
   </div>
 );
 
 const ProductRow = ({ product }) => (
-  <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-background hover:border-secondary/30 transition-all">
+  <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-background hover:border-secondary/30 transition-all sm:flex-row sm:items-center">
     {/* Avatar */}
     <div className="w-11 h-11 rounded-full bg-card border border-border overflow-hidden flex items-center justify-center text-base font-semibold shrink-0">
       {product.image ? <img src={product.image} alt={product.name} className="w-full h-full object-cover" /> : product.name?.[0] || "P"}
@@ -416,9 +418,9 @@ const ProductRow = ({ product }) => (
 
     {/* Info */}
     <div className="flex-1 min-w-0">
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-start justify-between gap-3 mb-1">
         <h3 className="font-semibold text-text truncate">{product.name}</h3>
-        <div className="flex items-center gap-1 shrink-0 ml-3">
+        <div className="flex items-center gap-1 shrink-0">
           <ScoreRing score={product.score} size={44} />
           <div className="text-right">
             <p className="text-xs text-muted leading-tight">score</p>
@@ -430,7 +432,7 @@ const ProductRow = ({ product }) => (
         <span className="text-green-600">▲ {product.positive}% positive</span>
         <span className="text-gray-500">• {product.neutral}% neutral</span>
         <span className="text-orange-500">▼ {product.negative}% negative</span>
-        <span className="text-muted ml-auto">{product.totalReviews} reviews</span>
+        <span className="text-muted sm:ml-auto">{product.totalReviews} reviews</span>
       </div>
 
       <SentimentBar positive={product.positive} neutral={product.neutral} negative={product.negative} />
@@ -439,7 +441,7 @@ const ProductRow = ({ product }) => (
 );
 
 const InsightPanel = ({ icon, title, subtitle, items, loading, badge, badgeClass, accentColor, footer }) => (
-  <div className="bg-card border border-border p-6 rounded-2xl">
+  <div className="bg-card border border-border p-5 sm:p-6 rounded-2xl">
     <div className="flex items-center gap-2.5 mb-1">
       <div className="p-2 rounded-full" style={{ background: `color-mix(in srgb, ${accentColor} 15%, transparent)`, color: accentColor }}>
         {icon}
@@ -455,7 +457,7 @@ const InsightPanel = ({ icon, title, subtitle, items, loading, badge, badgeClass
         {items.slice(0, 5).map((text, i) => (
           <div
             key={i}
-            className="flex items-center justify-between bg-background p-3.5 rounded-xl border border-border hover:border-secondary/30 transition-colors gap-3"
+            className="flex flex-col gap-2 bg-background p-3.5 rounded-xl border border-border hover:border-secondary/30 transition-colors sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="flex items-center gap-3 min-w-0">
               <span className="text-xs font-bold text-muted tabular-nums w-4 shrink-0">#{i + 1}</span>
@@ -479,7 +481,7 @@ const InsightPanel = ({ icon, title, subtitle, items, loading, badge, badgeClass
 
 const SentimentOverviewSkeleton = () => (
   <>
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {[1,2,3,4].map(i => (
         <div key={i} className="bg-card border border-border p-5 rounded-2xl animate-pulse space-y-3">
           <div className="h-3 w-20 bg-background rounded" />
@@ -488,9 +490,9 @@ const SentimentOverviewSkeleton = () => (
         </div>
       ))}
     </div>
-    <div className="grid grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
       {[1,2].map(i => (
-        <div key={i} className="bg-card border border-border p-6 rounded-2xl animate-pulse">
+        <div key={i} className="bg-card border border-border p-5 sm:p-6 rounded-2xl animate-pulse">
           <div className="h-5 w-36 bg-background rounded mb-5" />
           <div className="h-56 bg-background rounded-xl" />
         </div>
@@ -502,7 +504,7 @@ const SentimentOverviewSkeleton = () => (
 const ProductSentimentSkeleton = () => (
   <div className="space-y-3">
     {[1,2,3].map(i => (
-      <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-background animate-pulse">
+      <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-border bg-background animate-pulse">
         <div className="w-11 h-11 rounded-full bg-card shrink-0" />
         <div className="flex-1 space-y-2">
           <div className="h-4 w-40 bg-card rounded" />

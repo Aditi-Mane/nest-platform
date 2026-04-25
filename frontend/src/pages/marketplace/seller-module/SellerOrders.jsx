@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FiCheckCircle, FiClock} from "react-icons/fi";
 import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,7 @@ const SellerOrderHistory = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchSellerOrders = async () => {
+  const fetchSellerOrders = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -39,11 +39,11 @@ const SellerOrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, searchTerm]);
 
   useEffect(() => {
     fetchSellerOrders();
-  }, [page, statusFilter, searchTerm]);
+  }, [fetchSellerOrders]);
 
   useEffect(() => {
     setPage(1);
@@ -77,7 +77,7 @@ const SellerOrderHistory = () => {
   };
 
   return (
-    <div className="bg-background min-h-screen p-6">
+    <div className="bg-background min-h-screen px-4 sm:px-6 lg:px-8 py-6">
 
       {/* HEADER */}
       <div className="mb-6">
@@ -146,12 +146,12 @@ const SellerOrderHistory = () => {
         orders.map(order => (
           <div
             key={order._id}
-            className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+            className="bg-card rounded-[18px] px-4 py-4 sm:px-6 sm:py-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
 
             {/* LEFT SIDE */}
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center text-xl">
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+              <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center text-xl shrink-0">
                 <img
                   src={order?.productId?.images?.[0]?.url || "/placeholder.png"}
                   alt={order?.productId?.name || "Product"}
@@ -164,91 +164,95 @@ const SellerOrderHistory = () => {
                 />
               </div>
 
-              <div>
-                <span className="flex items-center justify-start gap-2">
-                  <h2 className="text-md font-semibold text-[#1f1f1f]">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <h2 className="text-md font-semibold text-[#1f1f1f] truncate">
                     {order.productId?.name}
                   </h2>
 
-                  <p className="text-sm font-semibold text-primary">
+                  <p className="text-sm font-semibold text-primary shrink-0">
                     Quantity: {order.quantity}
                   </p>
-                </span>
+                </div>
 
-                <p className="mt-1 text-muted text-[13px]">
-                  {order.buyerId?.name} • 
-                  {"\n" + new Date(order.createdAt).toLocaleDateString("en-US", 
-                    {month: "short", day: "numeric", year: "numeric"})}
+                <p className="mt-1 text-muted text-[13px] leading-relaxed">
+                  {order.buyerId?.name}
+                  <span className="hidden sm:inline"> • </span>
+                  <span className="block sm:inline">
+                    {new Date(order.createdAt).toLocaleDateString("en-US", 
+                      {month: "short", day: "numeric", year: "numeric"})}
+                  </span>
                 </p>
               </div>
             </div>
 
             {/* RIGHT SIDE */}
-            <div className="flex items-start gap-8">
+            <div className="w-full lg:w-auto border-t border-border pt-4 lg:border-t-0 lg:pt-0">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between lg:justify-end lg:gap-8">
 
-              {/* COLUMN 1 - Amount */}
-              <div className="flex flex-col">
-                <p className="text-muted text-[18px] font-semibold">
-                  Amount
-                </p>
+                {/* COLUMN 1 - Amount */}
+                <div className="flex flex-col">
+                  <p className="text-muted text-sm sm:text-base font-semibold">
+                    Amount
+                  </p>
 
-                <h2 className="text-[22px] font-semibold text-primary mt-1">
-                  ₹{order.totalPrice?.toFixed(2)}
-                </h2>
-              </div>
+                  <h2 className="text-xl sm:text-[22px] font-semibold text-primary mt-1">
+                    ₹{order.totalPrice?.toFixed(2)}
+                  </h2>
+                </div>
 
-              {/* COLUMN 2 - Status + Button */}
-              <div className="flex flex-col items-end">
+                {/* COLUMN 2 - Status + Button */}
+                <div className="flex flex-col items-start sm:items-end">
 
-                {order.status === "otp_verified" ? (
-                  <span className="flex items-center gap-1 bg-[#e6efdd] text-muted px-2.5 py-0.5 rounded-full text-[15px] font-medium">
-                    <FiCheckCircle size={12} />
-                    OTP verified
-                  </span>
-                ) : order.otp && new Date(order.otpExpiry).getTime() < Date.now() ? (
-                  <span className="flex items-center gap-1 bg-red-100 text-red-600 px-2.5 py-0.5 rounded-full text-[15px] font-medium">
-                    <FiClock size={12} />
-                    OTP Expired
-                  </span>
-                ) : order.status === "otp_generated" ? (
-                  <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-[15px] font-medium">
-                    <FiClock size={12} />
-                    OTP Generated
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 bg-background text-primary px-2.5 py-0.5 rounded-full text-[15px] font-medium">
-                    <FiClock size={12} />
-                    Pending
-                  </span>
-                )}
-              
-                {otpGeneratingId === order._id ? (
-                  <button
-                    disabled
-                    className="flex items-center gap-1 border border-primary px-3 py-1 rounded-md text-[15px] font-medium bg-gray-200 cursor-not-allowed mt-2"
-                  >
-                    Generating...
-                  </button>
-                ) : order.status === "otp_verified" ? null : 
-                  order.otp && new Date(order.otpExpiry).getTime() > Date.now() ? (
-                    <button
-                      onClick={() => handleVerifyOtp(order._id)}
-                      className="flex items-center gap-1 border border-green-600 px-3 py-1 rounded-md text-[15px] text-green-700 font-medium hover:bg-green-600 hover:text-white transition mt-2"
-                    >
-                      Verify OTP
-                    </button>
+                  {order.status === "otp_verified" ? (
+                    <span className="flex items-center gap-1 bg-[#e6efdd] text-muted px-2.5 py-0.5 rounded-full text-sm sm:text-[15px] font-medium">
+                      <FiCheckCircle size={12} />
+                      OTP verified
+                    </span>
+                  ) : order.otp && new Date(order.otpExpiry).getTime() < Date.now() ? (
+                    <span className="flex items-center gap-1 bg-red-100 text-red-600 px-2.5 py-0.5 rounded-full text-sm sm:text-[15px] font-medium">
+                      <FiClock size={12} />
+                      OTP Expired
+                    </span>
+                  ) : order.status === "otp_generated" ? (
+                    <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-2.5 py-0.5 rounded-full text-sm sm:text-[15px] font-medium">
+                      <FiClock size={12} />
+                      OTP Generated
+                    </span>
                   ) : (
+                    <span className="flex items-center gap-1 bg-background text-primary px-2.5 py-0.5 rounded-full text-sm sm:text-[15px] font-medium">
+                      <FiClock size={12} />
+                      Pending
+                    </span>
+                  )}
+                
+                  {otpGeneratingId === order._id ? (
                     <button
-                      onClick={() => handleGenerateOtp(order._id)}
-                      className="flex items-center gap-1 border border-primary px-3 py-1 rounded-md text-[15px] text-[#1f1f1f] font-medium hover:bg-primary hover:text-white transition mt-2"
+                      disabled
+                      className="flex items-center gap-1 border border-primary px-3 py-1 rounded-md text-sm sm:text-[15px] font-medium bg-gray-200 cursor-not-allowed mt-2"
                     >
-                      Generate OTP
+                      Generating...
                     </button>
-                  )
-                }
+                  ) : order.status === "otp_verified" ? null : 
+                    order.otp && new Date(order.otpExpiry).getTime() > Date.now() ? (
+                      <button
+                        onClick={() => handleVerifyOtp(order._id)}
+                        className="flex items-center gap-1 border border-green-600 px-3 py-1 rounded-md text-sm sm:text-[15px] text-green-700 font-medium hover:bg-green-600 hover:text-white transition mt-2"
+                      >
+                        Verify OTP
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleGenerateOtp(order._id)}
+                        className="flex items-center gap-1 border border-primary px-3 py-1 rounded-md text-sm sm:text-[15px] text-[#1f1f1f] font-medium hover:bg-primary hover:text-white transition mt-2"
+                      >
+                        Generate OTP
+                      </button>
+                    )
+                  }
 
+                </div>
               </div>
-
             </div>
           </div>
         )))}
@@ -267,8 +271,8 @@ const SellerOrderHistory = () => {
 export default SellerOrderHistory;
 
 const OrderCardSkeleton = () => (
-  <div className="bg-card rounded-[18px] px-8 py-5 flex justify-between items-center shadow-[0_4px_12px_rgba(0,0,0,0.06)] animate-pulse">
-    <div className="flex items-center gap-5">
+  <div className="bg-card rounded-[18px] px-4 py-4 sm:px-6 sm:py-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between shadow-[0_4px_12px_rgba(0,0,0,0.06)] animate-pulse">
+    <div className="flex items-center gap-5 flex-1">
       <div className="w-14 h-14 rounded-lg bg-background" />
       <div className="space-y-2">
         <div className="h-5 w-48 rounded bg-background" />
@@ -276,14 +280,16 @@ const OrderCardSkeleton = () => (
       </div>
     </div>
 
-    <div className="flex items-start gap-8">
-      <div className="space-y-2">
-        <div className="h-4 w-16 rounded bg-background" />
-        <div className="h-7 w-24 rounded bg-background" />
-      </div>
-      <div className="space-y-3 flex flex-col items-end">
-        <div className="h-7 w-28 rounded-full bg-background" />
-        <div className="h-10 w-28 rounded-xl bg-background" />
+    <div className="w-full lg:w-auto border-t border-border pt-4 lg:border-t-0 lg:pt-0">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between lg:justify-end lg:gap-8">
+        <div className="space-y-2">
+          <div className="h-4 w-16 rounded bg-background" />
+          <div className="h-7 w-24 rounded bg-background" />
+        </div>
+        <div className="space-y-3 flex flex-col items-start sm:items-end">
+          <div className="h-7 w-28 rounded-full bg-background" />
+          <div className="h-10 w-28 rounded-xl bg-background" />
+        </div>
       </div>
     </div>
   </div>
