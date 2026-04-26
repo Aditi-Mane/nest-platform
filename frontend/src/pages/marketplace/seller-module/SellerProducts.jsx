@@ -754,9 +754,9 @@ const SellerProducts = () => {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
 
-          <div className="bg-card w-162.5 rounded-2xl p-8 max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-card p-5 shadow-xl sm:p-8">
 
             <h2 className="text-2xl font-bold text-text">
               Add New Product
@@ -803,7 +803,7 @@ const SellerProducts = () => {
                 </div>
 
                 {formData.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {formData.images.map((img, index) => (
                       <div key={index} className="relative">
                         <img
@@ -847,7 +847,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CATEGORY + PRICE */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 <div>
                   <label className="block font-medium text-text mb-2">
@@ -890,7 +890,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CONDITION + STOCK (Optional) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 {/* CONDITION */}
                 <div>
@@ -1031,9 +1031,9 @@ const SellerProducts = () => {
 
       {/* EDIT MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
 
-          <div className="bg-card w-162.5 rounded-2xl p-8 max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-card p-5 shadow-xl sm:p-8">
 
             <h2 className="text-2xl font-bold text-text mb-4">
               Edit product details
@@ -1075,7 +1075,7 @@ const SellerProducts = () => {
                 </div>
 
                 {(existingImages.length > 0 || formData.images.length > 0) && (
-                <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 
                   {/* Existing Images */}
                   {existingImages.map((img, index) => (
@@ -1140,7 +1140,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CATEGORY + PRICE */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 <div>
                   <label className="block font-medium text-text mb-2">
@@ -1183,7 +1183,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CONDITION + STOCK (Optional) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 {/* CONDITION */}
                 <div>

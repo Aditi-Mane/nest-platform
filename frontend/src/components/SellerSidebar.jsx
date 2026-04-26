@@ -1,27 +1,22 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { GoPackage } from "react-icons/go";
-import { MdOutlineAnalytics } from "react-icons/md";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { MdOutlineAnalytics, MdAnalytics, MdReplay } from "react-icons/md";
 import { TbPackage } from "react-icons/tb";
 import { LiaRobotSolid } from "react-icons/lia";
-import { MdAnalytics } from "react-icons/md";
 import { FaRegSmile } from "react-icons/fa";
-import { MdOutlinePayment } from "react-icons/md";
-import { IoSettingsSharp } from "react-icons/io5";
-import { MdReplay } from "react-icons/md";
+import { IoSettingsSharp, IoPeople } from "react-icons/io5";
 import { SiGoogleanalytics } from "react-icons/si";
-import { IoPeople } from "react-icons/io5";
 import { FaPeopleGroup } from "react-icons/fa6";
 import { useMessages } from "@/context/MessageContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-import { useEffect } from "react";
 import api from "../api/axios.js";
 
-const SellerSidebar = () => {
+const SellerSidebar = ({ className = "", onNavigate }) => {
   const [openAI, setOpenAI] = useState(true);
   const [user, setUser] = useState({});
   const [userLoading, setUserLoading] = useState(true);
+  const { totalUnread } = useMessages();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -34,19 +29,22 @@ const SellerSidebar = () => {
         setUserLoading(false);
       }
     };
+
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  }, [location.pathname, onNavigate]);
+
   const baseLink =
-    "flex items-center gap-3 px-4 py-2 rounded-xl text-[15px] font-medium transition-all duration-200";
-
-  const activeLink =
-    "bg-[#efe6d6] text-[var(--color-primary)] font-semibold";
-
+    "flex items-center gap-3 rounded-xl px-4 py-2 text-[15px] font-medium transition-all duration-200";
+  const activeLink = "bg-[#efe6d6] text-[var(--color-primary)] font-semibold";
   const normalLink =
     "text-[var(--color-muted)] hover:bg-[#f4ecdd] hover:text-[var(--color-primary)]";
 
-  const { totalUnread } = useMessages();
   const avatarSrc = user?.avatar
     ? user.avatar.startsWith("http")
       ? user.avatar
@@ -54,30 +52,25 @@ const SellerSidebar = () => {
     : undefined;
 
   return (
-    <div className="w-72 h-screen bg-card border-r border-border flex flex-col justify-between">
-
-      {/* TOP SECTION */}
-      <div>
-        {/* LOGO */}
-        <div className="flex items-center gap-3 p-5 border-b border-border">
-          <div className="rounded-xl text-white flex items-center justify-center text-lg">
+    <div
+      className={`flex h-full w-72 flex-col justify-between border-r border-border bg-card ${className}`}
+    >
+      <div className="min-h-0">
+        <div className="flex items-center gap-3 border-b border-border p-5">
+          <div className="rounded-xl text-white">
             <img
-              src="/NEST_logo.png"  
+              src="/NEST_logo.png"
               alt="NEST Logo"
               className="size-12 object-contain"
             />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-text">NEST</h1>
-            <p className="text-sm text-muted">
-              Seller Dashboard
-            </p>
+            <h1 className="text-lg font-bold text-text">NEST</h1>
+            <p className="text-sm text-muted">Seller Dashboard</p>
           </div>
         </div>
 
-        {/* MENU */}
-        <div className="p-4 space-y-3">
-
+        <div className="space-y-3 overflow-y-auto p-4">
           <NavLink
             to="/marketplace/seller/dashboard"
             className={({ isActive }) =>
@@ -91,7 +84,7 @@ const SellerSidebar = () => {
           <NavLink
             to="/marketplace/seller/messages"
             className={({ isActive }) =>
-              `${baseLink} ${isActive ? activeLink : normalLink} flex items-center justify-between`
+              `${baseLink} ${isActive ? activeLink : normalLink} justify-between`
             }
           >
             <div className="flex items-center gap-2">
@@ -100,7 +93,7 @@ const SellerSidebar = () => {
             </div>
 
             {totalUnread > 0 && (
-              <span className="bg-[#E9C9A8] text-[#7A3E1D]  text-xs font-semibold px-2 py-[2px] rounded-full">
+              <span className="rounded-full bg-[#E9C9A8] px-2 py-[2px] text-xs font-semibold text-[#7A3E1D]">
                 {totalUnread}
               </span>
             )}
@@ -112,7 +105,7 @@ const SellerSidebar = () => {
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <TbPackage size={20}/>
+            <TbPackage size={20} />
             My Products
           </NavLink>
 
@@ -122,7 +115,7 @@ const SellerSidebar = () => {
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <MdReplay size={20}/>
+            <MdReplay size={20} />
             Order History
           </NavLink>
 
@@ -132,7 +125,7 @@ const SellerSidebar = () => {
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
           >
-            <SiGoogleanalytics size={20}/>
+            <SiGoogleanalytics size={20} />
             Analytics
           </NavLink>
 
@@ -146,16 +139,15 @@ const SellerSidebar = () => {
             Ventures
           </NavLink>
 
-          {/* AI SECTION */}
           <div className="pt-1">
             <button
-              onClick={() => setOpenAI(!openAI)}
+              onClick={() => setOpenAI((prev) => !prev)}
               className={`${baseLink} ${normalLink} w-full justify-between`}
             >
               <div className="flex items-center gap-3">
                 <LiaRobotSolid size={20} />
                 AI Insights
-                <span className="text-xs bg-[#efe6d6] text-primary px-2 py-0.5 rounded-full">
+                <span className="rounded-full bg-[#efe6d6] px-2 py-0.5 text-xs text-primary">
                   AI
                 </span>
               </div>
@@ -167,9 +159,7 @@ const SellerSidebar = () => {
                 <NavLink
                   to="/marketplace/seller/sales-prediction"
                   className={({ isActive }) =>
-                    `${baseLink} ${
-                      isActive ? activeLink : normalLink
-                    }`
+                    `${baseLink} ${isActive ? activeLink : normalLink}`
                   }
                 >
                   <MdAnalytics size={18} />
@@ -179,9 +169,7 @@ const SellerSidebar = () => {
                 <NavLink
                   to="/marketplace/seller/sentiment"
                   className={({ isActive }) =>
-                    `${baseLink} ${
-                      isActive ? activeLink : normalLink
-                    }`
+                    `${baseLink} ${isActive ? activeLink : normalLink}`
                   }
                 >
                   <FaRegSmile size={18} />
@@ -200,14 +188,12 @@ const SellerSidebar = () => {
             <IoSettingsSharp size={20} />
             Settings
           </NavLink>
-
         </div>
       </div>
 
-      {/* PROFILE */}
-      <div className="p-4 border-t border-border">
+      <div className="border-t border-border p-4">
         {userLoading ? (
-          <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl animate-pulse">
+          <div className="flex items-center gap-3 rounded-xl bg-[#efe6d6] p-3 animate-pulse">
             <div className="size-10 rounded-full bg-white/70" />
             <div className="flex-1 space-y-2">
               <div className="h-3 w-24 rounded bg-white/70" />
@@ -215,23 +201,20 @@ const SellerSidebar = () => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 bg-[#efe6d6] p-3 rounded-xl">
+          <div className="flex items-center gap-3 rounded-xl bg-[#efe6d6] p-3">
             <Avatar className="size-10 border border-border">
               <AvatarImage src={avatarSrc} alt={user?.name || "Seller avatar"} />
-              <AvatarFallback className="bg-primary text-white font-semibold">
+              <AvatarFallback className="bg-primary font-semibold text-white">
                 {user?.name?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <p className="font-medium text-sm">{user.name}</p>
-              <p className="text-xs text-muted">
-                {user.email}
-              </p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{user.name}</p>
+              <p className="truncate text-xs text-muted">{user.email}</p>
             </div>
           </div>
         )}
       </div>
-
     </div>
   );
 };
