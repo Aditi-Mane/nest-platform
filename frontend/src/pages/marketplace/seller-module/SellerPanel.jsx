@@ -113,7 +113,7 @@ const SellerPanel = () => {
 
         <div
           ref={containerRef}
-          className="flex-1 overflow-y-auto bg-background px-4 py-4 sm:px-6 lg:px-6"
+          className="flex-1 overflow-y-auto bg-background px-2 py-3 sm:px-4 sm:py-4 lg:px-6"
         >
           <Outlet />
         </div>

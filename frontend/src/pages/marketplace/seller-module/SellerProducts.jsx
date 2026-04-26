@@ -960,7 +960,7 @@ const SellerProducts = () => {
                   What's Included
                 </label>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={includedInput}
@@ -974,7 +974,7 @@ const SellerProducts = () => {
                     type="button"
                     onClick={addIncludedItem}
                     disabled={formData.whatsIncluded.length >= limit}
-                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                    className="rounded-lg border border-border px-3 py-2 hover:bg-[#f1e7d5] sm:w-auto"
                   >
                     Add
                   </button>
@@ -985,7 +985,7 @@ const SellerProducts = () => {
                   {formData.whatsIncluded.map((item, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                      className="flex flex-wrap items-center justify-between gap-2 bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
                     >
                       <span>✓ {item}</span>
 
@@ -1003,12 +1003,12 @@ const SellerProducts = () => {
               </div>
 
               {/* FOOTER BUTTONS */}
-              <div className="border-t border-border pt-6 flex gap-4">
+              <div className="border-t border-border pt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
 
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+                  className="w-full flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
                 >
                   Cancel
                 </button>
@@ -1016,7 +1016,7 @@ const SellerProducts = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Adding Product..." : "Add Product"}
                 </button>
@@ -1253,7 +1253,7 @@ const SellerProducts = () => {
                   What's Included
                 </label>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={includedInput}
@@ -1265,7 +1265,7 @@ const SellerProducts = () => {
                   <button
                     type="button"
                     onClick={addIncludedItem}
-                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                    className="rounded-lg border border-border px-3 py-2 hover:bg-[#f1e7d5] sm:w-auto"
                   >
                     Add
                   </button>
@@ -1276,7 +1276,7 @@ const SellerProducts = () => {
                   {formData.whatsIncluded.map((item, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                      className="flex flex-wrap items-center justify-between gap-2 bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
                     >
                       <span>✓ {item}</span>
 
@@ -1294,12 +1294,12 @@ const SellerProducts = () => {
               </div>
 
               {/* FOOTER BUTTONS */}
-              <div className="border-t border-border pt-6 flex gap-4">
+              <div className="border-t border-border pt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
 
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+                  className="w-full flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
                 >
                   Cancel
                 </button>
@@ -1307,7 +1307,7 @@ const SellerProducts = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Editing Product..." : "Edit Product"}
                 </button>
@@ -1328,7 +1328,7 @@ const SellerProducts = () => {
             <p className="text-muted mb-6">
               Are you sure you want to delete "{products.find(p => p._id === productToDelete)?.name}"? This action cannot be undone.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"

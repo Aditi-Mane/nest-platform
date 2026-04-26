@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { MdOutlineAnalytics, MdAnalytics, MdReplay } from "react-icons/md";
 import { TbPackage } from "react-icons/tb";
@@ -17,6 +17,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
   const [userLoading, setUserLoading] = useState(true);
   const { totalUnread } = useMessages();
   const location = useLocation();
+  const previousPathRef = useRef(location.pathname);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -34,9 +35,11 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
   }, []);
 
   useEffect(() => {
-    if (onNavigate) {
+    if (onNavigate && previousPathRef.current !== location.pathname) {
       onNavigate();
     }
+
+    previousPathRef.current = location.pathname;
   }, [location.pathname, onNavigate]);
 
   const baseLink =
