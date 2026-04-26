@@ -5,6 +5,6 @@ import { cache } from "../middleware/cacheMiddleware.js"
 
 const router=express.Router();
 
-router.get("/purchases", protect, cache(30, { userSpecific: true }), getMyPurchases );
+router.get("/purchases", protect, cache(20, { userSpecific: true }), getMyPurchases );
 
 export default router;

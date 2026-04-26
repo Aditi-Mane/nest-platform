@@ -24,12 +24,25 @@ import api from "../../../api/axios.js";
 
 // ── Stage config ──────────────────────────────────────────────────────────────
 const stageConfig = {
+  draft:            { label: "Ideation",        className: "bg-purple-100 text-purple-700 border-purple-200" },
   ideation:         { label: "Ideation",        className: "bg-purple-100 text-purple-700 border-purple-200" },
   building:         { label: "Building",        className: "bg-blue-100 text-blue-700 border-blue-200" },
   "ready-to-pitch": { label: "Ready to Pitch",  className: "bg-green-100 text-green-700 border-green-200" },
   active:           { label: "Active",          className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
   recruiting:       { label: "Recruiting",      className: "bg-orange-100 text-orange-700 border-orange-200" },
+  funded:           { label: "Funded",          className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  closed:           { label: "Closed",          className: "bg-slate-100 text-slate-700 border-slate-200" },
 };
+
+const STAGE_FILTER_OPTIONS = [
+  { value: "all", label: "All Stages" },
+  { value: "draft", label: "Ideation" },
+  { value: "building", label: "Building" },
+  { value: "active", label: "Active" },
+  { value: "recruiting", label: "Recruiting" },
+  { value: "ready-to-pitch", label: "Ready to Pitch" },
+  { value: "funded", label: "Funded" },
+];
 
 // ── Notification Dropdown ─────────────────────────────────────────────────────
 function NotificationBell() {
@@ -538,11 +551,11 @@ export default function VenturesPage() {
                       <SelectValue placeholder="All Stages" />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
-                      <SelectItem value="all">All Stages</SelectItem>
-                      <SelectItem value="ideation">Ideation</SelectItem>
-                      <SelectItem value="building">Building</SelectItem>
-                      <SelectItem value="ready-to-pitch">Ready to Pitch</SelectItem>
-                      <SelectItem value="recruiting">Recruiting</SelectItem>
+                      {STAGE_FILTER_OPTIONS.map((stage) => (
+                        <SelectItem key={stage.value} value={stage.value}>
+                          {stage.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
