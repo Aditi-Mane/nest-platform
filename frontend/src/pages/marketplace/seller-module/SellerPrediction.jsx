@@ -127,7 +127,7 @@ function PriorityBadge({ priority }) {
 // ─────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 animate-pulse">
+    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 animate-pulse">
       <div className="flex justify-between mb-4">
         <div className="h-3 w-24 rounded-full bg-background" />
         <div className="h-8 w-8 rounded-lg bg-background" />
@@ -140,10 +140,10 @@ function SkeletonCard() {
 
 function ChartSkeleton() {
   return (
-    <div className="h-[450px] rounded-2xl border border-border bg-card p-6 animate-pulse">
+    <div className="h-[340px] sm:h-[450px] rounded-2xl border border-border bg-card p-5 sm:p-6 animate-pulse">
       <div className="mb-5 h-5 w-40 rounded bg-background" />
-      <div className="h-[320px] rounded-2xl bg-background" />
-      <div className="mt-6 flex items-center justify-center gap-6 border-t border-border pt-5">
+      <div className="h-[220px] sm:h-[320px] rounded-2xl bg-background" />
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6 border-t border-border pt-5">
         {[1, 2, 3].map((item) => (
           <div key={item} className="flex items-center gap-2">
             <div className="h-3 w-8 rounded-full bg-background" />
@@ -246,19 +246,27 @@ function StatCard({ accentColor, icon: Icon, iconBg, label, value, sub, subColor
       style={{ borderLeft: `4px solid ${accentColor}` }}
     >
       
-      <div className="mb-3 flex items-start justify-between">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
-          style={{ backgroundColor: iconBg }}
-        >
-          {typeof Icon === "string" ? Icon : <Icon size={20} style={{ color: accentColor }} />}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-xl shrink-0"
+            style={{ backgroundColor: iconBg }}
+          >
+            {typeof Icon === "string" ? Icon : <Icon size={20} style={{ color: accentColor }} />}
+          </div>
+          <div className="min-w-0 flex-1 sm:hidden">
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-widest text-muted">
+              {label}
+            </p>
+            <p className="text-xl font-bold text-text leading-tight">{value}</p>
+          </div>
         </div>
-        {badge}
+        {badge && <div className="shrink-0">{badge}</div>}
       </div>
-      <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted">
+      <p className="hidden sm:block mb-1 text-xs font-medium uppercase tracking-widest text-muted">
         {label}
       </p>
-      <p className="mb-0.5 text-2xl font-bold text-text">{value}</p>
+      <p className="hidden sm:block mb-0.5 text-2xl font-bold text-text">{value}</p>
       {sub && (
         <p className="mt-0.5 text-xs font-semibold" style={{ color: subColor ?? T.secondary }}>
           {sub}
@@ -283,7 +291,7 @@ export default function SellerPrediction() {
 
   // ── Initial load ──────────────────────────────
   const fetchAll = useCallback(
-    async (range = timeRange) => {
+    async (range) => {
       try {
         setLoading(true);
         setError(null);
@@ -298,10 +306,10 @@ export default function SellerPrediction() {
         setLoading(false);
       }
     },
-    [timeRange]
+    []
   );
 
-  useEffect(() => { fetchAll(timeRange); }, [fetchAll]);
+  useEffect(() => { fetchAll(timeRange); }, [fetchAll, timeRange]);
 
   // ── Range change — only refetch chart ─────────
   const handleTimeRangeChange = async (range) => {
@@ -381,12 +389,12 @@ export default function SellerPrediction() {
   //  RENDER
   // ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background text-text px-6 py-6">
+    <div className="min-h-screen bg-background text-text px-4 sm:px-6 lg:px-8 py-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
 
       {/* ━━━━━━━━━━━━━━━━ PAGE HEADER ━━━━━━━━━━━━━━━━ */}
       <div
-        className="rounded-2xl p-6 relative overflow-hidden"
+        className="rounded-2xl p-5 sm:p-6 relative overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${T.bg} 0%, #f5ede0 60%, #ede8e0 100%)`,
           border: `1.5px solid ${T.border}`,
@@ -445,13 +453,13 @@ export default function SellerPrediction() {
             </div>
           </div>
 
-          <div className="flex gap-2 shrink-0">
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
               disabled={loading}
-              className="hover:scale-105 transition-transform"
+              className="w-full hover:scale-105 transition-transform"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
@@ -461,7 +469,7 @@ export default function SellerPrediction() {
               size="sm"
               onClick={handleExport}
               disabled={loading}
-              className="hover:scale-105 transition-transform"
+              className="w-full hover:scale-105 transition-transform"
             >
               <Download className="w-4 h-4 mr-2" />
               Export
@@ -471,7 +479,7 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ KPI METRIC CARDS ━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {loading ? (
           [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
         ) : (
@@ -544,7 +552,7 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ REVENUE FORECAST CHART ━━━━━━━━━━━━━━━━ */}
-      <Card className="mb-6 border border-border p-5" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
+      <Card className="mb-6 border border-border p-4 sm:p-5" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-foreground mb-1">Revenue Forecast</h2>
@@ -552,13 +560,13 @@ export default function SellerPrediction() {
               Historical performance vs AI predictions with 90% confidence intervals
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
             {["7days", "30days", "3months"].map((range) => (
               <button
                 key={range}
                 onClick={() => handleTimeRangeChange(range)}
                 disabled={chartLoading}
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50"
+                className="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 disabled:opacity-50"
                 style={
                   timeRange === range
                     ? {
@@ -583,7 +591,7 @@ export default function SellerPrediction() {
         {loading || chartLoading ? (
           <ChartSkeleton />
         ) : chartData.length === 0 ? (
-          <div className="h-[450px] flex items-center justify-center">
+          <div className="h-[340px] sm:h-[450px] flex items-center justify-center">
             <div className="text-center">
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -599,76 +607,76 @@ export default function SellerPrediction() {
           </div>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height={450}>
-              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor={T.primary} stopOpacity={0.12} />
-                    <stop offset="100%" stopColor={T.primary} stopOpacity={0.01} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border} opacity={0.25} />
-                <XAxis
-                  dataKey="day"
-                  stroke={T.secondary}
-                  style={{ fontSize: 12, fontWeight: 600 }}
-                  tickMargin={10}
-                />
-                <YAxis
-                  stroke={T.secondary}
-                  style={{ fontSize: 12, fontWeight: 600 }}
-                  tickFormatter={formatCurrency}
-                  tickMargin={8}
-                />
-                <Tooltip content={<ForecastTooltip />} />
+            <div className="h-[340px] sm:h-[450px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"   stopColor={T.primary} stopOpacity={0.12} />
+                      <stop offset="100%" stopColor={T.primary} stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={T.border} opacity={0.25} />
+                  <XAxis
+                    dataKey="day"
+                    stroke={T.secondary}
+                    style={{ fontSize: 12, fontWeight: 600 }}
+                    tickMargin={10}
+                  />
+                  <YAxis
+                    stroke={T.secondary}
+                    style={{ fontSize: 12, fontWeight: 600 }}
+                    tickFormatter={formatCurrency}
+                    tickMargin={8}
+                    width={72}
+                  />
+                  <Tooltip content={<ForecastTooltip />} />
 
-                {/* ── Confidence band (upper fills with gradient, lower erases with bg) ── */}
-                <Area
-                  type="monotone"
-                  dataKey="upper"
-                  stroke="none"
-                  fill="url(#confGrad)"
-                  fillOpacity={1}
-                  legendType="none"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="lower"
-                  stroke="none"
-                  fill={T.bg}
-                  fillOpacity={1}
-                  legendType="none"
-                />
+                  <Area
+                    type="monotone"
+                    dataKey="upper"
+                    stroke="none"
+                    fill="url(#confGrad)"
+                    fillOpacity={1}
+                    legendType="none"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="lower"
+                    stroke="none"
+                    fill={T.bg}
+                    fillOpacity={1}
+                    legendType="none"
+                  />
 
-                {/* Historical line */}
-                <Line
-                  type="monotone"
-                  dataKey="historical"
-                  stroke={T.secondary}
-                  strokeWidth={3.5}
-                  dot={{ fill: T.secondary, r: 5, strokeWidth: 2.5, stroke: "#fff" }}
-                  activeDot={{ r: 7, stroke: T.secondary, strokeWidth: 2, fill: "#fff" }}
-                  connectNulls={false}
-                  name="Historical"
-                />
+                  <Line
+                    type="monotone"
+                    dataKey="historical"
+                    stroke={T.secondary}
+                    strokeWidth={3.5}
+                    dot={{ fill: T.secondary, r: 5, strokeWidth: 2.5, stroke: "#fff" }}
+                    activeDot={{ r: 7, stroke: T.secondary, strokeWidth: 2, fill: "#fff" }}
+                    connectNulls={false}
+                    name="Historical"
+                  />
 
-                {/* Predicted line */}
-                <Line
-                  type="monotone"
-                  dataKey="predicted"
-                  stroke={T.primary}
-                  strokeWidth={3.5}
-                  strokeDasharray="9 4"
-                  dot={{ fill: T.primary, r: 6, strokeWidth: 2.5, stroke: "#fff" }}
-                  activeDot={{ r: 8, stroke: T.primary, strokeWidth: 2, fill: "#fff" }}
-                  connectNulls={false}
-                  name="Predicted"
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+                  <Line
+                    type="monotone"
+                    dataKey="predicted"
+                    stroke={T.primary}
+                    strokeWidth={3.5}
+                    strokeDasharray="9 4"
+                    dot={{ fill: T.primary, r: 6, strokeWidth: 2.5, stroke: "#fff" }}
+                    activeDot={{ r: 8, stroke: T.primary, strokeWidth: 2, fill: "#fff" }}
+                    connectNulls={false}
+                    name="Predicted"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
 
             {/* ── Fixed legend (was broken with div border-top hack) ── */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-5 border-t border-border text-sm">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-center gap-3 sm:gap-6 mt-6 pt-5 border-t border-border text-sm">
               <div className="flex items-center gap-2">
                 <svg width="28" height="10">
                   <line x1="0" y1="5" x2="28" y2="5" stroke={T.secondary} strokeWidth="3" strokeLinecap="round" />
@@ -698,7 +706,7 @@ export default function SellerPrediction() {
       </Card>
 
       {/* ━━━━━━━━━━━━━━━━ INSIGHT KPI CARDS ━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-1 gap-5 mb-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 lg:gap-5 mb-6 md:grid-cols-2 lg:grid-cols-4">
         {loading ? (
           [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)
         ) : (
@@ -844,10 +852,10 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ CATEGORY + INVENTORY ━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
 
         {/* Category Performance Chart */}
-        <Card className="lg:col-span-2 border border-border p-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+        <Card className="lg:col-span-2 border border-border p-4 sm:p-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
           <div className="mb-4">
             <h2 className={`${SECTION_TITLE_CLASS} mb-1`}>Category Performance Forecast</h2>
             <p className={SECTION_SUBTITLE_CLASS}>Current vs predicted revenue by product category</p>
@@ -875,35 +883,37 @@ export default function SellerPrediction() {
             </div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={categories} layout="vertical" margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border} opacity={0.2} horizontal={false} />
-                  <XAxis
-                    type="number"
-                    stroke={T.secondary}
-                    style={{ fontSize: 11 }}
-                    tickFormatter={formatCurrency}
-                  />
-                  <YAxis
-                    dataKey="category"
-                    type="category"
-                    stroke={T.secondary}
-                    style={{ fontSize: 11, fontWeight: 600 }}
-                    width={130}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: T.bg,
-                      border: `2px solid ${T.border}`,
-                      borderRadius: 12,
-                      padding: "10px 14px",
-                    }}
-                    formatter={(value, name) => [formatCurrency(value), name === "current" ? "Current" : "Predicted"]}
-                  />
-                  <Bar dataKey="current"   fill={T.secondary} radius={[0, 6, 6, 0]} name="current"   />
-                  <Bar dataKey="predicted" fill={T.primary}   radius={[0, 6, 6, 0]} name="predicted" />
-                </ComposedChart>
-              </ResponsiveContainer>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={categories} layout="vertical" margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={T.border} opacity={0.2} horizontal={false} />
+                    <XAxis
+                      type="number"
+                      stroke={T.secondary}
+                      style={{ fontSize: 11 }}
+                      tickFormatter={formatCurrency}
+                    />
+                    <YAxis
+                      dataKey="category"
+                      type="category"
+                      stroke={T.secondary}
+                      style={{ fontSize: 11, fontWeight: 600 }}
+                      width={110}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: T.bg,
+                        border: `2px solid ${T.border}`,
+                        borderRadius: 12,
+                        padding: "10px 14px",
+                      }}
+                      formatter={(value, name) => [formatCurrency(value), name === "current" ? "Current" : "Predicted"]}
+                    />
+                    <Bar dataKey="current"   fill={T.secondary} radius={[0, 6, 6, 0]} name="current"   />
+                    <Bar dataKey="predicted" fill={T.primary}   radius={[0, 6, 6, 0]} name="predicted" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
 
               {/* Growth % pills */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t border-border">
@@ -940,7 +950,7 @@ export default function SellerPrediction() {
         </Card>
 
         {/* Smart Inventory Panel */}
-        <Card className="border border-border p-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+        <Card className="border border-border p-4 sm:p-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
           <div className="mb-1 flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#f5e6d8" }}>
               <Package size={14} style={{ color: T.primary }} />
@@ -979,13 +989,13 @@ export default function SellerPrediction() {
                       borderLeftColor: borderColor,
                     }}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="font-semibold text-foreground text-sm truncate max-w-[120px]">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <p className="font-semibold text-foreground text-sm truncate flex-1 min-w-0">
                         {item.product}
                       </p>
                       <UrgencyBadge urgency={item.urgency} />
                     </div>
-                    <div className="flex items-center justify-between text-xs mb-1.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs mb-1.5">
                       <span className="text-muted-foreground">
                         Stock:{" "}
                         <span className="font-bold text-foreground">{item.currentStock}</span>
@@ -1004,11 +1014,11 @@ export default function SellerPrediction() {
       </div>
 
       {/* ━━━━━━━━━━━━━━━━ AI SUGGESTIONS PANEL ━━━━━━━━━━━━━━━━ */}
-      <Card className="border border-border p-5" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+      <Card className="border border-border p-4 sm:p-5" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2.5">
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center"
+              className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
               style={{
                 background: `linear-gradient(135deg, ${T.primary}20, ${T.primary}08)`,
                 border: `1.5px solid ${T.primary}30`,
@@ -1057,7 +1067,7 @@ export default function SellerPrediction() {
               return (
                 <div
                   key={index}
-                  className="group flex items-start gap-3 p-4 rounded-xl transition-all duration-200 cursor-pointer"
+                  className="group flex flex-col sm:flex-row items-start gap-3 p-4 rounded-xl transition-all duration-200 cursor-pointer"
                   style={{
                     border: `1.5px solid ${T.border}40`,
                     backgroundColor: "transparent",
@@ -1085,11 +1095,11 @@ export default function SellerPrediction() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="mb-1.5 flex items-start justify-between gap-3">
+                    <div className="mb-1.5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                       <h3 className="font-bold text-foreground text-sm leading-snug group-hover:text-current transition-colors">
                         {suggestion.title}
                       </h3>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <TypeBadge type={suggestion.type} />
                         <PriorityBadge priority={suggestion.priority} />
                       </div>
@@ -1163,4 +1173,3 @@ export default function SellerPrediction() {
     </div>
   );
 }
-

@@ -11,14 +11,14 @@ export const getMLRecommendations = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // 1️⃣ Get candidate products
+    // Get candidate products
     const candidates = await Product.find({
       _id: { $ne: id },
       category: currentProduct.category,
       status: "available",
     }).limit(20);
 
-    // ⚠️ If no candidates → return early
+    // If no candidates → return early
     if (!candidates.length) {
       return res.json({ recommendations: [] });
     }

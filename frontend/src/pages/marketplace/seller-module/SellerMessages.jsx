@@ -134,7 +134,7 @@ const SellerMessages = () => {
   };
 
   return (
-    <div className="bg-background min-h-screen p-6">
+    <div className="min-h-screen bg-background px-0 py-2 sm:py-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">All Buyer Requests</h1>
           <p className="text-muted mt-1">
@@ -142,15 +142,14 @@ const SellerMessages = () => {
           </p>
       </div>
 
-      {/* SEARCH + STATUS (UNCHANGED) */}
-      <div style={{ display: "flex", gap: "14px", marginBottom: "25px" }}>
-        <div className="bg-card"
+      {/* SEARCH + STATUS */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="bg-card flex-1"
           style={{
             display: "flex",
             alignItems: "center",
-            padding: "10px 14px",
+            padding: "12px 16px",
             borderRadius: "12px",
-            flex: 1,
             gap: "8px",
             border:
               activeField === "search"
@@ -158,6 +157,7 @@ const SellerMessages = () => {
                 : `1.5px solid ${softBorder}`,
           }}
         >
+          <Search size={16} className="text-muted flex-shrink-0" />
           <input
             placeholder="Search by product name or buyer..."
             value={searchTerm}
@@ -174,37 +174,41 @@ const SellerMessages = () => {
           />
         </div>
 
-        <select className="bg-card"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          onFocus={() => setActiveField("status")}
-          onBlur={() => setActiveField(null)}
+        <div className="bg-card flex-1"
           style={{
-            padding: "12px 18px",
-            borderRadius: "16px",
+            padding: "12px 16px",
+            borderRadius: "12px",
             border:
               activeField === "status"
                 ? `1.5px solid ${themeColor}`
                 : `1.5px solid ${softBorder}`,
-            fontSize: "14px",
-            minWidth: "170px",
-            cursor: "pointer",
-            outline: "none",
-            appearance: "none",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-
-            backgroundImage:
-              "url(\"data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>\")",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 14px center",
           }}
         >
-          <option value="all">All Status</option>
-          <option value="initiated">Initiated</option>
-          <option value="negotiating">Negotiating</option>
-          <option value="deal_confirmed">Deal Confirmed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              onFocus={() => setActiveField("status")}
+              onBlur={() => setActiveField(null)}
+              style={{
+                border: "none",
+                outline: "none",
+                background: "transparent",
+                fontSize: "14px",
+                flex: 1,
+                cursor: "pointer",
+                appearance: "none",
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="initiated">Initiated</option>
+              <option value="negotiating">Negotiating</option>
+              <option value="deal_confirmed">Deal Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <ChevronDown size={16} className="text-muted pointer-events-none" />
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -217,148 +221,118 @@ const SellerMessages = () => {
           <p className="text-muted mb-4">No requests yet</p>
         ) : (
           requests.map((item) => (
-            <div className="bg-card"
+            <div className="mb-4 rounded-2xl bg-card p-4 shadow-[0_3px_8px_rgba(0,0,0,0.04)] sm:p-5"
               key={item._id}
-          style={{
-            padding: "20px 25px",
-            borderRadius: "16px",
-            marginBottom: "14px",
-            boxShadow: "0 3px 8px rgba(0,0,0,0.04)",
-          }}
-        >
-          {/* TOP ROW */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between", // important
-              alignItems: "center",
-            }}
-          >
-            {/* LEFT SIDE */}
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                  overflow: "hidden"
-                }}
-              >
-                <img
-                  src={item.productId?.images[0].url || "/placeholder.png"}
-                  alt={item.productId?.name || "Product"}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
+            >
               
-            <div className="flex flex-col gap-1">
-              {/* Product + Price row */}
-              <div className="flex items-center gap-3">
-                <h3 className="text-base font-medium">
-                  {item.productId?.name}
-                </h3>
 
-                <p className="text-sm font-semibold" style={{ color: themeColor }}>
-                  Price: ₹{item.productId?.price}
-                </p>
+              {/* MAIN CONTENT ROW */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                {/* LEFT SIDE - Product details */}
+                <div className="flex flex-1 items-center gap-3 sm:gap-4">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                    <img
+                      src={item.productId?.images[0].url || "/placeholder.png"}
+                      alt={item.productId?.name || "Product"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  
+                  <div className="min-w-0 flex-1">
+                    {/* Product + Status row */}
+                    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <h3 className="truncate text-base font-medium">
+                        {item.productId?.name}
+                      </h3>
+                      <p className="shrink-0 text-sm font-semibold text-primary">
+                        Rs. {item.productId?.price}
+                      </p>
+                      </div>
 
-              </div>
+                      
+                    </div>
 
-              {/* Buyer */}
-              <p className="text-sm text-muted">
-                Buyer: {item.buyerId?.name}
-              </p>
-            </div>
-          </div>
+                    {/* Price */}
+                    <div className="hidden">
+                      <p className="text-sm font-semibold text-primary">
+                        ₹{item.productId?.price}
+                      </p>
+                    </div>
 
-            {/* RIGHT SIDE */}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={statusStyle(item.status)}>
-                {renderIcon(item.status)} {formatStatus(item.status)}
-              </span>
+                    {/* Buyer */}
+                    <p className="text-sm text-muted">
+                      Buyer: {item.buyerId?.name}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="relative inline-block">
-                <button
-                  onClick={async () => {
-                  try {
-                    await api.patch(`/messages/${item._id}/read`);
-
-                    //  instant UI update (IMPORTANT)
-                    setRequests((prev) =>
-                      prev.map((conv) =>
-                        conv._id === item._id
-                          ? { ...conv, unreadCountSeller: 0 }
-                          : conv
-                      )
-                    );
-
-                    navigate(`/marketplace/seller/messages/${item._id}`, {
-                      state: item,
-                    });
-
-                  } catch (error) {
-                    console.error("Error marking as read:", error);
-
-                    navigate(`/marketplace/seller/messages/${item._id}`, {
-                      state: item,
-                    });
-                  }
-                }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg"
-                  style={{ background: themeColor }}
-                >
-                  <MessageSquare size={14} /> Chat
-                </button>
-
-                {item.unreadCountSeller > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#E9C9A8] text-[#7A3E1D] text-[12px] font-semibold px-2 py-0.5 rounded-full shadow">
-                    {item.unreadCountSeller}
+                {/* RIGHT SIDE - Chat button and dropdown */}
+                <div className="flex items-center justify-end gap-3 lg:shrink-0">
+                  <span className="text-xs px-3 py-1 rounded-full font-medium shrink-0" 
+                    style={statusStyle(item.status)}
+                  >
+                    {renderIcon(item.status)} {formatStatus(item.status)}
                   </span>
-                )}
-              </div>
+                  <div className="relative">
+                    <button
+                      onClick={async () => {
+                      try {
+                        await api.patch(`/messages/${item._id}/read`);
 
-              <div
-                onClick={() =>
-                  setOpenCard(openCard === item._id ? null : item._id)
-                }
-                style={{ cursor: "pointer" }}
-              >
-                {openCard === item._id ? (
-                  <ChevronUp size={18} />
-                ) : (
-                  <ChevronDown size={18} />
-                )}
+                        //  instant UI update (IMPORTANT)
+                        setRequests((prev) =>
+                          prev.map((conv) =>
+                            conv._id === item._id
+                              ? { ...conv, unreadCountSeller: 0 }
+                              : conv
+                          )
+                        );
+
+                        navigate(`/marketplace/seller/messages/${item._id}`, {
+                          state: item,
+                        });
+
+                      } catch (error) {
+                        console.error("Error marking as read:", error);
+
+                        navigate(`/marketplace/seller/messages/${item._id}`, {
+                          state: item,
+                        });
+                      }
+                    }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg font-medium"
+                      style={{ background: themeColor }}
+                    >
+                      <MessageSquare size={14} /> Chat
+                    </button>
+
+                    {item.unreadCountSeller > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-[#E9C9A8] text-[#7A3E1D] text-[12px] font-semibold px-2 py-0.5 rounded-full shadow">
+                        {item.unreadCountSeller}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setOpenCard(openCard === item._id ? null : item._id)
+                    }
+                    className="p-2 rounded-lg hover:bg-border/50 transition-colors"
+                  >
+                    {openCard === item._id ? (
+                      <ChevronUp size={18} />
+                    ) : (
+                      <ChevronDown size={18} />
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
 
           {/* DROPDOWN DETAILS */}
           {openCard === item._id && (
-            <div
-              style={{
-                marginTop: "14px",
-                borderTop: "1px solid #ddd",
-                paddingTop: "12px",
-              }}
-            >
-
-              <p
-                style={{
-                  fontSize: "14px",
-                  fontStyle: "italic",
-                  color: "#555",
-                  margin: 0,
-                }}
-              >
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-sm text-muted italic">
                 Last Message: "{item.lastMessage}"
               </p>
             </div>
@@ -378,20 +352,27 @@ const SellerMessages = () => {
 export default SellerMessages;
 
 const MessageCardSkeleton = () => (
-  <div className="bg-card rounded-2xl p-6 animate-pulse shadow-[0_3px_8px_rgba(0,0,0,0.04)]">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="w-[60px] h-[60px] rounded-2xl bg-background" />
-        <div className="space-y-2">
-          <div className="h-4 w-52 rounded bg-background" />
-          <div className="h-3 w-32 rounded bg-background" />
+  <div className="bg-card rounded-2xl p-4 sm:p-6 mb-4 animate-pulse shadow-[0_3px_8px_rgba(0,0,0,0.04)]">
+    <div className="hidden sm:flex justify-end mb-3">
+      <div className="h-6 w-24 rounded-full bg-background" />
+    </div>
+
+    {/* Main content row */}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 flex-1">
+        <div className="w-12 h-12 sm:w-15 sm:h-15 rounded-xl bg-background" />
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="h-4 w-32 rounded bg-background" />
+          </div>
+          <div className="h-3 w-24 rounded bg-background" />
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="h-7 w-28 rounded-full bg-background" />
-        <div className="h-9 w-20 rounded-xl bg-background" />
+      <div className="flex items-center justify-end gap-3">
+        <div className="h-6 w-24 rounded-full bg-background" />
+        <div className="h-9 w-16 rounded-xl bg-background" />
+        <div className="w-6 h-6 rounded bg-background" />
       </div>
     </div>
   </div>
 );
-

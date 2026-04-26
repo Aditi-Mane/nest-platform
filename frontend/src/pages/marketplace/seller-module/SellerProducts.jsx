@@ -137,6 +137,55 @@ const SellerProducts = () => {
   const [productCategory, setProductCategory] = useState("all");
 
   const fileInputRef = useRef(null);
+  const allowedImageTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+  ]);
+  const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
+
+  const isAllowedImageFile = (file) => {
+    const fileName = file.name?.toLowerCase() || "";
+
+    return (
+      allowedImageTypes.has(file.type) ||
+      allowedImageExtensions.some((extension) => fileName.endsWith(extension))
+    );
+  };
+
+  const validateImageFiles = (files, existingCount = 0) => {
+    if (files.length === 0) {
+      return { validFiles: [] };
+    }
+
+    if (existingCount + formData.images.length + files.length > 5) {
+      return {
+        validFiles: [],
+        error: "You can upload up to 5 product images only",
+      };
+    }
+
+    const invalidTypeFile = files.find((file) => !isAllowedImageFile(file));
+    if (invalidTypeFile) {
+      return {
+        validFiles: [],
+        error: "Only JPG, JPEG, PNG, WEBP, HEIC, or HEIF images are allowed",
+      };
+    }
+
+    const oversizedFile = files.find((file) => file.size > 5 * 1024 * 1024);
+    if (oversizedFile) {
+      return {
+        validFiles: [],
+        error: "Each product image must be 5MB or smaller",
+      };
+    }
+
+    return { validFiles: files };
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -204,11 +253,24 @@ const SellerProducts = () => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    const previewImages = files.map((file) => ({
+    const { validFiles, error: imageError } = validateImageFiles(
+      files,
+      editingProduct ? existingImages.length : 0
+    );
+
+    if (imageError) {
+      setError(imageError);
+      toast.error(imageError);
+      e.target.value = "";
+      return;
+    }
+
+    const previewImages = validFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
 
+    setError("");
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...previewImages],
@@ -285,6 +347,17 @@ const SellerProducts = () => {
 
     try {
       setLoading(true);
+
+      const { error: imageError } = validateImageFiles(
+        formData.images.map((img) => img.file),
+        editingProduct ? existingImages.length : 0
+      );
+
+      if (imageError) {
+        setError(imageError);
+        toast.error(imageError);
+        return;
+      }
 
       const form = new FormData();
 
@@ -374,7 +447,7 @@ const SellerProducts = () => {
     }
   };
   return (
-    <div className="p-6 text-text">
+    <div className="px-0 py-2 text-text sm:py-4">
 
       {/* HEADER */}
       <div className="flex justify-between items-start mb-6">
@@ -612,23 +685,25 @@ const SellerProducts = () => {
                 </div>
 
                 {/* STATS BOX */}
-                <div className="grid grid-cols-3 gap-4 mt-4 bg-[#efe6d6] border border-border rounded-xl p-3 text-sm">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 bg-[#efe6d6] border border-border rounded-xl p-3 text-sm">
 
-                  <div>
-                    <p className="text-muted">Sales</p>
-                    <p className="font-semibold">{getProductAnalytics(p._id)?.sales || 0}</p>
+                  <div className="min-w-0">
+                    <p className="text-muted text-xs sm:text-sm">Sales</p>
+                    <p className="font-semibold text-sm sm:text-base truncate">
+                      {getProductAnalytics(p._id)?.sales || 0}
+                    </p>
                   </div>
 
-                  <div>
-                    <p className="text-muted">Revenue</p>
-                    <p className="font-semibold text-green-700">
+                  <div className="min-w-0">
+                    <p className="text-muted text-xs sm:text-sm">Revenue</p>
+                    <p className="font-semibold text-sm sm:text-base text-green-700 truncate">
                       ₹ {getProductAnalytics(p._id)?.revenue || 0}
                     </p>
                   </div>
 
-                  <div>
-                    <p className="text-muted">Views</p>
-                    <p className="font-semibold">{p.views}</p>
+                  <div className="min-w-0">
+                    <p className="text-muted text-xs sm:text-sm">Views</p>
+                    <p className="font-semibold text-sm sm:text-base truncate">{p.views}</p>
                   </div>
 
                 </div>
@@ -647,7 +722,7 @@ const SellerProducts = () => {
                 </div>
 
                 {/* ACTIONS */}
-                <div className="flex items-center justify-between mt-5">
+                <div className="flex flex-col sm:flex-row gap-3 mt-5">
 
                   <button onClick={() => handleEdit(p)} className="flex-1 border border-border rounded-xl py-2 hover:bg-[#f1e7d5] transition">
                     <span className="flex gap-2 justify-center items-center text-muted"><TfiPencilAlt size={20}/>Edit</span>
@@ -655,8 +730,8 @@ const SellerProducts = () => {
 
                   <button
                     onClick={() => handleDelete(p._id)}
-                    className="ml-3 flex items-center justify-center 
-                      w-10 h-10 rounded-xl
+                    className="flex items-center justify-center 
+                      w-full sm:w-10 h-10 rounded-xl
                       border border-border
                     
                       text-muted
@@ -681,9 +756,9 @@ const SellerProducts = () => {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
 
-          <div className="bg-card w-162.5 rounded-2xl p-8 max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-card p-5 shadow-xl sm:p-8">
 
             <h2 className="text-2xl font-bold text-text">
               Add New Product
@@ -716,21 +791,21 @@ const SellerProducts = () => {
                     Click to upload images
                   </p>
                   <p className="text-sm text-muted mt-1">
-                    You can select multiple images (PNG, JPG, up to 5MB each)
+                    You can select up to 5 images (PNG, JPG, JPEG, WEBP, HEIC, HEIF, max 5MB each)
                   </p>
 
                   <input
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept="image/png, image/jpeg"
+                    accept="image/*,.heic,.heif,.webp"
                     className="hidden"
                     onChange={handleImageUpload}
                   />
                 </div>
 
                 {formData.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {formData.images.map((img, index) => (
                       <div key={index} className="relative">
                         <img
@@ -774,7 +849,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CATEGORY + PRICE */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 <div>
                   <label className="block font-medium text-text mb-2">
@@ -817,7 +892,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CONDITION + STOCK (Optional) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 {/* CONDITION */}
                 <div>
@@ -887,7 +962,7 @@ const SellerProducts = () => {
                   What's Included
                 </label>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={includedInput}
@@ -901,7 +976,7 @@ const SellerProducts = () => {
                     type="button"
                     onClick={addIncludedItem}
                     disabled={formData.whatsIncluded.length >= limit}
-                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                    className="rounded-lg border border-border px-3 py-2 hover:bg-[#f1e7d5] sm:w-auto"
                   >
                     Add
                   </button>
@@ -912,7 +987,7 @@ const SellerProducts = () => {
                   {formData.whatsIncluded.map((item, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                      className="flex flex-wrap items-center justify-between gap-2 bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
                     >
                       <span>✓ {item}</span>
 
@@ -930,12 +1005,12 @@ const SellerProducts = () => {
               </div>
 
               {/* FOOTER BUTTONS */}
-              <div className="border-t border-border pt-6 flex gap-4">
+              <div className="border-t border-border pt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
 
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+                  className="w-full flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
                 >
                   Cancel
                 </button>
@@ -943,7 +1018,7 @@ const SellerProducts = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Adding Product..." : "Add Product"}
                 </button>
@@ -958,9 +1033,9 @@ const SellerProducts = () => {
 
       {/* EDIT MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
 
-          <div className="bg-card w-162.5 rounded-2xl p-8 max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-card p-5 shadow-xl sm:p-8">
 
             <h2 className="text-2xl font-bold text-text mb-4">
               Edit product details
@@ -988,21 +1063,21 @@ const SellerProducts = () => {
                     Click to upload images
                   </p>
                   <p className="text-sm text-muted mt-1">
-                    You can select multiple images (PNG, JPG, up to 5MB each)
+                    You can select up to 5 images (PNG, JPG, JPEG, WEBP, HEIC, HEIF, max 5MB each)
                   </p>
 
                   <input
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept="image/png, image/jpeg"
+                    accept="image/*,.heic,.heif,.webp"
                     className="hidden"
                     onChange={handleImageUpload}
                   />
                 </div>
 
                 {(existingImages.length > 0 || formData.images.length > 0) && (
-                <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 
                   {/* Existing Images */}
                   {existingImages.map((img, index) => (
@@ -1067,7 +1142,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CATEGORY + PRICE */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 <div>
                   <label className="block font-medium text-text mb-2">
@@ -1110,7 +1185,7 @@ const SellerProducts = () => {
               </div>
 
               {/* CONDITION + STOCK (Optional) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 {/* CONDITION */}
                 <div>
@@ -1180,7 +1255,7 @@ const SellerProducts = () => {
                   What's Included
                 </label>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={includedInput}
@@ -1192,7 +1267,7 @@ const SellerProducts = () => {
                   <button
                     type="button"
                     onClick={addIncludedItem}
-                    className="px-3 py-2 border border-border rounded-lg hover:bg-[#f1e7d5]"
+                    className="rounded-lg border border-border px-3 py-2 hover:bg-[#f1e7d5] sm:w-auto"
                   >
                     Add
                   </button>
@@ -1203,7 +1278,7 @@ const SellerProducts = () => {
                   {formData.whatsIncluded.map((item, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
+                      className="flex flex-wrap items-center justify-between gap-2 bg-[#efe6d6] px-3 py-2 rounded-lg text-sm"
                     >
                       <span>✓ {item}</span>
 
@@ -1221,12 +1296,12 @@ const SellerProducts = () => {
               </div>
 
               {/* FOOTER BUTTONS */}
-              <div className="border-t border-border pt-6 flex gap-4">
+              <div className="border-t border-border pt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
 
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
+                  className="w-full flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
                 >
                   Cancel
                 </button>
@@ -1234,7 +1309,7 @@ const SellerProducts = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex-1 bg-primary text-white rounded-xl py-3 shadow-md hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Editing Product..." : "Edit Product"}
                 </button>
@@ -1255,7 +1330,7 @@ const SellerProducts = () => {
             <p className="text-muted mb-6">
               Are you sure you want to delete "{products.find(p => p._id === productToDelete)?.name}"? This action cannot be undone.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 border border-border bg-background text-text rounded-xl py-3 hover:bg-background/70 transition"
