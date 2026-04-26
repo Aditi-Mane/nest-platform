@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useSocket } from "@/context/SocketContext";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Send, CheckCircle } from "lucide-react";
 import api from "../../../api/axios.js";
 import toast from "react-hot-toast";
 
 const SellerChatDetails = () => {
-  const { state } = useLocation();
   const { conversationId } = useParams();
   const navigate = useNavigate();
 
@@ -58,7 +57,7 @@ const SellerChatDetails = () => {
     return () => {
       socket.off("receive_message", handleReceive);
     };
-  }, [socket]);
+  }, [socket, conversationId]);
 
   // FETCH USER
   useEffect(() => {
@@ -170,7 +169,7 @@ const SellerChatDetails = () => {
       )
     : false;
 return (
-  <div className="bg-background flex items-center justify-center h-full px-6 py-6">
+  <div className="bg-background flex items-center justify-center h-full px-4 sm:px-6 lg:px-8 py-6">
     <div className="w-full max-w-2xl bg-card border border-border rounded-3xl flex flex-col h-[90vh] shadow-sm">
       {/* BACK */}
       <div
@@ -182,9 +181,9 @@ return (
       </div>
 
       {/* HEADER */}
-      <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-card/60 backdrop-blur-sm">
+      <div className="px-5 py-4 border-b border-border flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-card/60 backdrop-blur-sm">
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
 
           <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-sm font-semibold">
             {conversationInfo?.buyerId?.avatar ? (
@@ -210,7 +209,7 @@ return (
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 w-full sm:w-auto sm:justify-end">
 
           {/* Status Badge */}
           <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-secondary/20 text-secondary capitalize">
@@ -229,7 +228,7 @@ return (
                   setDealError("");
                   setShowDealModal(true);
                 }}
-                className="px-3 py-1.5 text-xs rounded-lg bg-primary text-white"
+                className="px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs rounded-lg bg-primary text-white"
               >
                 Confirm Deal
               </button>
@@ -239,7 +238,7 @@ return (
             {isSeller && !["completed"].includes(conversationInfo?.status) && (
               <button
                 onClick={handleCancelDeal}
-                className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white"
+                className="px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs rounded-lg bg-red-500 text-white"
               >
                 Cancel Deal
               </button>
@@ -332,7 +331,7 @@ return (
       {showDealModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-          <div className="w-105 bg-card border border-border rounded-xl shadow-lg p-6">
+          <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-lg p-5 sm:p-6 mx-4">
 
             <h2 className="text-lg font-semibold text-text mb-5">
               Confirm Deal
@@ -414,14 +413,14 @@ return (
                   setShowDealModal(false); 
                   setDealError("");
                 }}
-                className="px-4 py-2 text-sm rounded-lg border border-border bg-background text-text hover:opacity-90"
+                className="px-4 py-1.5 text-sm rounded-lg border border-border bg-background text-text hover:opacity-90"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleConfirmDeal}
-                className="px-4 py-2 text-sm rounded-lg bg-primary text-white hover:opacity-90"
+                className="px-4 py-1.5 text-sm rounded-lg bg-primary text-white hover:opacity-90"
               >
                 Confirm Sale
               </button>

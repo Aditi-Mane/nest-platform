@@ -9,10 +9,12 @@ import { SiGoogleanalytics } from "react-icons/si";
 import { FaPeopleGroup } from "react-icons/fa6";
 import { useMessages } from "@/context/MessageContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { X } from "lucide-react";
+
 import api from "../api/axios.js";
 
-const SellerSidebar = ({ className = "", onNavigate }) => {
-  const [openAI, setOpenAI] = useState(true);
+const SellerSidebar = ({ className = "", onClose, onNavigate }) => {
+  const [openAI, setOpenAI] = useState(false);
   const [user, setUser] = useState({});
   const [userLoading, setUserLoading] = useState(true);
   const { totalUnread } = useMessages();
@@ -54,31 +56,52 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
       : `http://localhost:5000${user.avatar}`
     : undefined;
 
+  const handleNavAction = () => {
+    onNavigate?.();
+    onClose?.();
+  };
+
   return (
     <div
-      className={`flex h-full w-72 flex-col justify-between border-r border-border bg-card ${className}`}
+      className={`flex h-full max-h-screen w-72 flex-col overflow-hidden border-r border-border bg-card lg:h-screen ${className}`.trim()}
     >
-      <div className="min-h-0">
-        <div className="flex items-center gap-3 border-b border-border p-5">
-          <div className="rounded-xl text-white">
-            <img
-              src="/NEST_logo.png"
-              alt="NEST Logo"
-              className="size-12 object-contain"
-            />
+
+      {/* TOP SECTION */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* LOGO */}
+        <div className="flex shrink-0 items-center justify-between border-b border-border p-5">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl text-white flex items-center justify-center text-lg">
+              <img
+                src="/NEST_logo.png"  
+                alt="NEST Logo"
+                className="size-12 object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg text-text">NEST</h1>
+              <p className="text-sm text-muted">
+                Seller Dashboard
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-text">NEST</h1>
-            <p className="text-sm text-muted">Seller Dashboard</p>
-          </div>
+          
+          {/* MOBILE CLOSE BUTTON */}
+          <button
+            onClick={handleNavAction}
+            className="lg:hidden p-2 rounded-lg hover:bg-border/50 transition-colors"
+          >
+            <X size={20} className="text-text" />
+          </button>
         </div>
 
-        <div className="space-y-3 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
           <NavLink
             to="/marketplace/seller/dashboard"
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={handleNavAction}
           >
             <MdOutlineAnalytics size={20} />
             Dashboard
@@ -89,6 +112,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink} justify-between`
             }
+            onClick={handleNavAction}
           >
             <div className="flex items-center gap-2">
               <IoPeople size={20} />
@@ -107,6 +131,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={handleNavAction}
           >
             <TbPackage size={20} />
             My Products
@@ -117,6 +142,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={handleNavAction}
           >
             <MdReplay size={20} />
             Order History
@@ -127,6 +153,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={handleNavAction}
           >
             <SiGoogleanalytics size={20} />
             Analytics
@@ -137,6 +164,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={handleNavAction}
           >
             <FaPeopleGroup size={20} />
             Ventures
@@ -164,6 +192,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
                   className={({ isActive }) =>
                     `${baseLink} ${isActive ? activeLink : normalLink}`
                   }
+                  onClick={handleNavAction}
                 >
                   <MdAnalytics size={18} />
                   Sales Prediction
@@ -174,6 +203,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
                   className={({ isActive }) =>
                     `${baseLink} ${isActive ? activeLink : normalLink}`
                   }
+                  onClick={handleNavAction}
                 >
                   <FaRegSmile size={18} />
                   Sentiment Analysis
@@ -187,6 +217,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
             className={({ isActive }) =>
               `${baseLink} ${isActive ? activeLink : normalLink}`
             }
+            onClick={handleNavAction}
           >
             <IoSettingsSharp size={20} />
             Settings
@@ -194,7 +225,7 @@ const SellerSidebar = ({ className = "", onNavigate }) => {
         </div>
       </div>
 
-      <div className="border-t border-border p-4">
+      <div className="shrink-0 border-t border-border p-4">
         {userLoading ? (
           <div className="flex items-center gap-3 rounded-xl bg-[#efe6d6] p-3 animate-pulse">
             <div className="size-10 rounded-full bg-white/70" />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FiCheckCircle, FiClock } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -16,7 +16,7 @@ const SellerOrderHistory = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchSellerOrders = async () => {
+  const fetchSellerOrders = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -36,11 +36,11 @@ const SellerOrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, searchTerm]);
 
   useEffect(() => {
     fetchSellerOrders();
-  }, [page, statusFilter, searchTerm]);
+  }, [fetchSellerOrders]);
 
   useEffect(() => {
     setPage(1);

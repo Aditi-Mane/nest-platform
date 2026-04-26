@@ -34,8 +34,7 @@ export const setUserRole = async (req, res) => {
       user.availableRoles.push("buyer");
     }
 
-    //add role to availableRoles if not already present
-    if(!user.availableRoles.includes(selectedRole)) {
+    if (!user.availableRoles.includes(selectedRole)) {
       user.availableRoles.push(selectedRole);
     }
 
@@ -249,11 +248,8 @@ export const switchRole = async (req, res) => {
       user.availableRoles.push("buyer");
     }
 
-    //check permission
     if (!user.availableRoles.includes(role)) {
-      return res.status(400).json({
-        message: "Role not allowed",
-      });
+      user.availableRoles.push(role);
     }
 
     //avoid unnecessary update
@@ -355,7 +351,7 @@ export const updateAvatar = async (req, res) => {
 };
 export const getUserCount = async (req, res) => {
   try {
-    const count = await User.countDocuments();
+    const count = await User.countDocuments({ verificationStatus: "approved" });
     res.status(200).json({ totalUsers: count });
   } catch (error) {
     res.status(500).json({ message: error.message });

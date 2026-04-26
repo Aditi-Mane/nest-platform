@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
 import SellerSidebar from "../../../components/SellerSidebar.jsx";
+import { Menu } from "lucide-react";
 
 const pageTitles = {
   "/marketplace/seller/dashboard": "Dashboard",
@@ -69,16 +69,6 @@ const SellerPanel = () => {
           />
 
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col shadow-2xl">
-            <div className="flex items-center justify-end border-b border-border bg-card px-4 py-3">
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(false)}
-                className="rounded-xl p-2 text-muted transition hover:bg-background hover:text-text"
-                aria-label="Close seller menu"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
             <SellerSidebar className="w-full border-r-0" onNavigate={() => setMobileNavOpen(false)} />
           </div>
         </div>
@@ -99,7 +89,6 @@ const SellerPanel = () => {
 
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-text">{pageTitle}</p>
-                <p className="text-xs text-muted">Seller workspace</p>
               </div>
             </div>
 
@@ -113,7 +102,7 @@ const SellerPanel = () => {
 
         <div
           ref={containerRef}
-          className="flex-1 overflow-y-auto bg-background px-2 py-3 sm:px-4 sm:py-4 lg:px-6"
+          className="flex-1 overflow-y-auto bg-background pl-4 pr-2 py-3 sm:pl-6 sm:pr-4 sm:py-4 lg:pl-8 lg:pr-6"
         >
           <Outlet />
         </div>

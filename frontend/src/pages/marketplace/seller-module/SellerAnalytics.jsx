@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -125,8 +125,8 @@ const SellerAnalytics = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-text px-6 py-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-background px-0 py-2 text-text sm:py-4">
+      <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:justify-between lg:items-center">
         <div>
           <h1 className="text-3xl font-bold">Analytics</h1>
           <p className="text-muted mt-1">
@@ -134,11 +134,13 @@ const SellerAnalytics = () => {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
           <button
             onClick={() => setRange("7d")}
-            className={`px-4 py-2 rounded-full ${
-              range === "7d" ? "bg-primary text-white" : "bg-card"
+            className={`px-4 py-2.5 rounded-full text-sm font-medium transition ${
+              range === "7d"
+                ? "bg-primary text-white shadow-sm"
+                : "bg-card border border-border"
             }`}
           >
             7 Days
@@ -146,8 +148,10 @@ const SellerAnalytics = () => {
 
           <button
             onClick={() => setRange("30d")}
-            className={`px-4 py-2 rounded-full ${
-              range === "30d" ? "bg-primary text-white" : "bg-card"
+            className={`px-4 py-2.5 rounded-full text-sm font-medium transition ${
+              range === "30d"
+                ? "bg-primary text-white shadow-sm"
+                : "bg-card border border-border"
             }`}
           >
             30 Days
@@ -159,7 +163,7 @@ const SellerAnalytics = () => {
         <AnalyticsSkeletonContent />
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             <StatCard
               icon={<DollarSign />}
               title="Total Revenue"
@@ -185,7 +189,7 @@ const SellerAnalytics = () => {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             <ChartCard title="Revenue Trend">
               <LineChartComponent data={revenue || []} color="#C96A2B" />
             </ChartCard>
@@ -199,7 +203,7 @@ const SellerAnalytics = () => {
             </ChartCard>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             <BreakdownCard
               title="Orders Breakdown"
               subtitle="Order status distribution"
@@ -213,7 +217,7 @@ const SellerAnalytics = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             <TopProducts products={topProducts} loading={loading} />
             <LowProducts products={lowProducts} loading={loading} />
           </div>
@@ -229,7 +233,7 @@ export default SellerAnalytics;
 
 const AnalyticsSkeletonContent = () => (
   <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {[1, 2, 3, 4].map((item) => (
           <div
             key={item}
@@ -242,19 +246,19 @@ const AnalyticsSkeletonContent = () => (
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {[1, 2, 3].map((item) => (
           <div
             key={item}
-            className="bg-card border border-border rounded-2xl p-6 h-[300px] animate-pulse"
+            className="bg-card border border-border rounded-2xl p-5 sm:p-6 h-[260px] sm:h-[300px] animate-pulse"
           >
             <div className="h-5 w-32 rounded bg-background mb-5" />
-            <div className="h-[220px] rounded-xl bg-background" />
+            <div className="h-[185px] sm:h-[220px] rounded-xl bg-background" />
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {[1, 2].map((item) => (
           <div
             key={item}
@@ -262,8 +266,8 @@ const AnalyticsSkeletonContent = () => (
           >
             <div className="h-5 w-40 rounded bg-background mb-2" />
             <div className="h-4 w-52 rounded bg-background mb-6" />
-            <div className="flex items-center gap-6">
-              <div className="w-[220px] h-[220px] rounded-full bg-background" />
+            <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-6">
+              <div className="w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] rounded-full bg-background" />
               <div className="flex-1 space-y-4">
                 {[1, 2, 3].map((line) => (
                   <div key={line} className="h-16 rounded-xl bg-background" />
@@ -274,7 +278,7 @@ const AnalyticsSkeletonContent = () => (
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {[1, 2].map((item) => (
           <div
             key={item}
@@ -291,26 +295,30 @@ const AnalyticsSkeletonContent = () => (
         ))}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-8 animate-pulse">
+      <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 animate-pulse">
         <div className="h-5 w-40 rounded bg-background mb-2" />
         <div className="h-4 w-60 rounded bg-background mb-8" />
-        <div className="h-48 rounded-xl bg-background" />
+        <div className="h-64 lg:h-48 rounded-xl bg-background" />
       </div>
   </div>
 );
 
 const StatCard = ({ icon, title, value }) => (
-  <div className="bg-card border border-border rounded-2xl p-6">
-    <div className="mb-3 text-primary">{icon}</div>
-    <p className="text-muted">{title}</p>
-    <h2 className="text-2xl font-bold">{value}</h2>
+  <div className="bg-card border border-border rounded-2xl p-5 sm:p-6">
+    <div className="flex items-start justify-between gap-4 sm:block">
+      <div className="mb-0 sm:mb-3 text-primary shrink-0">{icon}</div>
+      <div className="flex-1 sm:flex-none">
+        <p className="text-sm sm:text-base text-muted">{title}</p>
+        <h2 className="text-xl sm:text-2xl font-bold mt-1">{value}</h2>
+      </div>
+    </div>
   </div>
 );
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-card border border-border rounded-2xl p-6 h-[300px]">
+  <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 h-[260px] sm:h-[300px]">
     <h2 className="font-semibold mb-2">{title}</h2>
-    <div className="h-[220px]">{children}</div>
+    <div className="h-[185px] sm:h-[220px]">{children}</div>
   </div>
 );
 
@@ -337,12 +345,12 @@ const BarChartComponent = ({ data, color }) => (
 );
 
 const BreakdownCard = ({ title, subtitle, data }) => (
-  <div className="bg-card border border-border rounded-2xl p-6">
+  <div className="bg-card border border-border rounded-2xl p-5 sm:p-6">
     <h2 className="text-lg font-semibold mb-1">{title}</h2>
     <p className="text-sm text-muted mb-4">{subtitle}</p>
 
-    <div className="flex items-center gap-6">
-      <div className="w-[220px] h-[220px]">
+    <div className="flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-6">
+      <div className="w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] shrink-0">
         <ResponsiveContainer>
           <PieChart>
             <Pie data={data} dataKey="value" innerRadius={60}>
@@ -354,14 +362,14 @@ const BreakdownCard = ({ title, subtitle, data }) => (
         </ResponsiveContainer>
       </div>
 
-      <div className="flex-1 space-y-4">
+      <div className="flex-1 w-full space-y-3 sm:space-y-4">
         {data.map((item, index) => {
           const total = data.reduce((sum, current) => sum + current.value, 0);
           const percent = total ? ((item.value / total) * 100).toFixed(1) : "0.0";
 
           return (
             <div key={index} className="bg-background rounded-lg p-3">
-              <div className="flex justify-between text-sm mb-1">
+              <div className="flex items-start justify-between gap-3 text-sm mb-1">
                 <div className="flex items-center gap-2">
                   <span
                     className="w-2.5 h-2.5 rounded-full"
@@ -370,7 +378,7 @@ const BreakdownCard = ({ title, subtitle, data }) => (
                   {item.name}
                 </div>
 
-                <span className="font-medium">
+                <span className="font-medium text-right shrink-0">
                   {item.value} ({percent}%)
                 </span>
               </div>
@@ -398,7 +406,7 @@ const ProductPerformanceList = ({
   products = [],
   loading = false,
 }) => (
-  <div className="bg-card border border-border rounded-2xl p-6">
+  <div className="bg-card border border-border rounded-2xl p-5 sm:p-6">
     <h2 className="text-lg font-semibold">{title}</h2>
     <p className="text-sm text-muted mb-5">{subtitle}</p>
 
@@ -411,9 +419,9 @@ const ProductPerformanceList = ({
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex items-center justify-between bg-background rounded-xl px-4 py-3"
+            className="flex flex-col gap-3 bg-background rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <div className="w-7 h-7 flex items-center justify-center bg-primary text-white text-xs rounded-full">
                 {product.rank}
               </div>
@@ -421,16 +429,16 @@ const ProductPerformanceList = ({
               <img
                 src={product.image || "/placeholder.png"}
                 alt={product.name}
-                className="w-12 h-12 rounded-lg object-cover"
+                className="w-12 h-12 rounded-lg object-cover shrink-0"
               />
 
-              <div>
-                <h3 className="font-medium">{product.name}</h3>
+              <div className="min-w-0">
+                <h3 className="font-medium truncate">{product.name}</h3>
                 <p className="text-sm text-muted">{product.sales} sales</p>
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <p className="text-primary font-semibold">
                 {formatCurrency(product.revenue)}
               </p>
@@ -462,8 +470,8 @@ export const LowProducts = ({ products = [], loading = false }) => (
 );
 
 const FunnelItem = ({ icon, title, value, sub, drop }) => (
-  <div className="flex flex-col items-center">
-    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-background mb-3">
+  <div className="flex flex-col items-center text-center w-full lg:w-auto">
+    <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-full bg-background mb-3">
       {icon}
     </div>
 
@@ -475,7 +483,11 @@ const FunnelItem = ({ icon, title, value, sub, drop }) => (
   </div>
 );
 
-const Arrow = () => <div className="text-border text-5xl">{">"}</div>;
+const Arrow = () => (
+  <div className="text-border text-4xl lg:text-5xl rotate-90 lg:rotate-0 leading-none">
+    {">"}
+  </div>
+);
 
 const Funnel = ({ funnel = {} }) => {
   const views = funnel.views || 0;
@@ -492,13 +504,13 @@ const Funnel = ({ funnel = {} }) => {
   const drop3 = orders ? (((orders - completed) / orders) * 100).toFixed(0) : 0;
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-8 mb-8">
+    <div className="bg-card border border-border rounded-2xl p-5 sm:p-8 mb-8">
       <h2 className="text-lg font-semibold">Conversion Funnel</h2>
       <p className="text-sm text-muted mb-8">
         Track how buyers move through your sales process
       </p>
 
-      <div className="grid grid-cols-7 items-center text-center">
+      <div className="grid grid-cols-1 gap-3 justify-items-center lg:grid-cols-7 lg:items-center lg:text-center">
         <FunnelItem
           icon={<Eye size={26} />}
           title="Views"
