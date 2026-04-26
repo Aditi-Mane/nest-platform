@@ -1,5 +1,6 @@
 // routes/sellerRoutes.js
 import express from "express";
+import multer from "multer";
 import {
   cancelDeal,
   confirmDeal,
@@ -29,6 +30,31 @@ import { checkSeller } from "../middleware/sellerMiddleware.js";
 import { cache, invalidateCache } from "../middleware/cacheMiddleware.js";
 
 const router = express.Router();
+const handleSellerImageUpload = (req, res, next) => {
+  upload.array("images", 5)(req, res, (err) => {
+    if (!err) {
+      return next();
+    }
+
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          message: "Each product image must be 5MB or smaller",
+        });
+      }
+
+      if (err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE") {
+        return res.status(400).json({
+          message: "You can upload up to 5 product images only",
+        });
+      }
+    }
+
+    return res.status(400).json({
+      message: err.message || "Invalid product image upload",
+    });
+  });
+};
 
 // ─────────────────────────────────────────────
 // SELLER SETUP & PRODUCT MUTATIONS
@@ -43,7 +69,7 @@ router.post(
   "/create",
   protect,
   checkSeller,
-  upload.array("images", 5),
+  handleSellerImageUpload,
   async (req, res, next) => {
     // Attach post-handler invalidation after controller runs
     const originalJson = res.json.bind(res);
@@ -68,7 +94,7 @@ router.put(
   "/edit/:id",
   protect,
   checkSeller,
-  upload.array("images", 5),
+  handleSellerImageUpload,
   async (req, res, next) => {
     const originalJson = res.json.bind(res);
     res.json = async (data) => {

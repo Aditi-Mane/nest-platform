@@ -137,6 +137,55 @@ const SellerProducts = () => {
   const [productCategory, setProductCategory] = useState("all");
 
   const fileInputRef = useRef(null);
+  const allowedImageTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+  ]);
+  const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
+
+  const isAllowedImageFile = (file) => {
+    const fileName = file.name?.toLowerCase() || "";
+
+    return (
+      allowedImageTypes.has(file.type) ||
+      allowedImageExtensions.some((extension) => fileName.endsWith(extension))
+    );
+  };
+
+  const validateImageFiles = (files, existingCount = 0) => {
+    if (files.length === 0) {
+      return { validFiles: [] };
+    }
+
+    if (existingCount + formData.images.length + files.length > 5) {
+      return {
+        validFiles: [],
+        error: "You can upload up to 5 product images only",
+      };
+    }
+
+    const invalidTypeFile = files.find((file) => !isAllowedImageFile(file));
+    if (invalidTypeFile) {
+      return {
+        validFiles: [],
+        error: "Only JPG, JPEG, PNG, WEBP, HEIC, or HEIF images are allowed",
+      };
+    }
+
+    const oversizedFile = files.find((file) => file.size > 5 * 1024 * 1024);
+    if (oversizedFile) {
+      return {
+        validFiles: [],
+        error: "Each product image must be 5MB or smaller",
+      };
+    }
+
+    return { validFiles: files };
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -204,11 +253,24 @@ const SellerProducts = () => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    const previewImages = files.map((file) => ({
+    const { validFiles, error: imageError } = validateImageFiles(
+      files,
+      editingProduct ? existingImages.length : 0
+    );
+
+    if (imageError) {
+      setError(imageError);
+      toast.error(imageError);
+      e.target.value = "";
+      return;
+    }
+
+    const previewImages = validFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
 
+    setError("");
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...previewImages],
@@ -285,6 +347,17 @@ const SellerProducts = () => {
 
     try {
       setLoading(true);
+
+      const { error: imageError } = validateImageFiles(
+        formData.images.map((img) => img.file),
+        editingProduct ? existingImages.length : 0
+      );
+
+      if (imageError) {
+        setError(imageError);
+        toast.error(imageError);
+        return;
+      }
 
       const form = new FormData();
 
@@ -716,14 +789,14 @@ const SellerProducts = () => {
                     Click to upload images
                   </p>
                   <p className="text-sm text-muted mt-1">
-                    You can select multiple images (PNG, JPG, up to 5MB each)
+                    You can select up to 5 images (PNG, JPG, JPEG, WEBP, HEIC, HEIF, max 5MB each)
                   </p>
 
                   <input
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept="image/png, image/jpeg"
+                    accept="image/*,.heic,.heif,.webp"
                     className="hidden"
                     onChange={handleImageUpload}
                   />
@@ -988,14 +1061,14 @@ const SellerProducts = () => {
                     Click to upload images
                   </p>
                   <p className="text-sm text-muted mt-1">
-                    You can select multiple images (PNG, JPG, up to 5MB each)
+                    You can select up to 5 images (PNG, JPG, JPEG, WEBP, HEIC, HEIF, max 5MB each)
                   </p>
 
                   <input
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept="image/png, image/jpeg"
+                    accept="image/*,.heic,.heif,.webp"
                     className="hidden"
                     onChange={handleImageUpload}
                   />
