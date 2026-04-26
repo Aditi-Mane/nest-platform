@@ -280,10 +280,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                 >
                   <CardContent className="p-6 flex gap-5">
                     {/* Image */}
-                  <div
-                    className="w-32 h-32 rounded-xl overflow-hidden cursor-pointer"
-                    onClick={() => navigate(`/product/${item.id}`)}
-                  >
+                  <div className="w-32 h-32 rounded-xl overflow-hidden">
                     <ImageWithFallBack
                       src={item.image}
                       alt={item.name}
@@ -302,7 +299,7 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
                             {item.name}
                           </h3>
 
-                          <p className="text-sm text-muted mb-2">
+                          <p className="mb-2 line-clamp-2 text-sm text-muted">
                             {item.description}
                           </p>
 

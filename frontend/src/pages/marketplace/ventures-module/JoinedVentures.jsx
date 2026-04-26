@@ -117,12 +117,12 @@ function ChatListItem({ application, isSelected, onClick }) {
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex-1 min-w-0">
-        <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-start justify-between gap-2">
           <p className="truncate text-[13px] font-semibold sm:text-sm">{venture?.title}</p>
-          <span className="shrink-0 text-[10px] text-muted-foreground sm:text-xs">{lastMessageTime}</span>
+          <span className="shrink-0 pt-0.5 text-[10px] text-muted-foreground sm:text-xs">{lastMessageTime}</span>
         </div>
-        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{previewText}</p>
+        <p className="line-clamp-2 text-[11px] text-muted-foreground sm:text-xs">{previewText}</p>
       </div>
 
       <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
@@ -174,7 +174,7 @@ function TeamInfoPanel({ application, onClose }) {
 
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">Your Role</p>
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
               <p className="text-[13px] font-medium text-blue-700 sm:text-sm">{application.roleAppliedFor}</p>
             </div>
           </div>
@@ -212,7 +212,7 @@ function TeamInfoPanel({ application, onClose }) {
 
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">Creator</p>
-            <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
+            <div className="flex items-center gap-3 rounded-lg bg-background p-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={founderProfile?.avatar || "/default-avatar.png"} />
                 <AvatarFallback>{founderProfile?.name?.charAt(0) || "F"}</AvatarFallback>
@@ -343,7 +343,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <div className="px-3 py-3 border-b border-border flex items-center justify-between gap-2 sm:px-4 sm:gap-3">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-4 sm:gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
@@ -398,13 +398,13 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
             </Badge>
           ) : null}
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        <p className="mt-2 break-words text-[11px] text-muted-foreground">
           Founder: {founderProfile?.name || "Founder"}
-          {founderProfile?.collegeName ? ` • ${founderProfile.collegeName}` : ""}
+          {founderProfile?.collegeName ? ` â€¢ ${founderProfile.collegeName}` : ""}
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 bg-muted/20">
+      <div className="flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-4">
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -429,7 +429,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
               const isOwnMessage = String(senderId) === String(currentUserId);
               const senderRole = getSenderRole(msg.sender?._id || msg.sender, venture);
               const senderName = isOwnMessage ? 'You' : msg.sender?.name || 'Team Member';
-              const senderLabel = senderRole ? `${senderName} • ${senderRole}` : senderName;
+              const senderLabel = senderRole ? `${senderName} â€¢ ${senderRole}` : senderName;
 
               if (isSystem) {
                 const metaDetails = getMetaMessageDetails(msg, venture);
@@ -463,7 +463,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
                   className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl px-3 py-2 sm:max-w-xs sm:px-4 ${
+                    className={`max-w-[88%] rounded-2xl px-3 py-2 sm:max-w-xs sm:px-4 ${
                       isOwnMessage
                         ? 'bg-primary text-white rounded-br-none'
                         : 'bg-white text-foreground border border-border rounded-bl-none'
@@ -496,7 +496,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
         )}
       </div>
 
-      <div className="border-t border-border p-3 sm:p-4 flex gap-2">
+      <div className="flex gap-2 border-t border-border p-3 sm:p-4">
         <input
           type="text"
           placeholder="Type a message..."
@@ -513,7 +513,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
         />
         <Button
           size="sm"
-          className="rounded-xl px-3 text-[12px] sm:px-4 sm:text-sm"
+          className="h-auto shrink-0 rounded-xl px-3 text-[12px] sm:px-4 sm:text-sm"
           onClick={handleSendMessage}
           disabled={!newMessage.trim() || loading || Boolean(error) || sending}
         >
@@ -602,7 +602,7 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
   }
 
   return (
-    <div className="relative flex h-full rounded-none border-0 overflow-hidden bg-white shadow-sm md:rounded-2xl md:border md:border-border">
+    <div className="relative flex h-full overflow-hidden rounded-none border-0 bg-white shadow-sm md:rounded-2xl md:border md:border-border">
       <div className="hidden w-80 border-r border-border md:flex md:flex-col">
         <div className="px-4 py-5 border-b border-border">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -654,7 +654,7 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
                 className="fixed inset-0 z-30 bg-black/40 md:hidden"
                 onClick={() => setShowInfo(false)}
               />
-              <div className="fixed inset-0 z-40 md:static md:z-auto md:inset-auto">
+              <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[92vw] md:static md:z-auto md:inset-auto md:w-auto md:max-w-none">
                 <TeamInfoPanel
                   application={selectedApplication}
                   onClose={() => setShowInfo(false)}

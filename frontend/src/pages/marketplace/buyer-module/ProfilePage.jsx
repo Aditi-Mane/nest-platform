@@ -248,8 +248,8 @@ export const ProfilePage = () => {
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-8">
 
         {/* HEADER */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold text-primary">
               Profile Settings
             </h1>
@@ -258,15 +258,15 @@ export const ProfilePage = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex items-center justify-between gap-4 md:justify-end">
+            <div className="min-w-0 flex-1 text-left md:flex-none md:text-right">
               <h2 className="text-sm font-semibold">{name}</h2>
-              <p className="text-xs text-muted">{email}</p>
+              <p className="truncate text-xs text-muted">{email}</p>
             </div>
 
             <img
               src={profileImage || "https://via.placeholder.com/100"}
-              className="w-16 h-16 rounded-full object-cover border"
+              className="h-16 w-16 shrink-0 rounded-full object-cover border"
             />
           </div>
         </div>
