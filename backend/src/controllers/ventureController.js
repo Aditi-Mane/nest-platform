@@ -3,6 +3,7 @@ import Notification from "../models/Notification.js";
 import VentureMessage from "../models/VentureMessage.js";
 import { getIO } from "../config/socket.js";
 import User from "../models/User.js";
+import { sendVentureOfflineMessageEmail } from "../utils/emailNotifications.js";
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -572,16 +573,19 @@ export const toggleEndorse = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { ventureId } = req.params;
-    const venture = await Venture.findById(ventureId).select("creator teamMembers");
+    const venture = await Venture.findById(ventureId)
+      .select("creator teamMembers title")
+      .populate("creator", "_id name email notifications")
+      .populate("teamMembers.user", "_id name email notifications");
 
     if (!venture) {
       return res.status(404).json({ message: "Venture not found" });
     }
 
     const userId = req.user._id.toString();
-    const isCreator = venture.creator.toString() === userId;
+    const isCreator = venture.creator._id.toString() === userId;
     const isConfirmedMember = venture.teamMembers.some(
-      (member) => member.user.toString() === userId && member.confirmed
+      (member) => member.user._id.toString() === userId && member.confirmed
     );
 
     if (!isCreator && !isConfirmedMember) {
@@ -607,16 +611,18 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Message cannot be empty" });
     }
 
-    const venture = await Venture.findById(ventureId).select("creator teamMembers");
+    const venture = await Venture.findById(ventureId)
+      .populate("creator", "name email notifications")
+      .populate("teamMembers.user", "name email notifications");
 
     if (!venture) {
       return res.status(404).json({ message: "Venture not found" });
     }
 
     const userId = req.user._id.toString();
-    const isCreator = venture.creator.toString() === userId;
+    const isCreator = venture.creator._id.toString() === userId;
     const isConfirmedMember = venture.teamMembers.some(
-      (member) => member.user.toString() === userId && member.confirmed
+      (member) => member.user._id.toString() === userId && member.confirmed
     );
 
     if (!isCreator && !isConfirmedMember) {
@@ -632,6 +638,26 @@ export const sendMessage = async (req, res) => {
     const populated = await message.populate("sender", "name avatar");
     const io = getIO();
     io.to(`venture:${ventureId}`).emit("receive_venture_message", populated);
+
+    const allTeamUsers = [
+      venture.creator,
+      ...venture.teamMembers.filter((member) => member.confirmed).map((member) => member.user),
+    ];
+    const isOnline = (userId) => Boolean(io.sockets.adapter.rooms.get(userId)?.size);
+
+    for (const member of allTeamUsers) {
+      const memberId = member._id.toString();
+      if (memberId === req.user._id.toString()) continue;
+      if (!isOnline(memberId)) {
+        await sendVentureOfflineMessageEmail({
+          recipient: member,
+          senderName: req.user.name || "Someone",
+          ventureTitle: venture.title,
+          messageText: text.trim(),
+          ventureId,
+        });
+      }
+    }
 
     res.json(populated);
   } catch (error) {

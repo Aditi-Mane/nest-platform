@@ -9,9 +9,28 @@ export const SocketProvider = ({ children }) => {
   const { user } = useUser();
 
   useEffect(() => {
-    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+    const socketInstance = io(socketUrl, {
       withCredentials: true,
       transports: ["websocket"],
+    });
+
+    socketInstance.on("connect", () => {
+      if (import.meta.env.DEV) {
+        console.log("Socket connected:", socketInstance.id);
+      }
+    });
+
+    socketInstance.on("disconnect", () => {
+      if (import.meta.env.DEV) {
+        console.log("Socket disconnected");
+      }
+    });
+
+    socketInstance.on("connect_error", (error) => {
+      if (import.meta.env.DEV) {
+        console.error("Socket connection error:", error);
+      }
     });
 
     setSocket(socketInstance);
@@ -21,17 +40,38 @@ export const SocketProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ JOIN USER ROOM (FIXED)
+  // ✅ JOIN USER ROOM IMMEDIATELY AFTER SOCKET CONNECTION AND WHEN USER CHANGES
   useEffect(() => {
     if (!socket || !user?._id) return;
 
-    if (socket.connected) {
-      socket.emit("join_user_room", user._id);
-    } else {
-      socket.once("connect", () => {
+    const joinUserRoom = () => {
+      if (socket.connected) {
+        if (import.meta.env.DEV) {
+          console.log('SocketContext: User room join - emitting for user:', user._id);
+        }
         socket.emit("join_user_room", user._id);
-      });
-    }
+        
+        // After joining, request online users to pick up everyone
+        setTimeout(() => {
+          socket.emit("request_online_users");
+        }, 200);
+      } else {
+        // If not connected yet, wait for connection
+        socket.once("connect", () => {
+          if (import.meta.env.DEV) {
+            console.log('SocketContext: Socket now connected, joining user room for:', user._id);
+          }
+          socket.emit("join_user_room", user._id);
+          
+          // After joining, request online users
+          setTimeout(() => {
+            socket.emit("request_online_users");
+          }, 200);
+        });
+      }
+    };
+
+    joinUserRoom();
   }, [socket, user]);
 
   return (

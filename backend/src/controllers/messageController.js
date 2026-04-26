@@ -1,6 +1,7 @@
 import { getIO } from "../config/socket.js";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
+import { sendOfflineChatEmail } from "../utils/emailNotifications.js";
 
 
 //SEND MESSAGE
@@ -15,7 +16,10 @@ export const sendMessage = async (req, res) => {
     }
 
     //Get conversation
-    const conversation = await Conversation.findById(conversationId);
+    const conversation = await Conversation.findById(conversationId)
+      .populate("buyerId", "_id name email notifications")
+      .populate("sellerId", "_id name email notifications")
+      .populate("productId", "name");
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
@@ -23,10 +27,10 @@ export const sendMessage = async (req, res) => {
 
     //Authorization check
     const isSenderBuyer =
-      conversation.buyerId.toString() === senderId.toString();
+      conversation.buyerId._id.toString() === senderId.toString();
 
     const isSenderSeller =
-      conversation.sellerId.toString() === senderId.toString();
+      conversation.sellerId._id.toString() === senderId.toString();
 
     if (!isSenderBuyer && !isSenderSeller) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -35,7 +39,7 @@ export const sendMessage = async (req, res) => {
     // STATUS UPDATE → negotiating
     if (
       conversation.status === "initiated" &&
-      senderId.toString() === conversation.sellerId.toString()
+      senderId.toString() === conversation.sellerId._id.toString()
     ) {
       // Seller replied → move to negotiating
       conversation.status = "negotiating";
@@ -72,15 +76,40 @@ export const sendMessage = async (req, res) => {
 
     io.to(conversationId).emit("receive_message", populatedMessage);
 
-    io.to(conversation.buyerId.toString()).emit("unread_update", {
+    io.to(conversation.buyerId._id.toString()).emit("unread_update", {
         conversationId,
         unreadCountBuyer: conversation.unreadCountBuyer,
       });
 
-    io.to(conversation.sellerId.toString()).emit("unread_update", {
+    io.to(conversation.sellerId._id.toString()).emit("unread_update", {
         conversationId,
         unreadCountSeller: conversation.unreadCountSeller,
       });
+
+    const recipient = isSenderBuyer ? conversation.sellerId : conversation.buyerId;
+    const recipientRole = isSenderBuyer ? "seller" : "buyer";
+    
+    // CORRECT ONLINE DETECTION: Check if room exists AND has active connections
+    const recipientRoom = io.sockets.adapter.rooms.get(recipient._id.toString());
+    const isRecipientOnline = recipientRoom && recipientRoom.size > 0;
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Recipient ${recipient._id} online status:`, isRecipientOnline, 'Active connections:', recipientRoom?.size || 0);
+    }
+
+    if (!isRecipientOnline) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Sending offline email to:', recipient.email);
+      }
+      await sendOfflineChatEmail({
+        recipient,
+        senderName: req.user.name || "Someone",
+        productName: conversation.productId?.name || conversation.productName,
+        messageText: text,
+        conversationId,
+        recipientRole,
+      });
+    }
 
     return res.status(201).json({
       message: "Message sent successfully",

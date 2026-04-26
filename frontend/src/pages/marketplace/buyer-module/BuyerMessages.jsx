@@ -28,7 +28,7 @@ const BuyerMessages = () => {
   const themeColor = "var(--color-primary)";
   const softBorder = "var(--color-border)";
 
-  const { setTotalUnread } = useMessages();
+  const { setTotalUnread, onlineUsers } = useMessages();
 
  
   const navigate = useNavigate();
@@ -234,10 +234,22 @@ useEffect(() => {
     {/* Top Row */}
     <div className="flex items-center justify-between gap-2">
       
-      {/* Name */}
-      <p className="text-sm font-semibold text-gray-900 truncate">
-        {item.sellerId?.name}
-      </p>
+      {/* Name + Online Status */}
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-semibold text-gray-900 truncate">
+          {item.sellerId?.name}
+        </p>
+        
+        {/* Online Indicator */}
+        <div 
+          className={`w-2 h-2 rounded-full shrink-0 ${
+            onlineUsers?.has(item.sellerId?._id) 
+              ? 'bg-green-500' 
+              : 'bg-gray-300'
+          }`}
+          title={onlineUsers?.has(item.sellerId?._id) ? 'Online' : 'Offline'}
+        />
+      </div>
 
       {/* Right Side (Status + Unread) */}
       <div className="flex items-center gap-2 shrink-0">

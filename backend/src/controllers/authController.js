@@ -5,6 +5,7 @@ import { getTransporter } from "../utils/mailer.js";
 import { deleteFromS3 } from "../utils/deleteFromS3.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";
 import { syncAdminRole } from "../utils/adminRoles.js";
+import { sendVerificationSubmittedToAdminsEmail } from "../utils/emailNotifications.js";
 
 export const signup = async (req, res) => {
   try {
@@ -175,6 +176,7 @@ export const verifyAccount = async (req, res) =>{
     user.verificationStatus = "under_review"
 
     await user.save();
+    await sendVerificationSubmittedToAdminsEmail(user);
 
     return res.status(200).json({
       message: "Verification submitted successfully. Await admin approval.",

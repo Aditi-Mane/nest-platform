@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { sendVerificationApprovedEmail } from "../utils/emailNotifications.js";
 
 // GET all user entries
 export const getAllUsers = async (req, res) => {
@@ -21,6 +22,7 @@ export const approveUser = async (req, res) => {
     user.isVerified = true;
 
     await user.save();
+    await sendVerificationApprovedEmail(user);
 
     res.json({ message: "User approved" });
 

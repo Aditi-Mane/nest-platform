@@ -13,9 +13,11 @@ import {
 import api from "../../../api/axios.js";
 import Pagination from "../../../components/Pagination.jsx";
 import { useSocket } from "@/context/SocketContext";
+import { useMessages } from "@/context/MessageContext";
 const SellerMessages = () => {
 
   const socket = useSocket();
+  const { onlineUsers } = useMessages();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeField, setActiveField] = useState(null);
   const [openCard, setOpenCard] = useState(null); // 👈 for dropdown toggle
@@ -261,9 +263,19 @@ const SellerMessages = () => {
                     </div>
 
                     {/* Buyer */}
-                    <p className="text-sm text-muted">
-                      Buyer: {item.buyerId?.name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted">
+                        Buyer: {item.buyerId?.name}
+                      </p>
+                      <div 
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          onlineUsers?.has(item.buyerId?._id) 
+                            ? 'bg-green-500' 
+                            : 'bg-gray-300'
+                        }`}
+                        title={onlineUsers?.has(item.buyerId?._id) ? 'Online' : 'Offline'}
+                      />
+                    </div>
                   </div>
                 </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { MdEdit } from "react-icons/md";
 import api from "../../../api/axios.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../../../context/UserContext.jsx";
 import ReviewModal from "../../../components/ReviewModal.jsx";
 import {
@@ -78,6 +78,7 @@ const Input = ({ label, disabled, ...props }) => (
 export const ProfilePage = () => {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [editingProfile, setEditingProfile] = useState(false);
 
@@ -126,6 +127,17 @@ export const ProfilePage = () => {
   useEffect(() => {
     fetchPurchases();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const reviewProduct = params.get("reviewProduct");
+
+    if (!reviewProduct) return;
+
+    setSelectedProduct(reviewProduct);
+    setIsReviewModalOpen(true);
+    navigate("/marketplace/ProfilePage", { replace: true });
+  }, [location.search, navigate]);
 
   /*  REVIEW */
   const handleReviewSubmitted = () => {
