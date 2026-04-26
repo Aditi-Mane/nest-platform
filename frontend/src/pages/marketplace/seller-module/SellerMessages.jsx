@@ -134,7 +134,7 @@ const SellerMessages = () => {
   };
 
   return (
-    <div className="bg-background min-h-screen p-4 sm:p-6">
+    <div className="min-h-screen bg-background px-0 py-2 sm:py-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">All Buyer Requests</h1>
           <p className="text-muted mt-1">
@@ -174,7 +174,7 @@ const SellerMessages = () => {
           />
         </div>
 
-        <div className="bg-card"
+        <div className="bg-card flex-1"
           style={{
             padding: "12px 16px",
             borderRadius: "12px",
@@ -182,30 +182,32 @@ const SellerMessages = () => {
               activeField === "status"
                 ? `1.5px solid ${themeColor}`
                 : `1.5px solid ${softBorder}`,
-            minWidth: "180px",
           }}
         >
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            onFocus={() => setActiveField("status")}
-            onBlur={() => setActiveField(null)}
-            style={{
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              fontSize: "14px",
-              width: "100%",
-              cursor: "pointer",
-              appearance: "none",
-            }}
-          >
-            <option value="all">All Status</option>
-            <option value="initiated">Initiated</option>
-            <option value="negotiating">Negotiating</option>
-            <option value="deal_confirmed">Deal Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              onFocus={() => setActiveField("status")}
+              onBlur={() => setActiveField(null)}
+              style={{
+                border: "none",
+                outline: "none",
+                background: "transparent",
+                fontSize: "14px",
+                flex: 1,
+                cursor: "pointer",
+                appearance: "none",
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="initiated">Initiated</option>
+              <option value="negotiating">Negotiating</option>
+              <option value="deal_confirmed">Deal Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <ChevronDown size={16} className="text-muted pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -219,15 +221,15 @@ const SellerMessages = () => {
           <p className="text-muted mb-4">No requests yet</p>
         ) : (
           requests.map((item) => (
-            <div className="bg-card rounded-2xl p-4 sm:p-6 mb-4 shadow-[0_3px_8px_rgba(0,0,0,0.04)]"
+            <div className="mb-4 rounded-2xl bg-card p-4 shadow-[0_3px_8px_rgba(0,0,0,0.04)] sm:p-5"
               key={item._id}
             >
               
 
               {/* MAIN CONTENT ROW */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 {/* LEFT SIDE - Product details */}
-                <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                <div className="flex flex-1 items-center gap-3 sm:gap-4">
                   <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
                     <img
                       src={item.productId?.images[0].url || "/placeholder.png"}
@@ -236,23 +238,23 @@ const SellerMessages = () => {
                     />
                   </div>
                   
-                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                  <div className="min-w-0 flex-1">
                     {/* Product + Status row */}
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-base font-medium truncate flex-1 min-w-0">
+                    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <h3 className="truncate text-base font-medium">
                         {item.productId?.name}
                       </h3>
+                      <p className="shrink-0 text-sm font-semibold text-primary">
+                        Rs. {item.productId?.price}
+                      </p>
+                      </div>
 
                       
-                       <span className="text-xs px-3 py-1 rounded-full font-medium shrink-0" 
-                        style={statusStyle(item.status)}
-                        >
-                        {renderIcon(item.status)} {formatStatus(item.status)}
-                      </span>
                     </div>
 
                     {/* Price */}
-                    <div>
+                    <div className="hidden">
                       <p className="text-sm font-semibold text-primary">
                         ₹{item.productId?.price}
                       </p>
@@ -266,7 +268,12 @@ const SellerMessages = () => {
                 </div>
 
                 {/* RIGHT SIDE - Chat button and dropdown */}
-                <div className="flex items-center justify-end gap-3">
+                <div className="flex items-center justify-end gap-3 lg:shrink-0">
+                  <span className="text-xs px-3 py-1 rounded-full font-medium shrink-0" 
+                    style={statusStyle(item.status)}
+                  >
+                    {renderIcon(item.status)} {formatStatus(item.status)}
+                  </span>
                   <div className="relative">
                     <button
                       onClick={async () => {
@@ -357,12 +364,12 @@ const MessageCardSkeleton = () => (
         <div className="space-y-2 flex-1">
           <div className="flex items-center justify-between gap-3">
             <div className="h-4 w-32 rounded bg-background" />
-            <div className="h-6 w-24 rounded-full bg-background sm:hidden" />
           </div>
           <div className="h-3 w-24 rounded bg-background" />
         </div>
       </div>
       <div className="flex items-center justify-end gap-3">
+        <div className="h-6 w-24 rounded-full bg-background" />
         <div className="h-9 w-16 rounded-xl bg-background" />
         <div className="w-6 h-6 rounded bg-background" />
       </div>

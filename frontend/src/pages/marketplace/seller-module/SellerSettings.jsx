@@ -313,7 +313,7 @@ const SellerSettings = () => {
 
   return (
     <div className="min-h-screen bg-background text-text">
-      <div className="p-4 sm:p-6 space-y-8">
+      <div className="space-y-8 px-0 py-2 sm:py-4">
 
         {/* HEADER ROW */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

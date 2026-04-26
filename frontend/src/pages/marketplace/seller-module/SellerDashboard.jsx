@@ -294,7 +294,7 @@ export function SellerDashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-0 py-2 sm:py-4">
       {/* WELCOME BANNER */}
       <div className="mb-8 bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -304,12 +304,12 @@ export function SellerDashboard() {
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             {user?.availableRoles?.includes("admin") && (
               <Link to="/admin">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 border-border bg-card text-text hover:bg-background"
+                  className="flex w-full items-center justify-center gap-2 border-border bg-card text-text hover:bg-background sm:w-auto"
                 >
                   <ShieldCheck className="w-4 h-4" />
                   Admin Dashboard
@@ -317,7 +317,7 @@ export function SellerDashboard() {
               </Link>
             )}
             <Link to="/marketplace/seller/products">
-              <Button className="flex items-center bg-primary gap-2 text-card">
+              <Button className="flex w-full items-center justify-center gap-2 bg-primary text-card sm:w-auto">
                 <Plus className="w-4 h-4" />
                 Add New Product
               </Button>
@@ -637,7 +637,21 @@ export function SellerDashboard() {
             {requests?.length === 0 ? (
               <EmptyBuyerRequestsState />
             ) : (
-              <div className="flex-1 overflow-x-auto">
+              <>
+              <div className="space-y-3 md:hidden">
+                {requests?.slice(0, 5).map((request) => {
+                  const statusInfo = statusConfig[request.status];
+
+                  return (
+                    <BuyerRequestMobileCard
+                      key={request._id}
+                      request={request}
+                      statusInfo={statusInfo}
+                    />
+                  );
+                })}
+              </div>
+              <div className="hidden flex-1 overflow-x-auto md:block">
                 <table className="w-full text-sm">
 
                 {/* TABLE HEADER */}
@@ -726,6 +740,7 @@ export function SellerDashboard() {
 
                 </table>
               </div>
+              </>
             )}
           </Card>
         </div>
@@ -761,7 +776,13 @@ export function SellerDashboard() {
             ) : (
 
               /* ✅ TABLE */
-              <div className="flex-1 overflow-x-auto">
+              <>
+              <div className="space-y-3 md:hidden">
+                {orders.slice(0, 5).map((order) => (
+                  <RecentOrderMobileCard key={order._id} order={order} />
+                ))}
+              </div>
+              <div className="hidden flex-1 overflow-x-auto md:block">
                 <table className="w-full text-sm">
 
                   <thead>
@@ -834,6 +855,7 @@ export function SellerDashboard() {
 
                 </table>
               </div>
+              </>
             )}
           </Card>
         </div>
@@ -890,8 +912,112 @@ const EmptyBuyerRequestsState = () => (
   </div>
 );
 
+const BuyerRequestMobileCard = ({ request, statusInfo }) => (
+  <div className="rounded-2xl border border-border bg-background/70 p-4 shadow-sm">
+    <div className="flex items-start gap-3">
+      {request.productId?.images?.[0]?.url ? (
+        <img
+          src={request.productId.images[0].url}
+          alt={request.productId?.name}
+          className="h-14 w-14 shrink-0 rounded-xl object-cover"
+        />
+      ) : (
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-muted text-xs">
+          No Img
+        </div>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="truncate text-sm font-semibold text-text">
+            {request.productId?.name}
+          </h3>
+          <Badge className={`${statusInfo?.color} shrink-0 border text-[11px]`}>
+            {statusInfo?.label}
+          </Badge>
+        </div>
+
+        <p className="mt-1 text-sm font-semibold text-primary">
+          Rs. {request.productId?.price}
+        </p>
+
+        <div className="mt-3 flex items-center gap-2 text-sm text-muted">
+          {request.buyerId?.avatar ? (
+            <img
+              src={request.buyerId.avatar}
+              alt={request.buyerId?.name}
+              className="h-7 w-7 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-card text-[10px] font-semibold">
+              B
+            </div>
+          )}
+          <span className="truncate">{request.buyerId?.name}</span>
+        </div>
+      </div>
+    </div>
+
+    <Link to={`/marketplace/seller/messages/${request._id}`} className="mt-4 block">
+      <Button size="sm" className="w-full bg-primary text-card">
+        Chat With Buyer
+      </Button>
+    </Link>
+  </div>
+);
+
+const RecentOrderMobileCard = ({ order }) => {
+  const date = new Date(order.createdAt).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const statusUI = getOrderStatusUI(order.status);
+
+  return (
+    <div className="rounded-2xl border border-border bg-background/70 p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        {order.productId?.images?.[0]?.url ? (
+          <img
+            src={order.productId.images[0].url}
+            alt={order.productId?.name}
+            className="h-14 w-14 shrink-0 rounded-xl object-cover"
+          />
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-muted text-xs">
+            No Img
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="truncate text-sm font-semibold text-text">
+              {order.productId?.name}
+            </h3>
+            <p className="shrink-0 text-sm font-semibold text-secondary">
+              â‚¹{(order.amount || order.productId?.price)?.toFixed(2)}
+            </p>
+          </div>
+
+          <p className="mt-1 text-sm text-muted">
+            Buyer: {order.buyerId?.name}
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs text-text">
+              {statusUI.icon}
+              <span>{statusUI.label}</span>
+            </div>
+            <p className="text-xs text-muted">{date}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SellerDashboardSkeleton = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+  <div className="mx-auto max-w-7xl space-y-8 px-0 py-2 sm:py-4">
     <div className="bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-6 border-2 border-primary/20 animate-pulse">
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-3">

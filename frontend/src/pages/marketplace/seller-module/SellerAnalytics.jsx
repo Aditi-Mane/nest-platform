@@ -125,7 +125,7 @@ const SellerAnalytics = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-text px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-background px-0 py-2 text-text sm:py-4">
       <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:justify-between lg:items-center">
         <div>
           <h1 className="text-3xl font-bold">Analytics</h1>
