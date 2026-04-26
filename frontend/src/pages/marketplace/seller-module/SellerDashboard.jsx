@@ -995,7 +995,7 @@ const RecentOrderMobileCard = ({ order }) => {
               {order.productId?.name}
             </h3>
             <p className="shrink-0 text-sm font-semibold text-secondary">
-              â‚¹{(order.amount || order.productId?.price)?.toFixed(2)}
+              ₹{(order.amount || order.productId?.price)?.toFixed(2)}
             </p>
           </div>
 
