@@ -74,7 +74,7 @@ const SellerOrderHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background px-0 py-2 sm:py-4">
+    <div className="min-h-screen bg-background px-4 py-2 sm:py-4 max-w-full overflow-hidden">
       <div className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">Order History</h1>
         <p className="mt-1 text-muted">
@@ -97,7 +97,7 @@ const SellerOrderHistory = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full cursor-pointer appearance-none rounded-2xl border border-border bg-card px-4 py-3 pr-10 text-[14px] outline-none transition focus:border-primary md:min-w-[170px]"
+            className="w-full cursor-pointer appearance-none rounded-2xl border border-border bg-card px-4 py-3 pr-10 text-[14px] outline-none transition focus:border-primary md:min-w-42.5"
             style={{
               backgroundImage:
                 "url(\"data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>\")",
@@ -124,9 +124,9 @@ const SellerOrderHistory = () => {
           orders.map((order) => (
             <div
               key={order._id}
-              className="flex flex-col gap-5 rounded-[18px] bg-card px-4 py-5 shadow-[0_4px_12px_rgba(0,0,0,0.06)] sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8"
+              className="flex flex-col gap-5 rounded-[18px] bg-card px-4 py-5 shadow-[0_4px_12px_rgba(0,0,0,0.06)] sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8 overflow-hidden"
             >
-              <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+              <div className="flex min-w-0 items-start gap-4 sm:gap-5 flex-wrap">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-background text-xl">
                   <img
                     src={order?.productId?.images?.[0]?.url || "/placeholder.png"}
@@ -142,7 +142,7 @@ const SellerOrderHistory = () => {
 
                 <div className="min-w-0">
                   <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
-                    <h2 className="truncate text-md font-semibold text-[#1f1f1f]">
+                    <h2 className="text-md font-semibold text-[#1f1f1f] truncate max-w-45 sm:max-w-full">
                       {order.productId?.name}
                     </h2>
 
@@ -151,7 +151,7 @@ const SellerOrderHistory = () => {
                     </p>
                   </div>
 
-                  <p className="mt-1 text-[13px] text-muted">
+                  <p className="mt-1 text-[13px] text-muted break-all">
                     {order.buyerId?.name} •{" "}
                     {new Date(order.createdAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -168,30 +168,30 @@ const SellerOrderHistory = () => {
                     Amount
                   </p>
 
-                  <h2 className="mt-1 text-[20px] font-semibold text-primary sm:text-[22px]">
+                  <h2 className="mt-1 text-[20px] font-semibold text-primary sm:text-[22px] break-all">
                     ₹{order.totalPrice?.toFixed(2)}
                   </h2>
                 </div>
 
                 <div className="flex flex-col items-start sm:items-end">
                   {order.status === "otp_verified" ? (
-                    <span className="flex items-center gap-1 rounded-full bg-[#e6efdd] px-2.5 py-0.5 text-[15px] font-medium text-muted">
+                    <span className="flex items-center gap-1 rounded-full bg-[#e6efdd] px-2.5 py-0.5 text-[15px] font-medium text-muted break-all">
                       <FiCheckCircle size={12} />
                       OTP verified
                     </span>
                   ) : order.otp &&
                     new Date(order.otpExpiry).getTime() < Date.now() ? (
-                    <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[15px] font-medium text-red-600">
+                    <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[15px] font-medium text-red-600 break-all">
                       <FiClock size={12} />
                       OTP Expired
                     </span>
                   ) : order.status === "otp_generated" ? (
-                    <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-[15px] font-medium text-yellow-700">
+                    <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-[15px] font-medium text-yellow-700 break-all">
                       <FiClock size={12} />
                       OTP Generated
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 rounded-full bg-background px-2.5 py-0.5 text-[15px] font-medium text-primary">
+                    <span className="flex items-center gap-1 rounded-full bg-background px-2.5 py-0.5 text-[15px] font-medium text-primary break-all">
                       <FiClock size={12} />
                       Pending
                     </span>
@@ -200,7 +200,7 @@ const SellerOrderHistory = () => {
                   {otpGeneratingId === order._id ? (
                     <button
                       disabled
-                      className="mt-2 flex items-center gap-1 rounded-md border border-primary bg-gray-200 px-3 py-1 text-[15px] font-medium cursor-not-allowed"
+                      className="mt-2 flex items-center gap-1 rounded-md border border-primary bg-gray-200 px-3 py-1 text-[15px] font-medium cursor-not-allowed break-all"
                     >
                       Generating...
                     </button>
@@ -208,14 +208,14 @@ const SellerOrderHistory = () => {
                     new Date(order.otpExpiry).getTime() > Date.now() ? (
                     <button
                       onClick={() => handleVerifyOtp(order._id)}
-                      className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-green-600 px-3 py-1 text-[15px] font-medium text-green-700 transition hover:bg-green-600 hover:text-white sm:w-auto"
+                      className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-green-600 px-3 py-1 text-[15px] font-medium text-green-700 transition hover:bg-green-600 hover:text-white sm:w-auto break-all"
                     >
                       Verify OTP
                     </button>
                   ) : (
                     <button
                       onClick={() => handleGenerateOtp(order._id)}
-                      className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-primary px-3 py-1 text-[15px] font-medium text-[#1f1f1f] transition hover:bg-primary hover:text-white sm:w-auto"
+                      className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-primary px-3 py-1 text-[15px] font-medium text-[#1f1f1f] transition hover:bg-primary hover:text-white sm:w-auto break-all"
                     >
                       Generate OTP
                     </button>
