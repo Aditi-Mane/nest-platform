@@ -281,6 +281,76 @@ console.log("UPDATED STATUS:", conversation?.status);
   }
 };
 
+  const renderPurchaseCard = (className = "") => (
+    <Card className={`rounded-2xl border-border top-24 self-start ${className}`.trim()}>
+      <CardContent className="p-6 space-y-4">
+        <Button
+          size="lg"
+          className={`w-full rounded-xl border transition-all duration-200
+            ${getSoftButtonStyle(product?.status, conversation?.status, "cart")}
+            ${getSoftHover(product?.status, conversation?.status, "cart")}
+            shadow-none!
+          `}
+          disabled={isUnavailable}
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart className="h-5 w-5 mr-2" />
+          {product?.status === "sold"
+            ? "Sold Out"
+            : product?.status === "reserved"
+            ? "Reserved"
+            : "Add to Cart"}
+        </Button>
+
+        <Button
+          size="lg"
+          className={`w-full rounded-xl border 
+            ${getButtonStyle(conversationStatus, productStatus)}
+            ${getHoverStyle(conversationStatus, productStatus)}
+            shadow-none! transition-all`}
+          disabled={isContactButtonDisabled(conversationStatus, productStatus)}
+          onClick={async () => {
+            try {
+              await addToCart(product._id);
+
+              let conversationId = conversation?._id;
+
+              if (
+                !conversationId ||
+                conversation?.status === "cancelled" ||
+                conversation?.status === "completed"
+              ) {
+                const res = await api.post("/conversations/create", {
+                  productId: product._id,
+                });
+
+                const newConversation = res.data.conversation;
+
+                conversationId = newConversation._id;
+
+                setConversation(newConversation);
+              }
+
+              navigate(`/marketplace/buyer/messages/${conversationId}`);
+            } catch (error) {
+              console.error(error);
+              alert("Something went wrong");
+            }
+          }}
+        >
+          <MessageSquare className="h-5 w-5 mr-2" />
+          {getContactButtonText(conversationStatus, productStatus)}
+        </Button>
+
+        <div className="text-center text-sm text-muted-foreground">
+          <Shield className="h-5 w-5 mx-auto mb-2" />
+          <p>Secure payment through Nest</p>
+          <p>Money-back guarantee</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   const similarItems = [
     {
       name: "General Chemistry Notes",
@@ -447,6 +517,9 @@ if (!product) {
 
               </CardContent>
             </Card>
+            <div className="lg:hidden">
+              {renderPurchaseCard()}
+            </div>
            {/* Reviews Section */}
 <Card className="rounded-2xl bg-card/80 backdrop-blur-sm border-border shadow-sm">
   <CardHeader>
@@ -543,77 +616,9 @@ if (!product) {
         
             {/* Sidebar */}
           <div className="space-y-6">
-                   {/* Purchase Card */}
-            <Card className="rounded-2xl border-border top-24 self-start">
-              <CardContent className="p-6 space-y-4">
-          <Button
-                  size="lg"
-                  className={`w-full rounded-xl border transition-all duration-200
-                    ${getSoftButtonStyle(product?.status,conversation?.status, "cart")}
-                    ${getSoftHover(product?.status,conversation?.status, "cart")}
-                    shadow-none!
-                  `}
-                  disabled={isUnavailable}
-                  onClick={handleAddToCart}
-                >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  {product?.status === "sold"
-                    ? "Sold Out"
-                    : product?.status === "reserved"
-                    ? "Reserved"
-                    : "Add to Cart"}
-                </Button>
-
-          <Button
-                  size="lg"
-                  className={`w-full rounded-xl border 
-                    ${getButtonStyle(conversationStatus, productStatus)}
-                    ${getHoverStyle(conversationStatus, productStatus)}
-                    shadow-none! transition-all`}
-                    disabled={isContactButtonDisabled(conversationStatus, productStatus)}
-                  onClick={async () => {
-                          try {
-
-                            await addToCart(product._id);
-
-                            let conversationId = conversation?._id;
-
-                            // Create NEW conversation if previous one ended
-                            if (
-                              !conversationId ||
-                              conversation?.status === "cancelled" ||
-                              conversation?.status === "completed"
-                            ) {
-                              const res = await api.post("/conversations/create", {
-                                productId: product._id,
-                              });
-
-                              const newConversation = res.data.conversation;
-
-                              conversationId = newConversation._id;
-
-                              setConversation(newConversation);
-                            }
-
-                            navigate(`/marketplace/buyer/messages/${conversationId}`);
-
-                          } catch (error) {
-                            console.error(error);
-                            alert("Something went wrong");
-                          }
-                }}
-                >
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  {getContactButtonText(conversationStatus, productStatus)}
-                </Button>
-
-                <div className="text-center text-sm text-muted-foreground">
-                  <Shield className="h-5 w-5 mx-auto mb-2" />
-                  <p>Secure payment through Nest</p>
-                  <p>Money-back guarantee</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="hidden lg:block">
+              {renderPurchaseCard()}
+            </div>
 
             {/* Seller Card */}
            

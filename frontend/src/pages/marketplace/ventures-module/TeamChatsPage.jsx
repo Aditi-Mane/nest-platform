@@ -82,7 +82,7 @@ export default function TeamChatsPage() {
 
   return (
     <div className="h-[calc(100vh-72px)] overflow-hidden bg-gray-50">
-      <div className="max-w-7xl mx-auto h-full px-4 py-0 md:px-4 md:py-4">
+      <div className="mx-auto h-full max-w-7xl px-0 py-0 md:px-4 md:py-4">
         
         <div className="mb-4">
      
@@ -92,7 +92,7 @@ export default function TeamChatsPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="h-full">
+          <div className="flex h-full flex-col">
             <JoinedVentures
               teams={joinedVenturesData}
               initialSelectedVentureId={resolvedInitialId}

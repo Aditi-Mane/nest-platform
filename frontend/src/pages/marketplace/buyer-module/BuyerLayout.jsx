@@ -66,7 +66,7 @@ export default function BuyerLayout(){
       : location.pathname.includes("ventures")
       ? "ventures"
       : location.pathname.includes("ProfilePage")
-      ? "ProfilePage"
+      ? "profile"
       : "marketplace";
 
   const isSellerVenturesView =

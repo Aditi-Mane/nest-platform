@@ -160,7 +160,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
 
   return (
     <Card
-      className="p-5 rounded-2xl border border-border/60 bg-card backdrop-blur-sm 
+      className="p-4 sm:p-5 rounded-2xl border border-border/60 bg-card backdrop-blur-sm 
                  hover:shadow-lg hover:-translate-y-1 transition-all duration-300 
                  cursor-pointer flex flex-col group"
       onClick={() => onNavigate(`/marketplace/buyer/ventures/${idea._id}`)}
@@ -184,7 +184,7 @@ function VentureCard({ idea, onNavigate, isOwner = false, onDelete, onOpenChatro
       </div>
 
       {/* ── Title ── */}
-      <h3 className="font-semibold text-[17px] mb-1 leading-snug 
+      <h3 className="font-semibold text-base sm:text-[17px] mb-1 leading-snug
                      group-hover:text-primary transition">
         {idea.title}
       </h3>
@@ -445,22 +445,35 @@ export default function VenturesPage() {
 
         {/* ── Header ── */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Lightbulb className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold">Student Ventures</h1>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            
+            {/* Left Content */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <Lightbulb className="h-7 w-7 sm:h-8 sm:w-8 text-primary shrink-0" />
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+                  Student Ventures
+                </h1>
+              </div>
+
+              <p className="text-sm sm:text-base text-muted-foreground mt-2">
+                Collaborate with talented students, build innovative products, and pitch to investors.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Right Buttons */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl border-border text-text"
+                className="flex-1 sm:flex-none gap-2 rounded-xl border-border text-text"
                 onClick={() => navigate("/marketplace/buyer/ventures/chats")}
               >
                 <MessageCircle className="h-4 w-4 text-text" />
                 Chat Teams
               </Button>
+
               <Button
-                className="gap-2 rounded-xl text-card"
+                className="flex-1 sm:flex-none gap-2 rounded-xl text-card"
                 onClick={() => navigate("/marketplace/buyer/ventures/create")}
               >
                 <Plus className="h-4 w-4 text-card" />
@@ -468,9 +481,6 @@ export default function VenturesPage() {
               </Button>
             </div>
           </div>
-          <p className="text-muted-foreground mt-1">
-            Collaborate with talented students, build innovative products, and pitch to investors.
-          </p>
         </div>
 
         {/* ── Stats ── */}
@@ -534,9 +544,9 @@ export default function VenturesPage() {
                     className="pl-10 rounded-xl border-border focus-visible:ring-secondary"
                   />
                 </div>
-                <div className="flex gap-2 flex-wrap items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 w-full lg:w-auto">
                   <Select value={sort} onValueChange={setSort}>
-                    <SelectTrigger className="w-40 rounded-xl border-border">
+                    <SelectTrigger className="w-full sm:w-40 rounded-xl border-border">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
@@ -547,7 +557,7 @@ export default function VenturesPage() {
                   </Select>
 
                   <Select value={selectedStage} onValueChange={setSelectedStage}>
-                    <SelectTrigger className="w-44 rounded-xl border-border">
+                    <SelectTrigger className="w-full sm:w-44 rounded-xl border-border">
                       <SelectValue placeholder="All Stages" />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
