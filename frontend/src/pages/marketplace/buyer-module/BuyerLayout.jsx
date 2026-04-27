@@ -3,11 +3,13 @@ import api from '../../../api/axios.js'
 import { Outlet, useLocation, useNavigate} from "react-router-dom"
 import {Navigation} from "../../../components/Navigation.jsx";
 import { useUser } from "../../../context/UserContext.jsx";
+import { useSocket } from "../../../context/SocketContext.jsx";
 
 export default function BuyerLayout(){
   const location = useLocation();
   const navigate= useNavigate();
   const { user } = useUser();
+  const socket = useSocket();
 
   const [products, setProducts] = useState([]);
   const [favourites, setFavourites] = useState([]);
@@ -29,7 +31,7 @@ export default function BuyerLayout(){
           `/wishlist`
         );
 
-        setFavourites(res.data.map((product) => product._id));
+        setFavourites(res.data);
 
       } catch (error) {
         console.error("Error fetching wishlist:", error);
@@ -38,6 +40,21 @@ export default function BuyerLayout(){
     fetchProducts();
     fetchWishlist();
   }, []);
+
+  // Listen for real-time wishlist updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleWishlistUpdate = (data) => {
+      setFavourites(data.wishlist);
+    };
+
+    socket.on("wishlist_updated", handleWishlistUpdate);
+
+    return () => {
+      socket.off("wishlist_updated", handleWishlistUpdate);
+    };
+  }, [socket]);
 
   // favourite Handler
   const toggleFavourite = async (productId) => {

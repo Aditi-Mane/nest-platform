@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "@/api/axios";
 import { useSocket } from "./SocketContext";
+import { useUser } from "./UserContext";
 
 const MessageContext = createContext();
 
@@ -9,6 +10,7 @@ export const MessageProvider = ({ children }) => {
   const [unreadMap, setUnreadMap] = useState({});
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const socket = useSocket();
+  const { user } = useUser();
 
   
 
@@ -124,6 +126,63 @@ export const MessageProvider = ({ children }) => {
       socket.off("online_users_list", handleOnlineUsersList);
     };
   }, [socket]);
+
+  // MESSAGE NOTIFICATION SOUND
+  useEffect(() => {
+    if (!socket) return;
+
+    const playNotificationSound = () => {
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.volume = 0.3; // Set volume to 30% to not be too loud
+        audio.play().catch(err => {
+          // Silently fail if audio can't play (browser restrictions, etc.)
+          if (import.meta.env.DEV) {
+            console.log('Could not play notification sound:', err);
+          }
+        });
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.log('Error creating audio:', error);
+        }
+      }
+    };
+
+    const handleMessageReceived = (message) => {
+      if (import.meta.env.DEV) {
+        console.log('Message received event:', message);
+        console.log('Current user:', user);
+      }
+
+      // Get sender ID - handle both object and string formats
+      const senderId = typeof message.senderId === 'object' 
+        ? message.senderId._id 
+        : message.senderId;
+      
+      const currentUserId = user?._id;
+
+      // Only play sound for messages from other users, not our own messages
+      if (senderId && currentUserId && senderId !== currentUserId) {
+        // Don't play if document is hidden (user is in another tab/minimized)
+        // But DO play even if on messages page - user should hear it
+        const isDocumentVisible = !document.hidden;
+        
+        if (import.meta.env.DEV) {
+          console.log('Checking sound conditions - senderId:', senderId, 'currentUserId:', currentUserId, 'visible:', isDocumentVisible);
+        }
+
+        if (isDocumentVisible) {
+          playNotificationSound();
+        }
+      }
+    };
+
+    socket.on("receive_message", handleMessageReceived);
+
+    return () => {
+      socket.off("receive_message", handleMessageReceived);
+    };
+  }, [socket, user]);
 
   return (
     <MessageContext.Provider

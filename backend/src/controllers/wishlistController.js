@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { getIO } from "../config/socket.js";
 
 //Get wishlist
 export const getWishlist = async (req, res) => {
@@ -11,7 +12,7 @@ export const getWishlist = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(user.wishlist);
+    res.json(user.wishlist.map(product => product._id));
   } catch (error) {
     console.error("GET Wishlist Error:", error); // 👈 important
     res.status(500).json({ message: error.message });
@@ -43,7 +44,17 @@ export const toggleWishlist = async (req, res) => {
 
     await user.save();
 
-    res.json({ wishlist: user.wishlist });
+    // Get the updated populated wishlist to filter out invalid products
+    const updatedUser = await User.findById(userId).populate("wishlist");
+
+    // Emit socket event to update wishlist count in real-time
+    const io = getIO();
+    io.to(userId.toString()).emit("wishlist_updated", { 
+      wishlist: updatedUser.wishlist.map(product => product._id),
+      count: updatedUser.wishlist.length 
+    });
+
+    res.json({ wishlist: updatedUser.wishlist.map(product => product._id) });
 
   } catch (error) {
     console.error("TOGGLE Wishlist Error:", error); // 👈 important

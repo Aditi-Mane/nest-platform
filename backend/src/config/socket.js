@@ -2,6 +2,9 @@ import { Server } from "socket.io";
 
 let io;
 
+// Track user connections: userId -> Set of socket IDs
+const userConnections = new Map();
+
 export const initSocket = (server) => {
 
   //attaches socket to server
@@ -25,6 +28,7 @@ export const initSocket = (server) => {
         }
       },
       methods: ["GET", "POST", "PATCH"],
+      credentials: true,
     },
   });
 
@@ -35,17 +39,26 @@ export const initSocket = (server) => {
   socket.on("join_user_room", (userId) => {
     console.log(`User ${socket.id} joining user room: ${userId}`);
     socket.userId = userId; // Store for disconnect handler
+    
+    // Track this connection
+    if (!userConnections.has(userId)) {
+      userConnections.set(userId, new Set());
+    }
+    userConnections.get(userId).add(socket.id);
+    
     socket.join(userId);
     
-    // Broadcast that user is now online
-    io.emit("user_online", { userId });
+    // Only broadcast online if this is the first connection for this user
+    if (userConnections.get(userId).size === 1) {
+      io.emit("user_online", { userId });
+    }
   });
 
   socket.on("request_online_users", () => {
-    // Send back all currently online users
-    const onlineUserIds = Array.from(io.sockets.sockets.values())
-      .filter(s => s.userId)
-      .map(s => s.userId);
+    // Send back all currently online users (users with at least one active connection)
+    const onlineUserIds = Array.from(userConnections.keys()).filter(userId => 
+      userConnections.get(userId).size > 0
+    );
     
     socket.emit("online_users_list", { userIds: onlineUserIds });
   });
@@ -70,7 +83,18 @@ export const initSocket = (server) => {
       
       // Get the user ID from the socket data if we stored it
       if (socket.userId) {
-        io.emit("user_offline", { userId: socket.userId });
+        const userId = socket.userId;
+        
+        // Remove this connection from tracking
+        if (userConnections.has(userId)) {
+          userConnections.get(userId).delete(socket.id);
+          
+          // Only broadcast offline if this was the last connection for this user
+          if (userConnections.get(userId).size === 0) {
+            userConnections.delete(userId);
+            io.emit("user_offline", { userId });
+          }
+        }
       }
     });
   });

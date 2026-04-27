@@ -9,28 +9,31 @@ export const SocketProvider = ({ children }) => {
   const { user } = useUser();
 
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+    // Use the same base URL as the API, but remove /api suffix for socket connection
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const socketUrl = apiUrl.replace("/api", "");
     const socketInstance = io(socketUrl, {
       withCredentials: true,
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
+      upgrade: true,
+      rememberUpgrade: true,
+      timeout: 20000,
+      forceNew: false,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     socketInstance.on("connect", () => {
-      if (import.meta.env.DEV) {
-        console.log("Socket connected:", socketInstance.id);
-      }
+      console.log("Socket connected:", socketInstance.id, "URL:", socketUrl);
     });
 
     socketInstance.on("disconnect", () => {
-      if (import.meta.env.DEV) {
-        console.log("Socket disconnected");
-      }
+      console.log("Socket disconnected");
     });
 
     socketInstance.on("connect_error", (error) => {
-      if (import.meta.env.DEV) {
-        console.error("Socket connection error:", error);
-      }
+      console.error("Socket connection error:", error, "URL:", socketUrl);
     });
 
     setSocket(socketInstance);
@@ -46,9 +49,7 @@ export const SocketProvider = ({ children }) => {
 
     const joinUserRoom = () => {
       if (socket.connected) {
-        if (import.meta.env.DEV) {
-          console.log('SocketContext: User room join - emitting for user:', user._id);
-        }
+        console.log('SocketContext: User room join - emitting for user:', user._id);
         socket.emit("join_user_room", user._id);
         
         // After joining, request online users to pick up everyone
@@ -58,9 +59,7 @@ export const SocketProvider = ({ children }) => {
       } else {
         // If not connected yet, wait for connection
         socket.once("connect", () => {
-          if (import.meta.env.DEV) {
-            console.log('SocketContext: Socket now connected, joining user room for:', user._id);
-          }
+          console.log('SocketContext: Socket now connected, joining user room for:', user._id);
           socket.emit("join_user_room", user._id);
           
           // After joining, request online users
