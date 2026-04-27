@@ -3,6 +3,10 @@ import Venture from "../models/Venture.js";
 import Notification from "../models/Notification.js";
 import VentureMessage from "../models/VentureMessage.js";
 import { getIO } from "../config/socket.js";
+import {
+  sendVentureApplicationEmail,
+  sendVentureAcceptanceEmail,
+} from "../utils/emailNotifications.js";
 
 const notify = async ({ recipient, type, message, link, venture, application, triggeredBy }) => {
   await Notification.create({ recipient, type, message, link, venture, application, triggeredBy });
@@ -10,7 +14,7 @@ const notify = async ({ recipient, type, message, link, venture, application, tr
 
 export const applyToVenture = async (req, res) => {
   try {
-    const venture = await Venture.findById(req.params.id);
+    const venture = await Venture.findById(req.params.id).populate("creator", "name email");
     if (!venture) return res.status(404).json({ message: "Venture not found" });
 
     if (venture.creator.toString() === req.user._id.toString())
@@ -56,6 +60,15 @@ export const applyToVenture = async (req, res) => {
       triggeredBy: req.user._id,
     });
 
+    // Send email to venture creator
+    await sendVentureApplicationEmail({
+      creator: venture.creator,
+      applicantName: req.user.name,
+      ventureTitle: venture.title,
+      roleAppliedFor,
+      ventureId: venture._id,
+    });
+
     res.status(201).json({ application });
   } catch (err) {
     if (err.code === 11000)
@@ -91,7 +104,7 @@ export const respondToApplication = async (req, res) => {
     if (venture.creator.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Not authorised" });
 
-    const application = await Application.findById(req.params.appId);
+    const application = await Application.findById(req.params.appId).populate("applicant", "name email");
     if (!application) return res.status(404).json({ message: "Application not found" });
 
     const { status, creatorNote } = req.body;
@@ -156,6 +169,14 @@ export const respondToApplication = async (req, res) => {
         venture: venture._id,
         application: application._id,
         triggeredBy: req.user._id,
+      });
+
+      // Send email to accepted applicant
+      await sendVentureAcceptanceEmail({
+        applicant: application.applicant,
+        ventureTitle: venture.title,
+        roleAccepted: application.roleAppliedFor,
+        ventureId: venture._id,
       });
     } else {
       await notify({

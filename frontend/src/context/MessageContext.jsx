@@ -7,6 +7,7 @@ const MessageContext = createContext();
 export const MessageProvider = ({ children }) => {
   const [totalUnread, setTotalUnread] = useState(0);
   const [unreadMap, setUnreadMap] = useState({});
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
   const socket = useSocket();
 
   
@@ -44,22 +45,22 @@ export const MessageProvider = ({ children }) => {
     fetchUnread();
   }, []);
 
-  //  REAL-TIME SOCKET UPDATE
+  //  REAL-TIME SOCKET UPDATE - Listen for unread updates on ALL pages
   useEffect(() => {
     if (!socket) return;
 
     const handler = (data) => {
+      if (import.meta.env.DEV) {
+        console.log('MessageContext: Received unread_update:', data);
+      }
+      
       const count = isSeller
         ? data.unreadCountSeller ?? 0
         : data.unreadCountBuyer ?? 0;
 
-    const activeConversationId = window.location.pathname.split("/").pop();
-
       setUnreadMap((prev) => {
-         const updated = { ...prev };
+        const updated = { ...prev };
         updated[data.conversationId] = count;
-        
-
 
         const total = Object.values(updated).reduce(
           (sum, val) => sum + val,
@@ -67,6 +68,10 @@ export const MessageProvider = ({ children }) => {
         );
 
         setTotalUnread(total);
+        
+        if (import.meta.env.DEV) {
+          console.log('MessageContext: Updated unread map:', updated, 'Total:', total);
+        }
 
         return updated;
       });
@@ -77,9 +82,52 @@ export const MessageProvider = ({ children }) => {
     return () => socket.off("unread_update", handler);
   }, [socket, isSeller]);
 
+  // LISTEN FOR ONLINE/OFFLINE EVENTS
+  useEffect(() => {
+    if (!socket) return;
+
+    // Request initial list of online users
+    socket.emit("request_online_users");
+
+    const handleUserOnline = (data) => {
+      if (import.meta.env.DEV) {
+        console.log('User online:', data.userId);
+      }
+      setOnlineUsers((prev) => new Set([...prev, data.userId]));
+    };
+
+    const handleUserOffline = (data) => {
+      if (import.meta.env.DEV) {
+        console.log('User offline:', data.userId);
+      }
+      setOnlineUsers((prev) => {
+        const updated = new Set(prev);
+        updated.delete(data.userId);
+        return updated;
+      });
+    };
+
+    const handleOnlineUsersList = (data) => {
+      if (import.meta.env.DEV) {
+        console.log('Received online users list:', data.userIds);
+      }
+      setOnlineUsers(new Set(data.userIds));
+    };
+
+    socket.on("user_online", handleUserOnline);
+    socket.on("user_offline", handleUserOffline);
+    socket.on("online_users_list", handleOnlineUsersList);
+
+    return () => {
+      socket.off("user_online", handleUserOnline);
+      socket.off("user_offline", handleUserOffline);
+      socket.off("online_users_list", handleOnlineUsersList);
+    };
+  }, [socket]);
+
   return (
     <MessageContext.Provider
-      value={{ totalUnread, unreadMap, setTotalUnread, fetchUnread }}
+      value={{ totalUnread, unreadMap, setTotalUnread, fetchUnread, onlineUsers }}
     >
       {children}
     </MessageContext.Provider>

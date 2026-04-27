@@ -4,13 +4,18 @@ import Cart from "../models/Cart.js"
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
-import { getTransporter } from "../utils/mailer.js";
 import mongoose from "mongoose";
 import Review from "../models/Review.js";
 import { paginate } from "../utils/paginate.js";
 import { uploadToS3 } from "../utils/uploadToS3.js";
 import { deleteFromS3 } from "../utils/deleteFromS3.js";
 import ProductView from "../models/ProductView.js";
+import {
+  sendDealCancelledEmail,
+  sendDealConfirmedEmail,
+  sendOrderCompletedReviewEmail,
+  sendOrderOtpEmail,
+} from "../utils/emailNotifications.js";
 
 const getStatusFromStock = (stock) => (stock === 0 ? "sold" : "available");
 
@@ -434,7 +439,13 @@ export const confirmDeal = async (req, res) => {
     }
 
     const product = await Product.findById(conversation.productId);
-    const buyer = await User.findById(conversation.buyerId);
+    const buyer = await User.findById(conversation.buyerId).select("name email");
+
+    if (!buyer) {
+      return res.status(404).json({
+        message: "Buyer not found",
+      });
+    }
 
     if(!product) {
       return res.status(404).json({
@@ -490,6 +501,15 @@ export const confirmDeal = async (req, res) => {
     //update conversation
     conversation.status = "deal_confirmed";
     await conversation.save();
+    await sendDealConfirmedEmail({
+      buyer,
+      sellerName: req.user.name,
+      productName: product.name,
+      quantity: quantityNum,
+      pricePerItem: priceNum,
+      totalPrice,
+      paymentMethod,
+    });
 
     return res.status(201).json({
       message: "Deal confirmed and order created",
@@ -531,8 +551,12 @@ export const cancelDeal = async (req, res) =>{
     const existingOrder = await Order.findOne({ conversationId })
 
     // restore stock if order exists
+    let buyer = null;
+    let productName = conversation.productName;
     if(existingOrder) {
       const product = await Product.findById(conversation.productId);
+      buyer = await User.findById(existingOrder.buyerId).select("name email");
+      productName = existingOrder.productName || product?.name || productName;
 
       if(product) {
         product.stock += existingOrder.quantity;
@@ -551,6 +575,11 @@ export const cancelDeal = async (req, res) =>{
     //update conversation status
     conversation.status = "cancelled";
     await conversation.save();
+    await sendDealCancelledEmail({
+      buyer: buyer || await User.findById(conversation.buyerId).select("name email"),
+      sellerName: req.user.name,
+      productName,
+    });
 
     return res.status(200).json({
       message: "Deal cancelled",
@@ -615,10 +644,9 @@ export const getSellerOrders = async (req, res) =>{
 
 export const generateOrderOtp = async (req, res) => {
   try {
-    const transporter = getTransporter();
     const { orderId } = req.body;
 
-    const order = await Order.findById(orderId).populate("buyerId", "email");
+    const order = await Order.findById(orderId).populate("buyerId", "name email");
 
     if(!order) {
       return res.status(404).json({
@@ -650,20 +678,10 @@ export const generateOrderOtp = async (req, res) => {
     order.status = "otp_generated";
 
     await order.save();
-
-    await transporter.sendMail({
-      from: process.env.MAIL_FROM,
-      to: order.buyerId.email,
-      subject: "Order Delivery Confirmation OTP - NEST",
-      html: `
-        <div style="font-family: Arial; padding: 20px;">
-          <h2>Order Delivery Confirmation</h2>
-          <p>Your OTP is:</p>
-          <h1 style="letter-spacing: 5px;">${otp}</h1>
-          <p>This OTP will expire in 2 minutes.</p>
-          <p>If you did not request this, ignore this email.</p>
-        </div>
-      `,
+    await sendOrderOtpEmail({
+      buyer: order.buyerId,
+      otp: otp.toString(),
+      productName: order.productName,
     });
 
     return res.status(200).json({
@@ -688,7 +706,9 @@ export const verifyOrderOtp = async (req, res) => {
       return res.status(400).json({ message: "OTP is required" });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId)
+      .populate("buyerId", "name email")
+      .populate("productId", "name");
 
     if (!order) {
       return res.status(404).json({ message: "Order doesn't exist" });
@@ -706,7 +726,7 @@ export const verifyOrderOtp = async (req, res) => {
     if (new Date(order.otpExpiry).getTime() < Date.now()) {
 
       const conversation = await Conversation.findById(order.conversationId);
-      const product = await Product.findById(order.productId);
+      const product = await Product.findById(order.productId?._id || order.productId);
 
       if (conversation) {
         conversation.status = "negotiating";
@@ -754,7 +774,7 @@ export const verifyOrderOtp = async (req, res) => {
     );
 
 
-    const product = await Product.findById(order.productId);
+    const product = await Product.findById(order.productId?._id || order.productId);
 
     if (product) {
       if (product.status !== "deleted") {
@@ -765,8 +785,8 @@ export const verifyOrderOtp = async (req, res) => {
     }
 
     await Cart.updateOne(
-      { user: order.buyerId },
-      { $pull: { items: { product: order.productId } } }
+      { user: order.buyerId._id || order.buyerId },
+      { $pull: { items: { product: order.productId._id || order.productId } } }
     );
 
     const conversation = await Conversation.findById(order.conversationId);
@@ -775,6 +795,12 @@ export const verifyOrderOtp = async (req, res) => {
       conversation.status = "completed";
       await conversation.save();
     }
+    await sendOrderCompletedReviewEmail({
+      buyer: order.buyerId,
+      sellerName: req.user.name,
+      productName: order.productName || order.productId?.name,
+      productId: order.productId?._id || order.productId,
+    });
 
     return res.status(200).json({
       message: "OTP verified successfully. Order completed.",

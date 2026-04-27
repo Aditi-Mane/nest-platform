@@ -20,7 +20,12 @@ const BuyerMessages = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { setTotalUnread } = useMessages();
+
+  const themeColor = "var(--color-primary)";
+  const softBorder = "var(--color-border)";
+
+  const { setTotalUnread, onlineUsers } = useMessages();
+
 
  
   const navigate = useNavigate();
@@ -54,7 +59,7 @@ const BuyerMessages = () => {
 
     case "completed":
       return (
-      <span className={`${base} bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-sm`}>
+      <span className={`${base} bg-linear-to-r from-yellow-400 to-amber-500 text-white shadow-sm`}>
         <Trophy size={10} /> Completed
       </span>
     );
@@ -230,10 +235,22 @@ useEffect(() => {
     {/* Top Row */}
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       
-      {/* Name */}
-      <p className="truncate text-sm font-semibold text-gray-900">
-        {item.sellerId?.name}
-      </p>
+      {/* Name + Online Status */}
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-semibold text-gray-900 truncate">
+          {item.sellerId?.name}
+        </p>
+        
+        {/* Online Indicator */}
+        <div 
+          className={`w-2 h-2 rounded-full shrink-0 ${
+            onlineUsers?.has(item.sellerId?._id) 
+              ? 'bg-green-500' 
+              : 'bg-gray-300'
+          }`}
+          title={onlineUsers?.has(item.sellerId?._id) ? 'Online' : 'Offline'}
+        />
+      </div>
 
       {/* Right Side (Status + Unread) */}
       <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -243,7 +260,7 @@ useEffect(() => {
 
         {/* Unread Badge */}
         {item.unreadCountBuyer > 0 && (
-          <span className="bg-green-600 text-white text-[10px] px-2 py-[2px] rounded-full font-medium">
+          <span className="bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
             {item.unreadCountBuyer}
           </span>
         )}
