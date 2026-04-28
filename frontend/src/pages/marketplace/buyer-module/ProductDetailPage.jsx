@@ -483,9 +483,9 @@ if (!product) {
                 <div className="grid md:grid-cols-2 gap-2">
                   {product.whatsIncluded?.length > 0 ? (
                     product.whatsIncluded.map((f, i) => (
-                      <div key={i} className="flex gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
-                        <span className="text-sm">{f}</span>
+                      <div key={i} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-[#10B981]" />
+                        <span className="text-sm leading-relaxed">{f}</span>
                       </div>
                     ))
                   ) : (

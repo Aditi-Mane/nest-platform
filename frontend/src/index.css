@@ -38,4 +38,9 @@
   outline: none !important;
   box-shadow: none !important;
 }
-
+html,
+body,
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}

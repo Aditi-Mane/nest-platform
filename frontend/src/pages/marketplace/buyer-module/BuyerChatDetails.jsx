@@ -30,7 +30,6 @@ const BuyerChatDetails = () => {
 
   useEffect(() => {
     if (!socket || !conversationId) return;
-
     socket.emit("join_conversation", conversationId);
   }, [socket, conversationId]);
 
@@ -54,10 +53,7 @@ const BuyerChatDetails = () => {
     };
 
     socket.on("receive_message", handleReceive);
-
-    return () => {
-      socket.off("receive_message", handleReceive);
-    };
+    return () => socket.off("receive_message", handleReceive);
   }, [socket, conversationId]);
 
   useEffect(() => {
@@ -69,7 +65,6 @@ const BuyerChatDetails = () => {
         console.error(err);
       }
     };
-
     fetchUser();
   }, []);
 
@@ -82,9 +77,7 @@ const BuyerChatDetails = () => {
       }
     };
 
-    if (conversationId) {
-      markAsRead();
-    }
+    if (conversationId) markAsRead();
   }, [conversationId]);
 
   useEffect(() => {
@@ -179,8 +172,9 @@ const BuyerChatDetails = () => {
   const isChatLocked = conversationInfo?.status === "cancelled";
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white">
-      <div className="flex h-full min-h-0 w-full flex-col shadow-sm md:h-[90vh]">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white">
+      <div className="flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden shadow-sm md:h-[90vh]">
+        
         <div className="border-b border-border px-4 py-3 sm:px-5 sm:py-4">
           <button
             onClick={() => navigate("/marketplace/buyer/messages")}
@@ -209,9 +203,7 @@ const BuyerChatDetails = () => {
                   {conversationInfo?.sellerId?.name}
                 </h2>
                 <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-muted">
-                  <p className="truncate">
-                    {conversationInfo?.productId?.name}
-                  </p>
+                  <p className="truncate">{conversationInfo?.productId?.name}</p>
                   <span aria-hidden="true">|</span>
                   <p className="text-sm text-primary">
                     Rs. {conversationInfo?.productId?.price}
@@ -226,73 +218,71 @@ const BuyerChatDetails = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 sm:px-5">
+        <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-4 py-4 space-y-3 sm:px-5">
           <div className="sticky top-0 z-10 bg-white">
             {renderConversationBanner(conversationInfo?.status)}
           </div>
 
           {loading ? (
-            <div className="py-8 text-center text-sm text-muted">
-              Loading chat...
-            </div>
+            <div className="py-8 text-center text-sm text-muted">Loading chat...</div>
           ) : messages.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted">
               Start the conversation by sending a message.
             </div>
-          ) : messages.map((msg) => {
-            const senderId =
-              typeof msg.senderId === "object"
-                ? msg.senderId._id
-                : msg.senderId;
+          ) : (
+            messages.map((msg) => {
+              const senderId =
+                typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
 
-            const isMe = String(senderId) === String(currentUser?._id);
+              const isMe = String(senderId) === String(currentUser?._id);
 
-            return (
-              <div
-                key={msg._id}
-                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-              >
-                <div className="max-w-[88%] sm:max-w-[70%]">
-                  <div
-                    className={`rounded-2xl px-4 py-2 text-sm ${
-                      isMe
-                        ? "bg-primary text-white"
-                        : "border border-border bg-background text-text"
-                    }`}
-                  >
-                    {msg.text}
+              return (
+                <div
+                  key={msg._id}
+                  className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                >
+                  <div className="max-w-[88%] sm:max-w-[70%]">
+                    <div
+                      className={`rounded-2xl px-4 py-2 text-sm ${
+                        isMe
+                          ? "bg-primary text-white"
+                          : "border border-border bg-background text-text"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+
+                    <p
+                      className={`mt-1 px-1 text-[10px] ${
+                        isMe ? "text-right text-gray-300" : "text-left text-gray-400"
+                      }`}
+                    >
+                      {formatTime(msg.createdAt)}
+                    </p>
                   </div>
-
-                  <p
-                    className={`mt-1 px-1 text-[10px] ${
-                      isMe ? "text-right text-gray-300" : "text-left text-gray-400"
-                    }`}
-                  >
-                    {formatTime(msg.createdAt)}
-                  </p>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
 
-          <div ref={bottomRef}></div>
+          <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-border bg-white px-4 py-3">
-          <div className="flex gap-2 rounded-xl border border-border px-3 py-2 sm:gap-3">
+        <div className="shrink-0 overflow-x-hidden border-t border-border bg-white px-4 py-3">
+          <div className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-border px-3 py-2 sm:gap-3">
             <input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder={isChatLocked ? "Conversation closed" : "Type a message..."}
-              className="flex-1 bg-transparent text-sm outline-none"
+              className="flex-1 min-w-0 bg-transparent text-sm outline-none"
               disabled={isChatLocked || sending}
             />
 
             <button
               onClick={handleSend}
               disabled={isChatLocked || sending}
-              className={`rounded-lg p-2 ${
+              className={`shrink-0 rounded-lg p-2 ${
                 isChatLocked || sending
                   ? "cursor-not-allowed bg-gray-300"
                   : "bg-primary text-white"

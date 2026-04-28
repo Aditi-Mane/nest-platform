@@ -342,7 +342,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-white">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-4 sm:gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button
@@ -404,7 +404,7 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-4">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-4">
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -495,8 +495,8 @@ function TeamChatView({ application, onClose, onOpenList, onInfoClick, onMessage
           </div>
         )}
       </div>
-
-      <div className="flex gap-2 border-t border-border p-3 sm:p-4">
+      {/* Input */}
+      <div className="shrink-0 flex gap-2 border-t border-border bg-white p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] sm:p-4">
         <input
           type="text"
           placeholder="Type a message..."
@@ -602,7 +602,7 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
   }
 
   return (
-    <div className="relative flex h-full overflow-hidden rounded-none border-0 bg-white shadow-sm md:rounded-2xl md:border md:border-border">
+    <div className="relative flex h-full min-h-0 min-w-0 overflow-hidden rounded-none border-0 bg-white shadow-sm md:rounded-2xl md:border md:border-border">
       <div className="hidden w-80 border-r border-border md:flex md:flex-col">
         <div className="px-4 py-5 border-b border-border">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -654,7 +654,7 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
                 className="fixed inset-0 z-30 bg-black/40 md:hidden"
                 onClick={() => setShowInfo(false)}
               />
-              <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[92vw] md:static md:z-auto md:inset-auto md:w-auto md:max-w-none">
+              <div className="fixed right-0 top-[72px] bottom-0 z-40 w-full max-w-[92vw] md:static md:inset-auto md:z-auto md:w-auto md:max-w-none">
                 <TeamInfoPanel
                   application={selectedApplication}
                   onClose={() => setShowInfo(false)}
@@ -685,7 +685,7 @@ const JoinedVentures = ({ teams, initialSelectedVentureId = null, onBack = null 
             className="fixed inset-0 z-30 bg-black/40 md:hidden"
             onClick={() => setShowMobileList(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-40 flex w-full max-w-[92vw] flex-col bg-white shadow-xl md:hidden">
+         <div className="fixed left-0 top-[72px] bottom-0 z-40 flex w-full max-w-[92vw] flex-col bg-white shadow-xl md:hidden">
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <div>
                 <h2 className="text-sm font-semibold">Team Chats</h2>

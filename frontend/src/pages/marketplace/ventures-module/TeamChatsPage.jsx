@@ -81,7 +81,7 @@ export default function TeamChatsPage() {
 }, [initialSelectedVentureId, joinedVenturesData]);
 
   return (
-    <div className="h-[calc(100vh-72px)] overflow-hidden bg-gray-50">
+    <div className="h-[calc(100dvh-72px)] overflow-hidden bg-gray-50">
       <div className="mx-auto h-full max-w-7xl px-0 py-0 md:px-4 md:py-4">
         
         <div className="mb-4">

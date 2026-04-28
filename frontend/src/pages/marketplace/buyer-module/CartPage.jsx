@@ -256,12 +256,12 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
 
   return (
     <div className="min-h-screen bg-white text-text">
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-2">
             <ShoppingCart className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">Shopping Cart</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold">Shopping Cart</h1>
           </div>
 
           <p className="text-muted">
@@ -275,92 +275,100 @@ const cancelledCount = formattedItems.filter(i => i.status === 'cancelled').leng
             <div className="lg:col-span-2 space-y-5">
               {formattedItems.map((item) => (
                 <Card
-                  key={item.id}
-                  className="rounded-2xl border border-border bg-card"
-                >
-                  <CardContent className="p-6 flex gap-5">
-                    {/* Image */}
-                  <div className="w-32 h-32 rounded-xl overflow-hidden">
-                    <ImageWithFallBack
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                key={item.id}
+                className="rounded-2xl border border-border bg-card"
+              >
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5">
+                    
+                    {/* Product Image */}
+                    <div className="w-full sm:w-32 h-48 sm:h-32 rounded-xl overflow-hidden shrink-0">
+                      <ImageWithFallBack
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                    {/* Info */}
-                    <div className="flex-1">
-                      <div className="flex justify-between gap-4 mb-2">
-                        <div>
+                    {/* Content */}
+                    <div className="flex flex-1 min-w-0 flex-col">
+                      
+                      {/* Top Section */}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                        
+                        {/* Left Info */}
+                        <div className="flex-1 min-w-0">
                           <h3
-                            className="text-lg font-semibold cursor-pointer hover:text-primary"
+                            className="text-base sm:text-lg font-semibold cursor-pointer hover:text-primary line-clamp-1"
                             onClick={() => navigate(`/marketplace/buyer/product/${item.id}`)}
                           >
                             {item.name}
                           </h3>
 
-                          <p className="mb-2 line-clamp-2 text-sm text-muted">
+                          <p className="mt-1 text-sm text-muted line-clamp-2">
                             {item.description}
                           </p>
 
-                          <Badge className="bg-secondary text-white">
+                          <Badge className="mt-2 w-fit bg-secondary text-white">
                             {item.category}
                           </Badge>
                         </div>
 
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-primary">
+                        {/* Price */}
+                        <div className="sm:text-right shrink-0">
+                          <p className="text-xl sm:text-2xl font-bold text-primary">
                             ₹{item.price}
                           </p>
-                          <p className="text-xs text-muted">
-                            per item
-                          </p>
+                          <p className="text-xs text-muted">per item</p>
                         </div>
                       </div>
 
-                      {/* Seller */}
-                      <div className="flex items-center gap-2 mb-4">
-                       <Avatar className="w-7 h-7">
-                        <AvatarImage src={item.seller?.avatar} />
-                        <AvatarFallback className="text-xs">
-                          {item.seller?.name?.charAt(0)?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                        <p className="text-sm text-muted">
-                          {item.seller?.name} 
-                        </p>
-                         {getStatusBadge(item.status)}
+                      {/* Seller Row */}
+                      <div className="flex flex-wrap items-center gap-2 mb-4">
+                        <Avatar className="w-7 h-7 shrink-0">
+                          <AvatarImage src={item.seller?.avatar} />
+                          <AvatarFallback className="text-xs">
+                            {item.seller?.name?.charAt(0)?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <p className="text-sm text-muted">{item.seller?.name}</p>
+
+                        <div className="shrink-0">
+                          {getStatusBadge(item.status)}
+                        </div>
                       </div>
 
-                     
-                      <div className="flex items-center gap-3 mb-4">
-                       
-                      {/* Contact Seller Button */}
-                     <Button
-                      size="sm"
-                      className={`flex-1 rounded-xl border 
-                        ${getButtonStyle(item.status, item.productStatus)}
-                        ${getHoverStyle(item.status, item.productStatus)}
-                        !shadow-none transition-all`}
-                      onClick={() => handleContactSeller(item)}
-                      disabled={isContactButtonDisabled(item.status, item.productStatus)}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      {getContactButtonText(item.status, item.productStatus)}
-                    </Button>
-                       <Button
+                      {/* Action Row */}
+                      <div className="flex items-center gap-2 sm:gap-3 mt-auto">
+                        <Button
+                          size="sm"
+                          className={`flex-1 rounded-xl border
+                            ${getButtonStyle(item.status, item.productStatus)}
+                            ${getHoverStyle(item.status, item.productStatus)}
+                            !shadow-none transition-all`}
+                          onClick={() => handleContactSeller(item)}
+                          disabled={isContactButtonDisabled(item.status, item.productStatus)}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2 shrink-0" />
+                          <span className="truncate">
+                            {getContactButtonText(item.status, item.productStatus)}
+                          </span>
+                        </Button>
+
+                        <Button
                           variant="ghost"
-                          className="ml-auto text-red-600"
+                          size="icon"
+                          className="shrink-0 text-red-600"
                           onClick={() => removeFromCart(item.id)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                    </Button>
-                          
-                        </div>
-                      
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
               ))}
 
               {/* Continue Shopping */}
