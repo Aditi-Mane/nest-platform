@@ -1,17 +1,32 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useUser } from "@/context/UserContext";
+import { getApiOrigin } from "@/utils/apiBase";
+import { getStoredToken } from "@/utils/authStorage";
+import { useLocation } from "react-router-dom";
 
 const SocketContext = createContext(null);
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const { user } = useUser();
+  const location = useLocation();
 
   useEffect(() => {
-    // Use the same base URL as the API, but remove /api suffix for socket connection
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    const socketUrl = apiUrl.replace("/api", "");
+    const token = getStoredToken();
+    const isAuthRoute = location.pathname.startsWith("/auth");
+
+    if (!token || !user?._id || isAuthRoute) {
+      setSocket((currentSocket) => {
+        if (currentSocket) {
+          currentSocket.disconnect();
+        }
+        return null;
+      });
+      return;
+    }
+
+    const socketUrl = getApiOrigin();
     const socketInstance = io(socketUrl, {
       withCredentials: true,
       transports: ["websocket", "polling"],
@@ -41,7 +56,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       socketInstance.disconnect();
     };
-  }, []);
+  }, [location.pathname, user?._id]);
 
   // ✅ JOIN USER ROOM IMMEDIATELY AFTER SOCKET CONNECTION AND WHEN USER CHANGES
   useEffect(() => {

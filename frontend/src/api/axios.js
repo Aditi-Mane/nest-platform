@@ -1,9 +1,10 @@
 // api/axios.js
 import axios from "axios";
 import { clearStoredToken, getStoredToken } from "../utils/authStorage.js";
+import { getApiBaseUrl } from "../utils/apiBase.js";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: getApiBaseUrl(),
 });
 
 api.interceptors.request.use(

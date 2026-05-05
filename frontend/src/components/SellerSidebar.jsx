@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { X } from "lucide-react";
 
 import api from "../api/axios.js";
+import { toAbsoluteAssetUrl } from "../utils/apiBase.js";
 
 const SellerSidebar = ({ className = "", onClose, onNavigate }) => {
   const [openAI, setOpenAI] = useState(false);
@@ -50,11 +51,7 @@ const SellerSidebar = ({ className = "", onClose, onNavigate }) => {
   const normalLink =
     "text-[var(--color-muted)] hover:bg-[#f4ecdd] hover:text-[var(--color-primary)]";
 
-  const avatarSrc = user?.avatar
-    ? user.avatar.startsWith("http")
-      ? user.avatar
-      : `http://localhost:5000${user.avatar}`
-    : undefined;
+  const avatarSrc = toAbsoluteAssetUrl(user?.avatar);
 
   const handleNavAction = () => {
     onNavigate?.();
